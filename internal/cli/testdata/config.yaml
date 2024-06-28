@@ -1,0 +1,8 @@
+subdomain: example
+email: hoge@example.com
+token: foobarfoobar
+default_locale: ja
+default_permission_group_id: 123
+default_user_segment_id: 456
+notify_subscribers: false
+contents_dir: example

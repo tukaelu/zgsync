@@ -1,0 +1,17 @@
+{
+  "article": {
+    "author_id": 3465,
+    "comments_disabled": true,
+    "content_tag_ids": [
+      "01GT23D51Y",
+      "01GT23FWWN"
+    ],
+    "id": 37486578,
+    "locale": "en_us",
+    "permission_group_id": 123,
+    "position": 42,
+    "promoted": false,
+    "title": "How to use zgsync",
+    "user_segment_id": 12
+  }
+}
