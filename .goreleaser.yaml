@@ -10,8 +10,8 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
-      - -X zgsync.Version={{ .Version }}
-      - -X zgsync.Revision={{ .ShortCommit }}
+      - -X github.com/tukaelu/zgsync.Version={{ .Version }}
+      - -X github.com/tukaelu/zgsync.Revision={{ .ShortCommit }}
     env:
       - CGO_ENABLED=0
     goos:
