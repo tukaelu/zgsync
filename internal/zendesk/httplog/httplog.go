@@ -35,7 +35,7 @@ func DefaultLogRequest(req *http.Request) {
 func DefaultLogResponse(res *http.Response) {
 	ctx := res.Request.Context()
 	if requestedAt, ok := ctx.Value(ContextRequestKey).(time.Time); ok {
-		d := fmt.Sprintf("%dms", time.Duration(time.Now().Sub(requestedAt)).Milliseconds())
+		d := fmt.Sprintf("%dms", time.Duration(time.Since(requestedAt)).Milliseconds())
 		pd, _ := time.ParseDuration(d)
 		log.Printf("<---- [%s] %s (%s)", res.Status, res.Request.URL, pd)
 	} else {

@@ -123,6 +123,9 @@ func (c *CommandPush) pushTranslation(g *Global, file string) error {
 	}
 
 	resPayload, err := c.client.UpdateTranslation(t.SourceID, locale, payload)
+	if err != nil {
+		return err
+	}
 	if err = t.FromJson(resPayload); err != nil {
 		return err
 	}

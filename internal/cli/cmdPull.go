@@ -36,7 +36,9 @@ func (c *CommandPull) Run(g *Global) error {
 				return err
 			}
 			a := &zendesk.Article{}
-			a.FromJson(resPayload)
+			if err := a.FromJson(resPayload); err != nil {
+				return err
+			}
 			aPath := filepath.Join(g.Config.ContentsDir, strconv.Itoa(a.ID)+".md")
 			if err = a.Save(aPath); err != nil {
 				return fmt.Errorf("failed to save the article to %s: %w", aPath, err)
@@ -48,7 +50,9 @@ func (c *CommandPull) Run(g *Global) error {
 			return err
 		}
 		t := &zendesk.Translation{}
-		t.FromJson(resPayload)
+		if err := t.FromJson(resPayload); err != nil {
+			return err
+		}
 
 		if !c.Raw {
 			if t.Body, err = c.converter.ConvertToMarkdown(t.Body); err != nil {
