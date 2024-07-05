@@ -1,0 +1,44 @@
+---
+project_name: zgsync
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - main: ./cmd/zgsync/
+    binary: zgsync
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X zgsync.Version={{ .Version }}
+      - -X zgsync.Revision={{ .ShortCommit }}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format: zip
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+      - LICENSE
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+brews:
+  - repository:
+      owner: tukaelu
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
