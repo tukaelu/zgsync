@@ -51,12 +51,12 @@ contents_dir: path/to/contents
 zgsync consists of the subcommands pull, push, and empty.  
 By default, it handles Translations among the data models of the Zendesk Help Center, but it can also handle Articles by specifying a specific option.
 
-zgsync saves translations in files named `{Article ID}-{Locale}.md`. When using the pull or empty commands, specifying the `--save-article` option saves articles in files named `{Article ID}.md`.  
-When pushing, it does not automatically determine whether it is a translation or an article. Therefore, to post an article, explicitly specify the `--article` option and provide the article file.
+zgsync saves Translations in files named `{Article ID}-{Locale}.md`. When using the pull or empty commands, specifying the `--save-article` option saves Articles in files named `{Article ID}.md`.  
+When pushing, it does not automatically determine whether it is a Translation or an Article. Therefore, to post an Article, explicitly specify the `--article` option and provide the Article file.
 
 ### push
 
-The push subcommand updates posts, either translations or articles, to the remote.
+The push subcommand updates posts, either Translations or Articles, to the remote.
 
 ```
 Usage: zgsync push <files> ... [flags]
@@ -107,6 +107,90 @@ Flags:
   -u, --user-segment-id=INT                      Specify the user segment ID. If not specified, the default value will be used.
       --save-article                             It saves the article in addition to the translation.
 ```
+
+## Markdown file format
+
+zgsync manages Translations and Articles in the following formats respectively.
+
+### Translations
+
+Translations are files composed of Frontmatter and Markdown text. The Markdown, which corresponds to the body of the article, is written in this file.
+
+```markdown
+---
+title: cool title
+locale: ja
+draft: true
+outdated: false
+source_id: 12345678901234
+html_url: https://{your help center domain}/hc/ja/articles/12345678901234
+created_at: "2024-01-01T00:00:00Z"
+updated_at: "2024-01-01T00:00:00Z"
+---
+## Markdown
+
+some cool text
+```
+
+refs: [Translations | Zendesk Developer Docs](https://developer.zendesk.com/api-reference/help_center/help-center-api/translations/)
+
+### Article
+
+Articles manage only the metadata related to the post in the Frontmatter. Please note that any body text written in this file will be ignored.
+
+```markdown
+---
+author_id: 98765432109876
+comments_disabled: true
+content_tag_ids: []
+created_at: "2024-01-01T00:00:00Z"
+draft: false
+edited_at: "2024-01-01T00:00:00Z"
+html_url: https://{your help center domain}/hc/ja/articles/12345678901234
+id: 12345678901234
+label_names: []
+locale: ja
+outdated: false
+outdated_locales: []
+permission_group_id: 1234567
+position: 0
+promoted: false
+section_id: 567890123456
+source_locale: ja
+title: cool title
+updated_at: "2024-01-01T00:00:00Z"
+url: https://{subdomain}.zendesk.com/api/v2/help_center/ja/articles/12345678901234.json
+user_segment_id: 234567890123
+user_segment_ids: []
+vote_count: 0
+vote_sum: 0
+---
+```
+
+refs: [Articles | Zendesk Developer Docs](https://developer.zendesk.com/api-reference/help_center/help-center-api/articles/)
+
+## Regarding Markdown and HTML conversion
+
+- The conversion from Markdown to HTML is performed by [yuin/goldmark](https://github.com/yuin/goldmark), which adheres to the CommonMark specification.
+- It supports the output of div tags using notation similar to Pandoc.
+
+```markdown
+:::
+messages
+:::
+```
+
+- For headings such as h1 and h2 tags, as well as div tags, it also supports the specification of attributes.
+
+```markdown
+## Hoge {#hoge .h2}   // ==> <h2 id="hoge" class="h2">Hoge</h2>
+
+:::{.block .warning}  // ==> <div class="block warning"><p>warning messages</p></div>
+warning messages
+:::
+```
+
+- The conversion from HTML to Markdown uses [JohannesKaufmann/html-to-markdown](https://github.com/JohannesKaufmann/html-to-markdown), so full bidirectional conversion is not currently supported.
 
 ## Contributing
 
