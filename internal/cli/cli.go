@@ -9,10 +9,10 @@ type Global struct {
 
 type cli struct {
 	Global
-	Push    CommandPush    `cmd:"push" help:"push articles/translations to remote"`
-	Pull    CommandPull    `cmd:"pull" help:"pull articles/translations from remote"`
-	Empty   CommandEmpty   `cmd:"empty" help:"create an empty draft article"`
-	Version CommandVersion `cmd:"version" help:"show version"`
+	Push    CommandPush    `cmd:"push" help:"Push translations or articles to the remote."`
+	Pull    CommandPull    `cmd:"pull" help:"Pull translations or articles from the remote."`
+	Empty   CommandEmpty   `cmd:"empty" help:"Creates an empty draft article remotely and saves it locally."`
+	Version CommandVersion `cmd:"version" help:"Show version."`
 }
 
 func (c *cli) AfterApply(kCtx *kong.Context) error {

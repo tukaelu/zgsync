@@ -12,20 +12,20 @@ import (
 
 // refs: https://developer.zendesk.com/api-reference/help_center/help-center-api/translations/#update-translation
 type Translation struct {
-	Body        string `json:"body,omitempty" yaml:"-"`
-	CreatedAt   string `json:"created_at,omitempty" yaml:"created_at"`
-	CreatedById int    `json:"created_by_id,omitempty" yaml:"created_by_id"`
-	Draft       bool   `json:"draft,omitempty" yaml:"draft"`
-	HtmlURL     string `json:"html_url,omitempty" yaml:"html_url"`
-	ID          int    `json:"id" yaml:"id"`
+	Title       string `json:"title" yaml:"title"`
 	Locale      string `json:"locale" yaml:"locale"`
+	Draft       bool   `json:"draft,omitempty" yaml:"draft"`
 	Outdated    bool   `json:"outdated,omitempty" yaml:"outdated"`
 	SourceID    int    `json:"source_id,omitempty" yaml:"source_id"`
-	SourceType  string `json:"source_type,omitempty" yaml:"source_type" default:"article"`
-	Title       string `json:"title" yaml:"title"`
+	HtmlURL     string `json:"html_url,omitempty" yaml:"html_url"`
+	CreatedAt   string `json:"created_at,omitempty" yaml:"created_at"`
 	UpdatedAt   string `json:"updated_at,omitempty" yaml:"updated_at"`
-	UpdatedById int    `json:"updated_by_id,omitempty" yaml:"updated_by_id"`
-	URL         string `json:"url,omitempty" yaml:"url"`
+	ID          int    `json:"id" yaml:"-"`
+	URL         string `json:"url,omitempty" yaml:"-"`
+	SourceType  string `json:"source_type,omitempty" yaml:"-"`
+	CreatedById int    `json:"created_by_id,omitempty" yaml:"-"`
+	UpdatedById int    `json:"updated_by_id,omitempty" yaml:"-"`
+	Body        string `json:"body,omitempty" yaml:"-"`
 }
 
 type wrappedTranslation struct {

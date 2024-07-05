@@ -9,12 +9,12 @@ import (
 )
 
 type CommandEmpty struct {
-	Locale            string         `name:"locale" short:"l" help:"locale"`
-	PermissionGroupID int            `name:"permission-group-id" short:"p" help:"permission group ID"`
-	SaveArticle       bool           `name:"save-article" help:"save article to the contents directory"`
-	SectionID         int            `name:"section-id" short:"s" help:"section ID" required:""`
-	Title             string         `name:"title" short:"t" help:"title" required:""`
-	UserSegmentID     int            `name:"user-segment-id" short:"u" help:"user segment ID"`
+	SectionID         int            `name:"section-id" short:"s" help:"Specify the section ID of the article." required:""`
+	Title             string         `name:"title" short:"t" help:"Specify the title of the article." required:""`
+	Locale            string         `name:"locale" short:"l" help:"Specify the locale to pull. If not specified, the default locale will be used."`
+	PermissionGroupID int            `name:"permission-group-id" short:"p" help:"Specify the permission group ID. If not specified, the default value will be used."`
+	UserSegmentID     int            `name:"user-segment-id" short:"u" help:"Specify the user segment ID. If not specified, the default value will be used."`
+	SaveArticle       bool           `name:"save-article" help:"It saves the article in addition to the translation."`
 	client            zendesk.Client `kong:"-"`
 }
 

@@ -9,6 +9,6 @@ import (
 type CommandVersion struct{}
 
 func (c *CommandVersion) Run() error {
-	fmt.Printf("version %s (rev.%s)\n", zgsync.Version, zgsync.Revision)
+	fmt.Printf("version %s (rev: %s)\n", zgsync.Version, zgsync.Revision)
 	return nil
 }

@@ -13,11 +13,10 @@ func TestTranslationFromFile(t *testing.T) {
 		{
 			"testdata/translation-ja.md",
 			Translation{
-				Locale:     "ja",
-				Title:      "zgsyncの使い方",
-				SourceID:   12345,
-				SourceType: "article",
-				Body:       "# zgsyncの使い方\n",
+				Locale:   "ja",
+				Title:    "zgsyncの使い方",
+				SourceID: 12345,
+				Body:     "# zgsyncの使い方\n",
 			},
 		},
 	}
@@ -36,9 +35,6 @@ func TestTranslationFromFile(t *testing.T) {
 			}
 			if translation.SourceID != tt.expected.SourceID {
 				t.Errorf("translation.SourceId failed: got %v, want %v", translation.SourceID, tt.expected.SourceID)
-			}
-			if translation.SourceType != tt.expected.SourceType {
-				t.Errorf("translation.SourceType failed: got %v, want %v", translation.SourceType, tt.expected.SourceType)
 			}
 			if translation.Body != tt.expected.Body {
 				t.Errorf("translation.Body failed: got %v, want %v", translation.Body, tt.expected.Body)

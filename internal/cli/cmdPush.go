@@ -11,10 +11,10 @@ import (
 )
 
 type CommandPush struct {
-	Article   bool                `name:"article" help:"It pushes only articles."`
+	Article   bool                `name:"article" help:"Specify when posting an article. If not specified, the translation will be pushed."`
 	DryRun    bool                `name:"dry-run" help:"dry run"`
 	Raw       bool                `name:"raw" help:"It pushes raw data without converting it from Markdown to HTML."`
-	Files     []string            `arg:"" help:"files to push" type:"existingfile"`
+	Files     []string            `arg:"" help:"Specify the files to push." type:"existingfile"`
 	client    zendesk.Client      `kong:"-"`
 	converter converter.Converter `kong:"-"`
 }

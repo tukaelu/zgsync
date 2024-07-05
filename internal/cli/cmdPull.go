@@ -10,10 +10,10 @@ import (
 )
 
 type CommandPull struct {
-	Locale      string              `name:"locale" short:"l" help:"locale"`
+	Locale      string              `name:"locale" short:"l" help:"Specify the locale to pull. If not specified, the default locale will be used."`
 	Raw         bool                `name:"raw" help:"It pulls raw data without converting it from HTML to Markdown."`
-	WithArticle bool                `name:"with-article" short:"a" help:"It pulls only articles."`
-	ArticleIDs  []int               `arg:"" help:"article IDs to pull" type:"int"`
+	SaveArticle bool                `name:"save-article" short:"a" help:"It pulls and saves the article in addition to the translation."`
+	ArticleIDs  []int               `arg:"" help:"Specify the article IDs to pull." type:"int"`
 	client      zendesk.Client      `kong:"-"`
 	converter   converter.Converter `kong:"-"`
 }
@@ -30,7 +30,7 @@ func (c *CommandPull) Run(g *Global) error {
 	}
 
 	for _, articleID := range c.ArticleIDs {
-		if c.WithArticle {
+		if c.SaveArticle {
 			resPayload, err := c.client.ShowArticle(c.Locale, articleID)
 			if err != nil {
 				return err

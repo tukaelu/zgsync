@@ -6,7 +6,7 @@ OUTPUT_DIR ?= dist
 
 OS := $(shell go env GOOS)
 ARCH := $(shell go env GOARCH)
-# BUILD_LDFLAGS := "-X github.com/tukaelu/zgsync.Version=$(VERSION) -X github.com/tukaelu/zgsync.Revision=$(REVISION)"
+BUILD_LDFLAGS := "-X github.com/tukaelu/zgsync.Version=$(VERSION) -X github.com/tukaelu/zgsync.Revision=$(REVISION)"
 
 SOURCES = $(shell find . -type f -name '*.go')
 
