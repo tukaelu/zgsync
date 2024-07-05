@@ -110,9 +110,7 @@ func (c *clientImpl) doRequest(method string, endpoint string, payload io.Reader
 		return "", err
 	}
 
-	if method != http.MethodGet {
-		req.Header.Set("Content-Type", "application/json")
-	}
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Basic "+c.authorizationToken())
 
 	client := &http.Client{}

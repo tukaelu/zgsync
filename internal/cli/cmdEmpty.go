@@ -58,7 +58,7 @@ func (c *CommandEmpty) Run(g *Global) error {
 	}
 
 	if c.SaveArticle {
-		aPath := filepath.Join(g.Config.ContentsDir, strconv.Itoa(a.ID), ".md")
+		aPath := filepath.Join(g.Config.ContentsDir, strconv.Itoa(a.ID)+".md")
 		if err = a.Save(aPath); err != nil {
 			return fmt.Errorf("failed to save the article to %s: %w", aPath, err)
 		}
@@ -73,7 +73,7 @@ func (c *CommandEmpty) Run(g *Global) error {
 	if err = t.FromJson(res); err != nil {
 		return err
 	}
-	tPath := filepath.Join(g.Config.ContentsDir, strconv.Itoa(t.SourceID), "-", t.Locale, ".md")
+	tPath := filepath.Join(g.Config.ContentsDir, strconv.Itoa(t.SourceID)+"-"+t.Locale+".md")
 	if err = t.Save(tPath); err != nil {
 		return fmt.Errorf("failed to save the translation to %s: %w", tPath, err)
 	}

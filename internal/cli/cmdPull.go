@@ -37,7 +37,7 @@ func (c *CommandPull) Run(g *Global) error {
 			}
 			a := &zendesk.Article{}
 			a.FromJson(resPayload)
-			aPath := filepath.Join(g.Config.ContentsDir, strconv.Itoa(a.ID), ".md")
+			aPath := filepath.Join(g.Config.ContentsDir, strconv.Itoa(a.ID)+".md")
 			if err = a.Save(aPath); err != nil {
 				return fmt.Errorf("failed to save the article to %s: %w", aPath, err)
 			}
@@ -56,7 +56,7 @@ func (c *CommandPull) Run(g *Global) error {
 			}
 		}
 
-		tPath := filepath.Join(g.Config.ContentsDir, strconv.Itoa(t.SourceID), "-", t.Locale, ".md")
+		tPath := filepath.Join(g.Config.ContentsDir, strconv.Itoa(t.SourceID)+"-"+t.Locale+".md")
 		if err = t.Save(tPath); err != nil {
 			return fmt.Errorf("failed to save the translation to %s: %w", tPath, err)
 		}
