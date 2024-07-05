@@ -9,7 +9,15 @@ When posting, it converts the Markdown to HTML to match the API interface.
 
 ## Installation
 
-TODO
+### Homebrew tap
+
+```
+brew install tukaelu/tap/zgsync
+```
+
+### Binary install
+
+Please download the appropriate Zip archive for your environment from the [releases](https://github.com/tukaelu/zgsync/releases).
 
 ## Configuration
 
