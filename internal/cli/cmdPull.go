@@ -31,12 +31,12 @@ func (c *CommandPull) Run(g *Global) error {
 
 	for _, articleID := range c.ArticleIDs {
 		if c.SaveArticle {
-			resPayload, err := c.client.ShowArticle(c.Locale, articleID)
+			res, err := c.client.ShowArticle(c.Locale, articleID)
 			if err != nil {
 				return err
 			}
 			a := &zendesk.Article{}
-			if err := a.FromJson(resPayload); err != nil {
+			if err := a.FromJson(res); err != nil {
 				return err
 			}
 			aPath := filepath.Join(g.Config.ContentsDir, strconv.Itoa(a.ID)+".md")
@@ -45,12 +45,12 @@ func (c *CommandPull) Run(g *Global) error {
 			}
 		}
 
-		resPayload, err := c.client.ShowTranslation(articleID, c.Locale)
+		res, err := c.client.ShowTranslation(articleID, c.Locale)
 		if err != nil {
 			return err
 		}
 		t := &zendesk.Translation{}
-		if err := t.FromJson(resPayload); err != nil {
+		if err := t.FromJson(res); err != nil {
 			return err
 		}
 

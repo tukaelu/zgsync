@@ -10,9 +10,12 @@ BUILD_LDFLAGS := "-X github.com/tukaelu/zgsync.Version=$(VERSION) -X github.com/
 
 SOURCES = $(shell find . -type f -name '*.go')
 
-.PHONY: test
+.PHONY: test lint build clean
 test:
 	go test -v ./...
+
+lint:
+	golangci-lint run
 
 build: $(OUTPUT_DIR) $(SOURCES)
 	go mod tidy

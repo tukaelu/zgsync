@@ -75,11 +75,11 @@ func (c *CommandPush) pushArticle(g *Global, file string) error {
 		locale = a.Locale
 	}
 
-	resPayload, err := c.client.UpdateArticle(locale, a.ID, payload)
+	res, err := c.client.UpdateArticle(locale, a.ID, payload)
 	if err != nil {
 		return err
 	}
-	if err = a.FromJson(resPayload); err != nil {
+	if err = a.FromJson(res); err != nil {
 		return err
 	}
 
@@ -122,11 +122,11 @@ func (c *CommandPush) pushTranslation(g *Global, file string) error {
 		locale = t.Locale
 	}
 
-	resPayload, err := c.client.UpdateTranslation(t.SourceID, locale, payload)
+	res, err := c.client.UpdateTranslation(t.SourceID, locale, payload)
 	if err != nil {
 		return err
 	}
-	if err = t.FromJson(resPayload); err != nil {
+	if err = t.FromJson(res); err != nil {
 		return err
 	}
 

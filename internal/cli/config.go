@@ -56,7 +56,7 @@ func (g *Global) LoadConfig() error {
 	if g.Config.ContentsDir == "" {
 		g.Config.ContentsDir = "."
 	}
-	return nil
+	return g.Config.Validation()
 }
 
 func (g *Global) ConfigExists() error {
