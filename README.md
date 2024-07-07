@@ -90,6 +90,8 @@ Flags:
   -a, --save-article                             It pulls and saves the article in addition to the translation.
 ```
 
+If a Translation or Article already exists locally in the `contents_dir`, it will be overwritten.
+
 ### empty
 
 The empty subcommand creates an empty draft article remotely and saves it locally.
@@ -108,13 +110,16 @@ Flags:
       --save-article                             It saves the article in addition to the translation.
 ```
 
+The empty subcommand should not be used when adding a new Translation to an existing Article.
+
 ## Markdown file format
 
 zgsync manages Translations and Articles in the following formats respectively.
 
 ### Translations
 
-Translations are files composed of Frontmatter and Markdown text. The Markdown, which corresponds to the body of the article, is written in this file.
+Translations are files composed of Frontmatter and Markdown text. The Markdown, which corresponds to the body of the article, is written in this file.  
+Ensure that the Markdown Frontmatter related to properties required by the API is not missing.
 
 ```markdown
 ---
@@ -190,7 +195,7 @@ warning messages
 :::
 ```
 
-- The conversion from HTML to Markdown uses [JohannesKaufmann/html-to-markdown](https://github.com/JohannesKaufmann/html-to-markdown), so full bidirectional conversion is not currently supported.
+- The conversion from HTML to Markdown uses [JohannesKaufmann/html-to-markdown](https://github.com/JohannesKaufmann/html-to-markdown), so fully consistent bidirectional conversion is not currently supported.
 
 ## Contributing
 

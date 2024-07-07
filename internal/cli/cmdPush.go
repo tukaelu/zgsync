@@ -83,7 +83,7 @@ func (c *CommandPush) pushArticle(g *Global, file string) error {
 		return err
 	}
 
-	if err = a.Save(file); err != nil {
+	if err = a.Save(file, false); err != nil {
 		return err
 	}
 
@@ -133,7 +133,7 @@ func (c *CommandPush) pushTranslation(g *Global, file string) error {
 	if !c.Raw {
 		t.Body = origBody
 	}
-	if err = t.Save(file); err != nil {
+	if err = t.Save(file, false); err != nil {
 		return err
 	}
 

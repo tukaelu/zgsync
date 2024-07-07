@@ -2,8 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"path/filepath"
-	"strconv"
 
 	"github.com/tukaelu/zgsync/internal/converter"
 	"github.com/tukaelu/zgsync/internal/zendesk"
@@ -39,9 +37,8 @@ func (c *CommandPull) Run(g *Global) error {
 			if err := a.FromJson(res); err != nil {
 				return err
 			}
-			aPath := filepath.Join(g.Config.ContentsDir, strconv.Itoa(a.ID)+".md")
-			if err = a.Save(aPath); err != nil {
-				return fmt.Errorf("failed to save the article to %s: %w", aPath, err)
+			if err = a.Save(g.Config.ContentsDir, true); err != nil {
+				return fmt.Errorf("failed to save the article: %w", err)
 			}
 		}
 
@@ -60,9 +57,8 @@ func (c *CommandPull) Run(g *Global) error {
 			}
 		}
 
-		tPath := filepath.Join(g.Config.ContentsDir, strconv.Itoa(t.SourceID)+"-"+t.Locale+".md")
-		if err = t.Save(tPath); err != nil {
-			return fmt.Errorf("failed to save the translation to %s: %w", tPath, err)
+		if err = t.Save(g.Config.ContentsDir, true); err != nil {
+			return fmt.Errorf("failed to save the translation: %w", err)
 		}
 	}
 	return nil

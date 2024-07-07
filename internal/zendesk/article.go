@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path/filepath"
+	"strconv"
 
 	"github.com/adrg/frontmatter"
 	"gopkg.in/yaml.v3"
@@ -74,8 +76,11 @@ func (a *Article) FromJson(jsonStr string) error {
 	return nil
 }
 
-func (a *Article) Save(path string) error {
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0644)
+func (a *Article) Save(path string, appendFileName bool) error {
+	if appendFileName {
+		path = filepath.Join(path, strconv.Itoa(a.ID)+"-article.md")
+	}
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}

@@ -99,7 +99,7 @@ func replacementDiv(content string, selec *goquery.Selection, opt *md.Options) *
 	if len(attrs) > 0 {
 		styledDiv = styledDiv + "{" + strings.Join(attrs, " ") + "}"
 	}
-	styledDiv = styledDiv + "\n" + content + "\n:::\n\n"
+	styledDiv = styledDiv + "\n" + strings.TrimSpace(content) + "\n:::\n\n"
 
 	return md.String(styledDiv)
 }

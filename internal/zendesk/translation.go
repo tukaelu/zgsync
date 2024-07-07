@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path/filepath"
+	"strconv"
 
 	"github.com/adrg/frontmatter"
 	"gopkg.in/yaml.v3"
@@ -75,8 +77,11 @@ func (t *Translation) ToPayload() (string, error) {
 	return string(b), nil
 }
 
-func (t *Translation) Save(path string) error {
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0644)
+func (t *Translation) Save(path string, appendFileName bool) error {
+	if appendFileName {
+		path = filepath.Join(path, strconv.Itoa(t.SourceID)+"-translation-"+t.Locale+".md")
+	}
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
