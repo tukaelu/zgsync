@@ -88,9 +88,11 @@ Flags:
   -l, --locale=STRING                            Specify the locale to pull. If not specified, the default locale will be used.
       --raw                                      It pulls raw data without converting it from HTML to Markdown.
   -a, --save-article                             It pulls and saves the article in addition to the translation.
+      --without-section-dir                      It doesn't save in a directory named after the section ID.
 ```
 
-If a Translation or Article already exists locally in the `contents_dir`, it will be overwritten.
+By default, the pull subcommand saves under `{contents_dir}/{section_id}`. You can also specify an option to output directly under `{contents_dir}/`.
+If a Translation or Article already exists at the specified local path, it will be overwritten.
 
 ### empty
 
@@ -108,6 +110,7 @@ Flags:
   -p, --permission-group-id=INT                  Specify the permission group ID. If not specified, the default value will be used.
   -u, --user-segment-id=INT                      Specify the user segment ID. If not specified, the default value will be used.
       --save-article                             It saves the article in addition to the translation.
+      --without-section-dir                      It doesn't save in a directory named after the section ID.
 ```
 
 The empty subcommand should not be used when adding a new Translation to an existing Article.
@@ -120,6 +123,7 @@ zgsync manages Translations and Articles in the following formats respectively.
 
 Translations are files composed of Frontmatter and Markdown text. The Markdown, which corresponds to the body of the article, is written in this file.  
 Ensure that the Markdown Frontmatter related to properties required by the API is not missing.
+The section_id is included for administrative purposes but is not required by the Translation API.
 
 ```markdown
 ---
@@ -127,6 +131,7 @@ title: cool title
 locale: ja
 draft: true
 outdated: false
+section_id: 1234567890
 source_id: 12345678901234
 html_url: https://{your help center domain}/hc/ja/articles/12345678901234
 created_at: "2024-01-01T00:00:00Z"

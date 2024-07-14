@@ -77,10 +77,16 @@ func (a *Article) FromJson(jsonStr string) error {
 }
 
 func (a *Article) Save(path string, appendFileName bool) error {
-	if appendFileName {
-		path = filepath.Join(path, strconv.Itoa(a.ID)+"-article.md")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if err := os.MkdirAll(path, 0o755); err != nil {
+			return err
+		}
 	}
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+
+	if appendFileName {
+		path = filepath.Join(path, strconv.Itoa(a.ID)+".md")
+	}
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 	if err != nil {
 		return err
 	}
