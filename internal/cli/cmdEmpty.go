@@ -2,6 +2,8 @@ package cli
 
 import (
 	"fmt"
+	"path/filepath"
+	"strconv"
 
 	"github.com/tukaelu/zgsync/internal/zendesk"
 )
@@ -13,6 +15,7 @@ type CommandEmpty struct {
 	PermissionGroupID int            `name:"permission-group-id" short:"p" help:"Specify the permission group ID. If not specified, the default value will be used."`
 	UserSegmentID     int            `name:"user-segment-id" short:"u" help:"Specify the user segment ID. If not specified, the default value will be used."`
 	SaveArticle       bool           `name:"save-article" help:"It saves the article in addition to the translation."`
+	WithoutSectionDir bool           `name:"without-section-dir" help:"It doesn't save in a directory named after the section ID."`
 	client            zendesk.Client `kong:"-"`
 }
 
@@ -55,8 +58,15 @@ func (c *CommandEmpty) Run(g *Global) error {
 		return err
 	}
 
+	var saveDirPath string
+	if c.WithoutSectionDir {
+		saveDirPath = g.Config.ContentsDir
+	} else {
+		saveDirPath = filepath.Join(g.Config.ContentsDir, strconv.Itoa(a.SectionID))
+	}
+
 	if c.SaveArticle {
-		if err = a.Save(g.Config.ContentsDir, true); err != nil {
+		if err = a.Save(saveDirPath, true); err != nil {
 			return fmt.Errorf("failed to save the article: %w", err)
 		}
 	}
@@ -70,7 +80,9 @@ func (c *CommandEmpty) Run(g *Global) error {
 	if err = t.FromJson(res); err != nil {
 		return err
 	}
-	if err = t.Save(g.Config.ContentsDir, true); err != nil {
+	t.SectionID = a.SectionID
+
+	if err = t.Save(saveDirPath, true); err != nil {
 		return fmt.Errorf("failed to save the translation: %w", err)
 	}
 	return nil

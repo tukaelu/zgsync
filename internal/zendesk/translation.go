@@ -18,6 +18,7 @@ type Translation struct {
 	Locale      string `json:"locale" yaml:"locale"`
 	Draft       bool   `json:"draft,omitempty" yaml:"draft"`
 	Outdated    bool   `json:"outdated,omitempty" yaml:"outdated"`
+	SectionID   int    `json:"-" yaml:"section_id,omitempty"`
 	SourceID    int    `json:"source_id,omitempty" yaml:"source_id"`
 	HtmlURL     string `json:"html_url,omitempty" yaml:"html_url"`
 	CreatedAt   string `json:"created_at,omitempty" yaml:"created_at"`
@@ -78,10 +79,16 @@ func (t *Translation) ToPayload() (string, error) {
 }
 
 func (t *Translation) Save(path string, appendFileName bool) error {
-	if appendFileName {
-		path = filepath.Join(path, strconv.Itoa(t.SourceID)+"-translation-"+t.Locale+".md")
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		if err := os.MkdirAll(path, 0o755); err != nil {
+			return err
+		}
 	}
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+
+	if appendFileName {
+		path = filepath.Join(path, strconv.Itoa(t.SourceID)+"-"+t.Locale+".md")
+	}
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 	if err != nil {
 		return err
 	}
