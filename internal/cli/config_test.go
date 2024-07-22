@@ -3,11 +3,12 @@ package cli
 import "testing"
 
 func TestLoadConfig(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		configPath               string
 		subdomain                string
 		email                    string
 		token                    string
+		defaultCommentsDisabled  bool
 		defaultLocale            string
 		defaultPermissionGroupID int
 		defaultUserSegmentID     int
@@ -19,6 +20,7 @@ func TestLoadConfig(t *testing.T) {
 			"example",
 			"hoge@example.com",
 			"foobarfoobar",
+			true,
 			"ja",
 			123,
 			456,
@@ -30,6 +32,7 @@ func TestLoadConfig(t *testing.T) {
 			"example",
 			"hoge@example.com",
 			"foobarfoobar",
+			false,
 			"ja",
 			123,
 			456,
@@ -56,6 +59,9 @@ func TestLoadConfig(t *testing.T) {
 			if g.Config.Token != tt.token {
 				t.Errorf("Config.Token failed: got %v, want %v", g.Config.Token, tt.token)
 			}
+			if g.Config.DefaultCommentsDisabled != tt.defaultCommentsDisabled {
+				t.Errorf("Config.DefaultCommentsDisabled failed: got %v, want %v", g.Config.DefaultCommentsDisabled, tt.defaultCommentsDisabled)
+			}
 			if g.Config.DefaultLocale != tt.defaultLocale {
 				t.Errorf("Config.DefaultLocale failed: got %v, want %v", g.Config.DefaultLocale, tt.defaultLocale)
 			}
@@ -76,7 +82,7 @@ func TestLoadConfig(t *testing.T) {
 }
 
 func TestConfigExists(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		name       string
 		configPath string
 		notError   bool

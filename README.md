@@ -28,6 +28,7 @@ You can also explicitly specify the path using the `--config` option.
 subdomain: <your zendesk subdomain>
 email: <your zendesk email address>/token
 token: <your zendesk token>
+default_comments_disabled: true
 default_locale: ja
 default_permission_group_id: 123
 default_user_segment_id: 456
@@ -40,6 +41,7 @@ contents_dir: path/to/contents
 | subdomain                   | true     | Specify a brand-specific subdomain                       |
 | email                       | true     | Specify the email address with "/token" added to the end |
 | token                       | true     | Specify your API token                                   |
+| default_comments_disabled   | true     | Specify the default comments disabled                    |
 | default_locale              | true     | Specify the default locale for translations              |
 | default_permission_group_id | true     | Specify the default permission group ID                  |
 | default_user_segment_id     | true     | Specify the default user segment ID                      |
