@@ -37,6 +37,7 @@ func (c *CommandEmpty) Run(g *Global) error {
 
 	a := &zendesk.Article{
 		Draft:             true,
+		CommentsDisabled:  g.Config.DefaultCommentsDisabled,
 		Locale:            c.Locale,
 		PermissionGroupID: c.PermissionGroupID,
 		SectionID:         c.SectionID,

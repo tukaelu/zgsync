@@ -12,6 +12,7 @@ type Config struct {
 	Subdomain                string `yaml:"subdomain" description:"Zendesk subdomain" required:"true"`
 	Email                    string `yaml:"email" description:"Zendesk email" required:"true"`
 	Token                    string `yaml:"token" description:"Zendesk API token" required:"true"`
+	DefaultCommentsDisabled  bool   `yaml:"default_comments_disabled" description:"Default comments disabled" default:"false"`
 	DefaultLocale            string `yaml:"default_locale" description:"Default locale for articles" required:"true"`
 	DefaultPermissionGroupID int    `yaml:"default_permission_group_id" description:"Default permission group ID" required:"true"`
 	DefailtUserSegmentID     int    `yaml:"default_user_segment_id" description:"Default user segment ID" required:"true"`
