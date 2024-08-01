@@ -21,8 +21,8 @@ type Translation struct {
 	SectionID   int    `json:"-" yaml:"section_id,omitempty"`
 	SourceID    int    `json:"source_id,omitempty" yaml:"source_id"`
 	HtmlURL     string `json:"html_url,omitempty" yaml:"html_url"`
-	CreatedAt   string `json:"created_at,omitempty" yaml:"created_at"`
-	UpdatedAt   string `json:"updated_at,omitempty" yaml:"updated_at"`
+	CreatedAt   string `json:"created_at,omitempty" yaml:"-"`
+	UpdatedAt   string `json:"updated_at,omitempty" yaml:"-"`
 	ID          int    `json:"id" yaml:"-"`
 	URL         string `json:"url,omitempty" yaml:"-"`
 	SourceType  string `json:"source_type,omitempty" yaml:"-"`

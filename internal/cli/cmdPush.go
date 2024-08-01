@@ -75,15 +75,8 @@ func (c *CommandPush) pushArticle(g *Global, file string) error {
 		locale = a.Locale
 	}
 
-	res, err := c.client.UpdateArticle(locale, a.ID, payload)
+	_, err = c.client.UpdateArticle(locale, a.ID, payload)
 	if err != nil {
-		return err
-	}
-	if err = a.FromJson(res); err != nil {
-		return err
-	}
-
-	if err = a.Save(file, false); err != nil {
 		return err
 	}
 
@@ -96,8 +89,6 @@ func (c *CommandPush) pushTranslation(g *Global, file string) error {
 	if err != nil {
 		return err
 	}
-
-	origBody := t.Body
 
 	if !c.Raw {
 		if t.Body, err = c.converter.ConvertToHTML(t.Body); err != nil {
@@ -122,18 +113,8 @@ func (c *CommandPush) pushTranslation(g *Global, file string) error {
 		locale = t.Locale
 	}
 
-	res, err := c.client.UpdateTranslation(t.SourceID, locale, payload)
+	_, err = c.client.UpdateTranslation(t.SourceID, locale, payload)
 	if err != nil {
-		return err
-	}
-	if err = t.FromJson(res); err != nil {
-		return err
-	}
-
-	if !c.Raw {
-		t.Body = origBody
-	}
-	if err = t.Save(file, false); err != nil {
 		return err
 	}
 

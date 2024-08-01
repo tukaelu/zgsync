@@ -136,8 +136,6 @@ outdated: false
 section_id: 1234567890
 source_id: 12345678901234
 html_url: https://{your help center domain}/hc/ja/articles/12345678901234
-created_at: "2024-01-01T00:00:00Z"
-updated_at: "2024-01-01T00:00:00Z"
 ---
 ## Markdown
 
