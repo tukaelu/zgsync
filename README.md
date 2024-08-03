@@ -1,4 +1,7 @@
 # zgsync
+![Latest GitHub Release](https://img.shields.io/github/release/tukaelu/zgsync.svg)
+[![Go Report Card](https://goreportcard.com/badge/tukaelu/zgsync)](https://goreportcard.com/report/tukaelu/zgsync)
+![Github Actions Test](https://github.com/tukaelu/zgsync/actions/workflows/ci.yaml/badge.svg?branch=main)
 
 Currently under development, and there may be breaking changes.
 
