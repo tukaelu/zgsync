@@ -36,7 +36,7 @@ func TestLoadConfig(t *testing.T) {
 			false,
 			"ja",
 			123,
-			&refDefaultUserSegmentID,
+			nil,
 			false,
 			".",
 		},

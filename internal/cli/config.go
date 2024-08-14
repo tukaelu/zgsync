@@ -15,7 +15,7 @@ type Config struct {
 	DefaultCommentsDisabled  bool   `yaml:"default_comments_disabled" description:"Default comments disabled" default:"false"`
 	DefaultLocale            string `yaml:"default_locale" description:"Default locale for articles" required:"true"`
 	DefaultPermissionGroupID int    `yaml:"default_permission_group_id" description:"Default permission group ID" required:"true"`
-	DefailtUserSegmentID     *int   `yaml:"default_user_segment_id" description:"Default user segment ID" required:"true"`
+	DefailtUserSegmentID     *int   `yaml:"default_user_segment_id" description:"Default user segment ID"`
 	NotifySubscribers        bool   `yaml:"notify_subscribers" description:"Notify subscribers when creating or updating articles" default:"false"`
 	ContentsDir              string `yaml:"contents_dir" description:"Path to the contents directory" default:"."`
 }
