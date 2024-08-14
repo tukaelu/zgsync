@@ -1,0 +1,10 @@
+name: zgsync
+description: setup zgsync
+runs:
+  using: "composite"
+  steps:
+    - name: setup zgsync
+      shell: bash
+      run: |
+        cd "${GITHUB_WORKSPACE}" || exit 1
+        /bin/bash -c "$(curl -fsfL https://raw.githubusercontent.com/tukaelu/zgsync/master/install.sh)

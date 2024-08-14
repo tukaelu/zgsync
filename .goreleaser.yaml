@@ -17,13 +17,17 @@ builds:
     goos:
       - linux
       - darwin
+      - freebsd
     goarch:
       - amd64
       - arm64
 
 archives:
-  - format: zip
-    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+  - format: tar.gz
+    format_overrides:
+      - goos: darwin
+        format: zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     files:
       - README.md
       - LICENSE
