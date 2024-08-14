@@ -3,6 +3,7 @@ package cli
 import "testing"
 
 func TestLoadConfig(t *testing.T) {
+	refDefaultUserSegmentID := 456
 	tests := []struct {
 		configPath               string
 		subdomain                string
@@ -11,7 +12,7 @@ func TestLoadConfig(t *testing.T) {
 		defaultCommentsDisabled  bool
 		defaultLocale            string
 		defaultPermissionGroupID int
-		defaultUserSegmentID     int
+		defaultUserSegmentID     *int
 		notifySubscribers        bool
 		contentsDir              string
 	}{
@@ -23,7 +24,7 @@ func TestLoadConfig(t *testing.T) {
 			true,
 			"ja",
 			123,
-			456,
+			&refDefaultUserSegmentID,
 			false,
 			"example",
 		},
@@ -35,7 +36,7 @@ func TestLoadConfig(t *testing.T) {
 			false,
 			"ja",
 			123,
-			456,
+			&refDefaultUserSegmentID,
 			false,
 			".",
 		},
@@ -68,7 +69,7 @@ func TestLoadConfig(t *testing.T) {
 			if g.Config.DefaultPermissionGroupID != tt.defaultPermissionGroupID {
 				t.Errorf("Config.DefaultPermissionGroupID failed: got %v, want %v", g.Config.DefaultPermissionGroupID, tt.defaultPermissionGroupID)
 			}
-			if g.Config.DefailtUserSegmentID != tt.defaultUserSegmentID {
+			if g.Config.DefailtUserSegmentID != nil && *g.Config.DefailtUserSegmentID != *tt.defaultUserSegmentID {
 				t.Errorf("Config.DefailtUserSegmentID failed: got %v, want %v", g.Config.DefailtUserSegmentID, tt.defaultUserSegmentID)
 			}
 			if g.Config.NotifySubscribers != tt.notifySubscribers {

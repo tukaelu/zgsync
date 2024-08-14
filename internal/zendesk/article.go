@@ -35,7 +35,7 @@ type Article struct {
 	Title             string   `json:"title" yaml:"title"`
 	UpdatedAt         string   `json:"updated_at,omitempty" yaml:"updated_at"`
 	Url               string   `json:"url,omitempty" yaml:"url"`
-	UserSegmentID     int      `json:"user_segment_id" yaml:"user_segment_id"`
+	UserSegmentID     *int     `json:"user_segment_id" yaml:"user_segment_id"`
 	UserSegmentIDs    []int    `json:"user_segment_ids,omitempty" yaml:"user_segment_ids"`
 	VoteCount         int      `json:"vote_count,omitempty" yaml:"vote_count"`
 	VoteSum           int      `json:"vote_sum,omitempty" yaml:"vote_sum"`

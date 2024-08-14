@@ -6,7 +6,8 @@ import (
 )
 
 func TestArticleFromFile(t *testing.T) {
-	var tests = []struct {
+	refUserSegmentID := 123
+	tests := []struct {
 		filepath string
 		expected Article
 	}{
@@ -25,7 +26,7 @@ func TestArticleFromFile(t *testing.T) {
 				Locale:            "en_us",
 				PermissionGroupID: 56,
 				Title:             "How to use zgsync",
-				UserSegmentID:     123,
+				UserSegmentID:     &refUserSegmentID,
 			},
 		},
 	}
@@ -45,7 +46,7 @@ func TestArticleFromFile(t *testing.T) {
 			if article.Title != tt.expected.Title {
 				t.Errorf("article.Title failed: got %v, want %v", article.Title, tt.expected.Title)
 			}
-			if article.UserSegmentID != tt.expected.UserSegmentID {
+			if article.UserSegmentID != nil && *article.UserSegmentID != *tt.expected.UserSegmentID {
 				t.Errorf("article.UserSegmentId failed: got %v, want %v", article.UserSegmentID, tt.expected.UserSegmentID)
 			}
 			if len(article.UserSegmentIDs) != len(tt.expected.UserSegmentIDs) {
@@ -56,7 +57,8 @@ func TestArticleFromFile(t *testing.T) {
 }
 
 func TestArticleFromJson(t *testing.T) {
-	var tests = []struct {
+	refUserSegmentID := 12
+	tests := []struct {
 		filepath string
 		expected Article
 	}{
@@ -72,7 +74,7 @@ func TestArticleFromJson(t *testing.T) {
 				Position:          42,
 				Promoted:          false,
 				Title:             "How to use zgsync",
-				UserSegmentID:     12,
+				UserSegmentID:     &refUserSegmentID,
 			},
 		},
 	}
@@ -111,7 +113,7 @@ func TestArticleFromJson(t *testing.T) {
 			if article.Title != tt.expected.Title {
 				t.Errorf("article.Title failed: got %v, want %v", article.Title, tt.expected.Title)
 			}
-			if article.UserSegmentID != tt.expected.UserSegmentID {
+			if *article.UserSegmentID != *tt.expected.UserSegmentID {
 				t.Errorf("article.UserSegmentId failed: got %v, want %v", article.UserSegmentID, tt.expected.UserSegmentID)
 			}
 		})
