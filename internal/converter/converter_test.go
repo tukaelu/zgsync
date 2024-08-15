@@ -11,7 +11,7 @@ import (
 )
 
 func TestConvertToHTML(t *testing.T) {
-	// TOOD: implement this test
+	// TODO: implement this test
 }
 
 func TestConvertToHTML_Div(t *testing.T) {
@@ -98,7 +98,7 @@ func TestConvertToHTML_Headings(t *testing.T) {
 }
 
 func TestConvertToMarkdown(t *testing.T) {
-	// TOOD: implement this test
+	// TODO: implement this test
 }
 
 func TestConvertToMarkdown_PluckAttributes(t *testing.T) {

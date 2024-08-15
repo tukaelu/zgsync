@@ -47,7 +47,7 @@ contents_dir: path/to/contents
 | default_comments_disabled   | true     | Specify the default comments disabled                    |
 | default_locale              | true     | Specify the default locale for translations              |
 | default_permission_group_id | true     | Specify the default permission group ID                  |
-| default_user_segment_id     | true     | Specify the default user segment ID                      |
+| default_user_segment_id     | false    | Specify the default user segment ID                      |
 | notify_subscribers          | false    | Specify whether to notify subscribers of the article     |
 | contents_dir                | false    | Specify the local directory path to manage articles      |
 

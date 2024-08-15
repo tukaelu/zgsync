@@ -13,7 +13,7 @@ type CommandEmpty struct {
 	Title             string         `name:"title" short:"t" help:"Specify the title of the article." required:""`
 	Locale            string         `name:"locale" short:"l" help:"Specify the locale to pull. If not specified, the default locale will be used."`
 	PermissionGroupID int            `name:"permission-group-id" short:"p" help:"Specify the permission group ID. If not specified, the default value will be used."`
-	UserSegmentID     int            `name:"user-segment-id" short:"u" help:"Specify the user segment ID. If not specified, the default value will be used."`
+	UserSegmentID     *int           `name:"user-segment-id" short:"u" help:"Specify the user segment ID. If not specified, the default value will be used."`
 	SaveArticle       bool           `name:"save-article" help:"It saves the article in addition to the translation."`
 	WithoutSectionDir bool           `name:"without-section-dir" help:"It doesn't save in a directory named after the section ID."`
 	client            zendesk.Client `kong:"-"`
@@ -31,7 +31,7 @@ func (c *CommandEmpty) Run(g *Global) error {
 	if c.PermissionGroupID == 0 {
 		c.PermissionGroupID = g.Config.DefaultPermissionGroupID
 	}
-	if c.UserSegmentID == 0 {
+	if c.UserSegmentID == nil {
 		c.UserSegmentID = g.Config.DefailtUserSegmentID
 	}
 
