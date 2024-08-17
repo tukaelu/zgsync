@@ -10,13 +10,13 @@ import (
 )
 
 type CommandPull struct {
-	Locale            string              `name:"locale" short:"l" help:"Specify the locale to pull. If not specified, the default locale will be used."`
-	Raw               bool                `name:"raw" help:"It pulls raw data without converting it from HTML to Markdown."`
-	SaveArticle       bool                `name:"save-article" short:"a" help:"It pulls and saves the article in addition to the translation."`
-	WithoutSectionDir bool                `name:"without-section-dir" help:"It doesn't save in a directory named after the section ID."`
-	ArticleIDs        []int               `arg:"" help:"Specify the article IDs to pull." type:"int"`
-	client            zendesk.Client      `kong:"-"`
-	converter         converter.Converter `kong:"-"`
+	Locale         string              `name:"locale" short:"l" help:"Specify the locale to pull. If not specified, the default locale will be used."`
+	Raw            bool                `name:"raw" help:"It pulls raw data without converting it from HTML to Markdown."`
+	SaveArticle    bool                `name:"save-article" short:"a" help:"It pulls and saves the article in addition to the translation."`
+	WithSectionDir bool                `name:"with-section-dir" short:"S" help:"A .md file will be created in the section ID directory."`
+	ArticleIDs     []int               `arg:"" help:"Specify the article IDs to pull." type:"int"`
+	client         zendesk.Client      `kong:"-"`
+	converter      converter.Converter `kong:"-"`
 }
 
 func (c *CommandPull) AfterApply(g *Global) error {
@@ -40,10 +40,8 @@ func (c *CommandPull) Run(g *Global) error {
 			return err
 		}
 
-		var saveDirPath string
-		if c.WithoutSectionDir {
-			saveDirPath = g.Config.ContentsDir
-		} else {
+		saveDirPath := g.Config.ContentsDir
+		if c.WithSectionDir {
 			saveDirPath = filepath.Join(g.Config.ContentsDir, strconv.Itoa(a.SectionID))
 		}
 

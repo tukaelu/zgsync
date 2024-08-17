@@ -15,7 +15,7 @@ type CommandEmpty struct {
 	PermissionGroupID int            `name:"permission-group-id" short:"p" help:"Specify the permission group ID. If not specified, the default value will be used."`
 	UserSegmentID     *int           `name:"user-segment-id" short:"u" help:"Specify the user segment ID. If not specified, the default value will be used."`
 	SaveArticle       bool           `name:"save-article" help:"It saves the article in addition to the translation."`
-	WithoutSectionDir bool           `name:"without-section-dir" help:"It doesn't save in a directory named after the section ID."`
+	WithSectionDir    bool           `name:"with-section-dir" short:"S" help:"A .md file will be created in the section ID directory."`
 	client            zendesk.Client `kong:"-"`
 }
 
@@ -59,10 +59,8 @@ func (c *CommandEmpty) Run(g *Global) error {
 		return err
 	}
 
-	var saveDirPath string
-	if c.WithoutSectionDir {
-		saveDirPath = g.Config.ContentsDir
-	} else {
+	saveDirPath := g.Config.ContentsDir
+	if c.WithSectionDir {
 		saveDirPath = filepath.Join(g.Config.ContentsDir, strconv.Itoa(a.SectionID))
 	}
 
