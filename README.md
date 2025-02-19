@@ -206,7 +206,7 @@ warning messages
 ```
 
 - The conversion from HTML to Markdown uses [JohannesKaufmann/html-to-markdown](https://github.com/JohannesKaufmann/html-to-markdown), so fully consistent bidirectional conversion is not currently supported.
-- If `enable_link_target_blank` is set to `true`, the `target="_blank"　rel="noopener noreferrer"` attribute will be added to all anchor (<a>) tags.
+- If `enable_link_target_blank` is set to `true`, the `target="_blank" rel="noopener noreferrer"` attributes will be added to all anchor (<a>) tags.
 
 ## Contributing
 
