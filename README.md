@@ -37,6 +37,7 @@ default_permission_group_id: 123
 default_user_segment_id: 456
 notify_subscribers: false
 contents_dir: path/to/contents
+enable_link_target_blank: false
 ```
 
 | Key                         | Required | Description                                              |
@@ -50,6 +51,7 @@ contents_dir: path/to/contents
 | default_user_segment_id     | false    | Specify the default user segment ID                      |
 | notify_subscribers          | false    | Specify whether to notify subscribers of the article     |
 | contents_dir                | false    | Specify the local directory path to manage articles      |
+| enable_link_target_blank    | false    | Specify if links open in a new tab (affected only push)  |
 
 ## Usage
 
@@ -204,6 +206,7 @@ warning messages
 ```
 
 - The conversion from HTML to Markdown uses [JohannesKaufmann/html-to-markdown](https://github.com/JohannesKaufmann/html-to-markdown), so fully consistent bidirectional conversion is not currently supported.
+- If `enable_link_target_blank` is set to `true`, the `target="_blank"　rel="noopener noreferrer"` attribute will be added to all anchor (<a>) tags.
 
 ## Contributing
 

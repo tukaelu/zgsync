@@ -18,6 +18,7 @@ type Config struct {
 	DefailtUserSegmentID     *int   `yaml:"default_user_segment_id" description:"Default user segment ID"`
 	NotifySubscribers        bool   `yaml:"notify_subscribers" description:"Notify subscribers when creating or updating articles" default:"false"`
 	ContentsDir              string `yaml:"contents_dir" description:"Path to the contents directory" default:"."`
+	EnableLinkTargetBlank    bool   `yaml:"enable_link_target_blank" description:"This makes links open in a new tab" default:"false"`
 }
 
 func (c *Config) Validation() error {

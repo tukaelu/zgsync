@@ -21,7 +21,7 @@ type CommandPush struct {
 
 func (c *CommandPush) AfterApply(g *Global) error {
 	c.client = zendesk.NewClient(g.Config.Subdomain, g.Config.Email, g.Config.Token)
-	c.converter = converter.NewConverter()
+	c.converter = converter.NewConverter(g.Config.EnableLinkTargetBlank)
 	return nil
 }
 
