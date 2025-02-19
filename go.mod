@@ -8,7 +8,7 @@ require (
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
 	github.com/PuerkitoBio/goquery v1.10.2
 	github.com/adrg/frontmatter v0.2.0
-	github.com/alecthomas/kong v0.9.0
+	github.com/alecthomas/kong v1.8.1
 	github.com/stefanfritsch/goldmark-fences v1.0.0
 	github.com/yuin/goldmark v1.7.4
 	golang.org/x/net v0.35.0
