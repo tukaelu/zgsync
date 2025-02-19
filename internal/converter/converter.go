@@ -140,7 +140,7 @@ type linkTargetTransformer struct{}
 var LinkTargetTransformer = &linkTargetTransformer{}
 
 func (t *linkTargetTransformer) Transform(node *ast.Document, reader text.Reader, pc parser.Context) {
-	ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
+	_ = ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
 		if link, ok := node.(*ast.Link); ok && entering {
 			link.SetAttribute([]byte("target"), []byte("_blank"))
 			link.SetAttribute([]byte("rel"), []byte("noopener noreferrer"))
