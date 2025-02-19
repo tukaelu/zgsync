@@ -10,7 +10,7 @@ require (
 	github.com/adrg/frontmatter v0.2.0
 	github.com/alecthomas/kong v0.9.0
 	github.com/stefanfritsch/goldmark-fences v1.0.0
-	github.com/yuin/goldmark v1.7.4
+	github.com/yuin/goldmark v1.7.8
 	golang.org/x/net v0.35.0
 	gopkg.in/yaml.v3 v3.0.1
 )
