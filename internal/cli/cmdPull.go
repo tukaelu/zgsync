@@ -21,7 +21,7 @@ type CommandPull struct {
 
 func (c *CommandPull) AfterApply(g *Global) error {
 	c.client = zendesk.NewClient(g.Config.Subdomain, g.Config.Email, g.Config.Token)
-	c.converter = converter.NewConverter()
+	c.converter = converter.NewConverter(false)
 	return nil
 }
 

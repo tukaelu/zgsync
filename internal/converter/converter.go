@@ -12,9 +12,12 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	fences "github.com/stefanfritsch/goldmark-fences"
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	renderer "github.com/yuin/goldmark/renderer/html"
+	"github.com/yuin/goldmark/text"
+	"github.com/yuin/goldmark/util"
 )
 
 type Converter interface {
@@ -27,7 +30,7 @@ type converterImpl struct {
 	html     *md.Converter
 }
 
-func NewConverter() Converter {
+func NewConverter(enableLinkTargetBlank bool) Converter {
 	markdown := goldmark.New(
 		goldmark.WithExtensions(
 			extension.Table,
@@ -41,6 +44,14 @@ func NewConverter() Converter {
 			renderer.WithUnsafe(),
 		),
 	)
+
+	if enableLinkTargetBlank {
+		markdown.Parser().AddOptions(
+			parser.WithASTTransformers(
+				util.Prioritized(LinkTargetTransformer, 100),
+			),
+		)
+	}
 
 	html := md.NewConverter("", true, &md.Options{EscapeMode: "disabled", CodeBlockStyle: "fenced"})
 	html.Use(plugin.Table())
@@ -122,4 +133,18 @@ func replacementHeadings(content string, selec *goquery.Selection, opt *md.Optio
 	}
 
 	return md.String(prefix + " " + content + "\n")
+}
+
+type linkTargetTransformer struct{}
+
+var LinkTargetTransformer = &linkTargetTransformer{}
+
+func (t *linkTargetTransformer) Transform(node *ast.Document, reader text.Reader, pc parser.Context) {
+	_ = ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
+		if link, ok := node.(*ast.Link); ok && entering {
+			link.SetAttribute([]byte("target"), []byte("_blank"))
+			link.SetAttribute([]byte("rel"), []byte("noopener noreferrer"))
+		}
+		return ast.WalkContinue, nil
+	})
 }

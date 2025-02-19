@@ -32,7 +32,7 @@ func TestConvertToHTML_Div(t *testing.T) {
 		},
 	}
 
-	c := NewConverter()
+	c := NewConverter(false)
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			actualHTMLContent, _ := c.ConvertToHTML(tc.markdown)
@@ -86,7 +86,65 @@ func TestConvertToHTML_Headings(t *testing.T) {
 		},
 	}
 
-	c := NewConverter()
+	c := NewConverter(false)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actualHTMLContent, _ := c.ConvertToHTML(tc.markdown)
+			if strings.Compare(tc.expected, actualHTMLContent) != 0 {
+				t.Errorf("expected %s, got %s", tc.expected, actualHTMLContent)
+			}
+		})
+	}
+}
+
+func TestConvertToHTML_Anchor(t *testing.T) {
+	testCases := []struct {
+		name     string
+		markdown string
+		expected string
+	}{
+		{
+			name:     "Non-Attributes",
+			markdown: "[Example](https://www.example.com/)",
+			expected: "<p><a href=\"https://www.example.com/\">Example</a></p>\n",
+		},
+		{
+			name:     "Title",
+			markdown: "[Example](https://www.example.com/ \"Title\")",
+			expected: "<p><a href=\"https://www.example.com/\" title=\"Title\">Example</a></p>\n",
+		},
+	}
+
+	c := NewConverter(false)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actualHTMLContent, _ := c.ConvertToHTML(tc.markdown)
+			if strings.Compare(tc.expected, actualHTMLContent) != 0 {
+				t.Errorf("expected %s, got %s", tc.expected, actualHTMLContent)
+			}
+		})
+	}
+}
+
+func TestConvertToHTML_AnchorWithTargetBlank(t *testing.T) {
+	testCases := []struct {
+		name     string
+		markdown string
+		expected string
+	}{
+		{
+			name:     "Non-Attributes",
+			markdown: "[Example](https://www.example.com/)",
+			expected: "<p><a href=\"https://www.example.com/\" target=\"_blank\" rel=\"noopener noreferrer\">Example</a></p>\n",
+		},
+		{
+			name:     "Title",
+			markdown: "[Example](https://www.example.com/ \"Title\")",
+			expected: "<p><a href=\"https://www.example.com/\" title=\"Title\" target=\"_blank\" rel=\"noopener noreferrer\">Example</a></p>\n",
+		},
+	}
+
+	c := NewConverter(true)
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			actualHTMLContent, _ := c.ConvertToHTML(tc.markdown)
