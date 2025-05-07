@@ -142,8 +142,13 @@ var LinkTargetTransformer = &linkTargetTransformer{}
 func (t *linkTargetTransformer) Transform(node *ast.Document, reader text.Reader, pc parser.Context) {
 	_ = ast.Walk(node, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
 		if link, ok := node.(*ast.Link); ok && entering {
-			link.SetAttribute([]byte("target"), []byte("_blank"))
-			link.SetAttribute([]byte("rel"), []byte("noopener noreferrer"))
+			url := string(link.Destination)
+
+			// only if not an internal link apply attributes
+			if !strings.HasPrefix(url, "#") && !strings.HasPrefix(url, "/#") {
+				link.SetAttribute([]byte("target"), []byte("_blank"))
+				link.SetAttribute([]byte("rel"), []byte("noopener noreferrer"))
+			}
 		}
 		return ast.WalkContinue, nil
 	})
