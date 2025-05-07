@@ -155,6 +155,35 @@ func TestConvertToHTML_AnchorWithTargetBlank(t *testing.T) {
 	}
 }
 
+func TestConvertToHTML_AnchorWithNoTargetBlank(t *testing.T) {
+	testCases := []struct {
+		name     string
+		markdown string
+		expected string
+	}{
+		{
+			name:     "Non-Attributes",
+			markdown: "[Example](#hoge)",
+			expected: "<p><a href=\"#hoge\">Example</a></p>\n",
+		},
+		{
+			name:     "Title",
+			markdown: "[Example](/#hoge \"Title\")",
+			expected: "<p><a href=\"/#hoge\" title=\"Title\">Example</a></p>\n",
+		},
+	}
+
+	c := NewConverter(true)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actualHTMLContent, _ := c.ConvertToHTML(tc.markdown)
+			if strings.Compare(tc.expected, actualHTMLContent) != 0 {
+				t.Errorf("expected %s, got %s", tc.expected, actualHTMLContent)
+			}
+		})
+	}
+}
+
 func TestConvertToMarkdown(t *testing.T) {
 	// TODO: implement this test
 }
