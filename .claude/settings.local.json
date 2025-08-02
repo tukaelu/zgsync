@@ -7,7 +7,11 @@
       "mcp__serena__onboarding",
       "mcp__serena__list_dir",
       "mcp__serena__get_symbols_overview",
-      "mcp__serena__find_symbol"
+      "mcp__serena__find_symbol",
+      "mcp__serena__insert_after_symbol",
+      "mcp__serena__replace_regex",
+      "Bash(go test:*)",
+      "mcp__serena__search_for_pattern"
     ],
     "deny": []
   }
