@@ -14,7 +14,8 @@
       "mcp__serena__search_for_pattern",
       "Bash(ls:*)",
       "Bash(go tool cover:*)",
-      "Bash(go build:*)"
+      "Bash(go build:*)",
+      "mcp__serena__think_about_whether_you_are_done"
     ],
     "deny": []
   }
