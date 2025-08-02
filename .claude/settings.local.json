@@ -11,7 +11,9 @@
       "mcp__serena__insert_after_symbol",
       "mcp__serena__replace_regex",
       "Bash(go test:*)",
-      "mcp__serena__search_for_pattern"
+      "mcp__serena__search_for_pattern",
+      "Bash(ls:*)",
+      "Bash(go tool cover:*)"
     ],
     "deny": []
   }
