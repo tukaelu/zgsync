@@ -208,6 +208,51 @@ warning messages
 - The conversion from HTML to Markdown uses [JohannesKaufmann/html-to-markdown](https://github.com/JohannesKaufmann/html-to-markdown), so fully consistent bidirectional conversion is not currently supported.
 - If `enable_link_target_blank` is set to `true`, the `target="_blank" rel="noopener noreferrer"` attributes will be added to all anchor (<a>) tags.
 
+## Development Setup
+
+### Prerequisites
+
+- Go 1.23.0 or later
+- GNU Make
+- golangci-lint (for linting)
+
+### Recommended Development Tools
+
+For an enhanced development experience, we recommend using [Claude Code](https://claude.ai/code) with the [SERENA MCP server](https://github.com/oraios/serena) for intelligent code assistance.
+
+#### Setting up SERENA
+
+After cloning the repository, set up SERENA by running:
+
+```bash
+# Add SERENA MCP server to Claude Code
+claude mcp add serena -- uvx --from git+https://github.com/oraios/serena serena-mcp-server --context ide-assistant --project $(pwd)
+```
+
+Then, initialize SERENA in Claude Code:
+
+```
+/mcp__serena__initial_instructions
+```
+
+Note: SERENA memory files are not tracked in Git and should be initialized in each development environment.
+
+### Building and Testing
+
+```bash
+# Build the binary
+make build
+
+# Run tests
+make test
+
+# Run linter
+make lint
+
+# Clean build artifacts
+make clean
+```
+
 ## Contributing
 
 Contributions are very welcome! Feel free to submit issues and pull requests.
