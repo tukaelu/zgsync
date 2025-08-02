@@ -18,6 +18,8 @@ type AdvancedMockServer struct {
 	scenarios     *ScenarioManager
 	errorSim      *ErrorSimulator
 	errorTracker  *ErrorTracker
+	latencySim    *LatencySimulator
+	rateLimiter   *RateLimiter
 	config        *MockServerConfig
 	requestLog    []RequestLog
 	mutex         sync.RWMutex
@@ -32,6 +34,10 @@ type MockServerConfig struct {
 	StrictMode        bool // Validate request format strictly
 	EnableErrorSim    bool // Enable realistic error simulation
 	ErrorScenarios    []string // List of error scenarios to enable
+	EnableLatencySim  bool // Enable realistic latency simulation
+	EnableRateLimiting bool // Enable rate limiting
+	LatencyConfig     *LatencyConfig // Latency simulation configuration
+	RateLimitConfig   *RateLimitConfig // Rate limiting configuration
 }
 
 // RequestLog tracks all requests for debugging and verification
@@ -142,11 +148,25 @@ func NewAdvancedMockServer(config *MockServerConfig) *AdvancedMockServer {
 	errorSim := NewErrorSimulator()
 	errorTracker := NewErrorTracker()
 
+	// Initialize latency simulation
+	var latencySim *LatencySimulator
+	if config.EnableLatencySim {
+		latencySim = NewLatencySimulator(config.LatencyConfig)
+	}
+
+	// Initialize rate limiting
+	var rateLimiter *RateLimiter
+	if config.EnableRateLimiting {
+		rateLimiter = NewRateLimiter(config.RateLimitConfig)
+	}
+
 	server := &AdvancedMockServer{
 		dataStore:    dataStore,
 		scenarios:    scenarios,
 		errorSim:     errorSim,
 		errorTracker: errorTracker,
+		latencySim:   latencySim,
+		rateLimiter:  rateLimiter,
 		config:       config,
 		requestLog:   make([]RequestLog, 0),
 	}
@@ -233,6 +253,20 @@ func (s *AdvancedMockServer) middleware(next http.Handler) http.HandlerFunc {
 		// Create response writer wrapper for logging
 		rw := &responseWriter{ResponseWriter: w}
 
+		// Apply rate limiting first (before any processing)
+		if s.rateLimiter != nil && s.config.EnableRateLimiting {
+			if s.rateLimiter.ApplyRateLimit(rw, r) {
+				// Request was rate limited, complete logging and return
+				s.completeRequestLogging(requestLog, rw, startTime)
+				return
+			}
+		}
+
+		// Apply latency simulation (realistic network delays)
+		if s.latencySim != nil && s.config.EnableLatencySim {
+			s.latencySim.SimulateLatency(r)
+		}
+
 		// Apply scenario behaviors (may write response and return early)
 		if s.applyScenarioBehavior(rw, r) {
 			// Scenario behavior handled the response, skip normal handler
@@ -242,24 +276,29 @@ func (s *AdvancedMockServer) middleware(next http.Handler) http.HandlerFunc {
 		}
 
 		// Complete request logging
-		if requestLog != nil {
-			requestLog.Response = ResponseLog{
-				StatusCode: rw.statusCode,
-				Duration:   time.Since(startTime),
-				Headers:    make(map[string]string),
-			}
+		s.completeRequestLogging(requestLog, rw, startTime)
+	}
+}
 
-			// Copy response headers
-			for key, values := range w.Header() {
-				if len(values) > 0 {
-					requestLog.Response.Headers[key] = values[0]
-				}
-			}
-
-			s.mutex.Lock()
-			s.requestLog = append(s.requestLog, *requestLog)
-			s.mutex.Unlock()
+// completeRequestLogging completes the request logging process
+func (s *AdvancedMockServer) completeRequestLogging(requestLog *RequestLog, rw *responseWriter, startTime time.Time) {
+	if requestLog != nil {
+		requestLog.Response = ResponseLog{
+			StatusCode: rw.statusCode,
+			Duration:   time.Since(startTime),
+			Headers:    make(map[string]string),
 		}
+
+		// Copy response headers
+		for key, values := range rw.Header() {
+			if len(values) > 0 {
+				requestLog.Response.Headers[key] = values[0]
+			}
+		}
+
+		s.mutex.Lock()
+		s.requestLog = append(s.requestLog, *requestLog)
+		s.mutex.Unlock()
 	}
 }
 
@@ -414,6 +453,114 @@ func (s *AdvancedMockServer) GetAvailableErrorScenarios() []string {
 // CreateCompositeErrorScenario creates a scenario combining multiple error types
 func (s *AdvancedMockServer) CreateCompositeErrorScenario(name string, scenarios []string, probability float64) {
 	s.errorSim.CreateCompositeScenario(name, scenarios, probability)
+}
+
+// Latency simulation control methods
+
+// EnableLatencySimulation enables realistic latency simulation
+func (s *AdvancedMockServer) EnableLatencySimulation(config *LatencyConfig) {
+	s.config.EnableLatencySim = true
+	s.config.LatencyConfig = config
+	if s.latencySim == nil {
+		s.latencySim = NewLatencySimulator(config)
+	}
+}
+
+// DisableLatencySimulation disables latency simulation
+func (s *AdvancedMockServer) DisableLatencySimulation() {
+	s.config.EnableLatencySim = false
+	s.latencySim = nil
+}
+
+// GetLatencyStatistics returns latency simulation statistics
+func (s *AdvancedMockServer) GetLatencyStatistics() *NetworkStatistics {
+	if s.latencySim != nil {
+		return s.latencySim.GetNetworkStatistics()
+	}
+	return nil
+}
+
+// ResetLatencyStatistics clears latency statistics
+func (s *AdvancedMockServer) ResetLatencyStatistics() {
+	if s.latencySim != nil {
+		s.latencySim.ResetStatistics()
+	}
+}
+
+// SetNetworkProfile updates the network profile for latency simulation
+func (s *AdvancedMockServer) SetNetworkProfile(profile NetworkProfile) {
+	if s.latencySim != nil {
+		s.latencySim.SetNetworkProfile(profile)
+	}
+}
+
+// AddLatencyPattern adds a custom latency pattern
+func (s *AdvancedMockServer) AddLatencyPattern(name string, pattern *LatencyPattern) {
+	if s.latencySim != nil {
+		s.latencySim.AddCustomPattern(name, pattern)
+	}
+}
+
+// GetLatencyReport generates a detailed latency report
+func (s *AdvancedMockServer) GetLatencyReport() string {
+	if s.latencySim != nil {
+		return s.latencySim.GetLatencyReport()
+	}
+	return "Latency simulation not enabled"
+}
+
+// Rate limiting control methods
+
+// EnableRateLimiting enables API rate limiting
+func (s *AdvancedMockServer) EnableRateLimiting(config *RateLimitConfig) {
+	s.config.EnableRateLimiting = true
+	s.config.RateLimitConfig = config
+	if s.rateLimiter == nil {
+		s.rateLimiter = NewRateLimiter(config)
+	}
+}
+
+// DisableRateLimiting disables rate limiting
+func (s *AdvancedMockServer) DisableRateLimiting() {
+	s.config.EnableRateLimiting = false
+	s.rateLimiter = nil
+}
+
+// GetRateLimitStatistics returns rate limiting statistics
+func (s *AdvancedMockServer) GetRateLimitStatistics() *RateLimitStatistics {
+	if s.rateLimiter != nil {
+		return s.rateLimiter.GetStatistics()
+	}
+	return nil
+}
+
+// ResetRateLimitStatistics clears rate limiting statistics
+func (s *AdvancedMockServer) ResetRateLimitStatistics() {
+	if s.rateLimiter != nil {
+		s.rateLimiter.ResetStatistics()
+	}
+}
+
+// UpdateGlobalRateLimit updates the global rate limit
+func (s *AdvancedMockServer) UpdateGlobalRateLimit(limit int) {
+	if s.rateLimiter != nil {
+		s.rateLimiter.UpdateGlobalLimit(limit)
+	}
+}
+
+// UpdateEndpointRateLimit updates the rate limit for a specific endpoint
+func (s *AdvancedMockServer) UpdateEndpointRateLimit(endpoint string, limit int) {
+	if s.rateLimiter != nil {
+		s.rateLimiter.UpdateEndpointLimit(endpoint, limit)
+	}
+}
+
+// GetRateLimitReport generates a detailed rate limiting report
+func (s *AdvancedMockServer) GetRateLimitReport() string {
+	if s.rateLimiter != nil {
+		return s.rateLimiter.GetRateLimitReport()
+	}
+	return "Rate limiting not enabled"
 }
 
 // registerRoutes sets up all API endpoints
