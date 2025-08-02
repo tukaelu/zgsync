@@ -13,7 +13,8 @@
       "Bash(go test:*)",
       "mcp__serena__search_for_pattern",
       "Bash(ls:*)",
-      "Bash(go tool cover:*)"
+      "Bash(go tool cover:*)",
+      "Bash(go build:*)"
     ],
     "deny": []
   }
