@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.0.15](https://github.com/tukaelu/zgsync/compare/v0.0.14...v0.0.15) - 2025-08-03
+### Other Changes
+- fix(deps): update module github.com/alecthomas/kong to v1.12.1 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/33
+
 ## [v0.0.14](https://github.com/tukaelu/zgsync/compare/v0.0.13...v0.0.14) - 2025-08-03
 ### Other Changes
 - fix(deps): update module github.com/alecthomas/kong to v1.12.0 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/23
