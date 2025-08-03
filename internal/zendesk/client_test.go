@@ -484,6 +484,248 @@ func TestClient_ErrorHandling(t *testing.T) {
 	}
 }
 
+func TestClient_AdditionalErrorHandling(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		setupServer  func() *httptest.Server
+		operation    func(Client) error
+		expectError  string
+	}{
+		{
+			name: "request creation failure",
+			setupServer: func() *httptest.Server {
+				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+				}))
+			},
+			operation: func(c Client) error {
+				// Test with invalid method to cause http.NewRequest to fail
+				tc := c.(*testClientImpl)
+				_, err := tc.doRequest("INVALID\nMETHOD", "/valid/endpoint", nil)
+				return err
+			},
+			expectError: "invalid method",
+		},
+		{
+			name: "response body read failure simulation",
+			setupServer: func() *httptest.Server {
+				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					// Write partial response and then close connection abruptly
+					w.Write([]byte("{\"partial\":"))
+					// Simulate connection drop by using hijacker
+					if hijacker, ok := w.(http.Hijacker); ok {
+						conn, _, _ := hijacker.Hijack()
+						conn.Close()
+					}
+				}))
+			},
+			operation: func(c Client) error {
+				_, err := c.ShowArticle("en_us", 123)
+				return err
+			},
+			expectError: "EOF", // Connection-related error (adjusted expectation)
+		},
+		{
+			name: "various HTTP status codes",
+			setupServer: func() *httptest.Server {
+				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusTeapot) // 418 status
+					w.Write([]byte(`{"error": "I'm a teapot"}`))
+				}))
+			},
+			operation: func(c Client) error {
+				_, err := c.ShowArticle("en_us", 123)
+				return err
+			},
+			expectError: "unexpected status code: 418",
+		},
+		{
+			name: "network connection failure",
+			setupServer: func() *httptest.Server {
+				// Return a server that we'll immediately close to simulate connection failure
+				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+				}))
+				server.Close() // Close immediately to force connection errors
+				return server
+			},
+			operation: func(c Client) error {
+				_, err := c.ShowArticle("en_us", 123)
+				return err
+			},
+			expectError: "connection refused",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			
+			server := tt.setupServer()
+			if tt.name != "network connection failure" {
+				defer server.Close()
+			}
+			
+			client := createTestClient(t, server.URL)
+			
+			err := tt.operation(client)
+			
+			if tt.expectError != "" {
+				if err == nil {
+					t.Errorf("Expected error containing '%s' but got none", tt.expectError)
+				} else if !strings.Contains(err.Error(), tt.expectError) {
+					t.Errorf("Expected error containing '%s', got: %v", tt.expectError, err)
+				}
+			}
+		})
+	}
+}
+
+func TestArticleAndTranslation_ErrorHandling(t *testing.T) {
+	t.Parallel()
+
+	// Test Article struct error handling
+	t.Run("Article_FromFile_Errors", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			filename string
+			expectError bool
+		}{
+			{
+				name:     "non-existent file",
+				filename: "testdata/non-existent-article.md",
+				expectError: true,
+			},
+			{
+				name:     "invalid frontmatter",
+				filename: "testdata/invalid-frontmatter-article.md",
+				expectError: true,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				var article Article
+				err := article.FromFile(tt.filename)
+				
+				if tt.expectError && err == nil {
+					t.Errorf("Expected error for %s but got none", tt.name)
+				}
+				if !tt.expectError && err != nil {
+					t.Errorf("Expected no error for %s but got: %v", tt.name, err)
+				}
+			})
+		}
+	})
+
+	t.Run("Article_FromJson_Errors", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			jsonData string
+			expectError bool
+		}{
+			{
+				name:     "invalid JSON",
+				jsonData: `{"article": invalid json}`,
+				expectError: true,
+			},
+			{
+				name:     "empty JSON",
+				jsonData: ``,
+				expectError: true,
+			},
+			{
+				name:     "malformed article structure",
+				jsonData: `{"not_article": {"id": 123}}`,
+				expectError: false, // This should not error, just result in empty article
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				var article Article
+				err := article.FromJson(tt.jsonData)
+				
+				if tt.expectError && err == nil {
+					t.Errorf("Expected error for %s but got none", tt.name)
+				}
+				if !tt.expectError && err != nil {
+					t.Errorf("Expected no error for %s but got: %v", tt.name, err)
+				}
+			})
+		}
+	})
+
+	t.Run("Translation_FromFile_Errors", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			filename string
+			expectError bool
+		}{
+			{
+				name:     "non-existent file",
+				filename: "testdata/non-existent-translation.md",
+				expectError: true,
+			},
+			{
+				name:     "invalid frontmatter",
+				filename: "testdata/invalid-frontmatter-translation.md",
+				expectError: true,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				var translation Translation
+				err := translation.FromFile(tt.filename)
+				
+				if tt.expectError && err == nil {
+					t.Errorf("Expected error for %s but got none", tt.name)
+				}
+				if !tt.expectError && err != nil {
+					t.Errorf("Expected no error for %s but got: %v", tt.name, err)
+				}
+			})
+		}
+	})
+
+	t.Run("Translation_FromJson_Errors", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			jsonData string
+			expectError bool
+		}{
+			{
+				name:     "invalid JSON",
+				jsonData: `{"translation": invalid json}`,
+				expectError: true,
+			},
+			{
+				name:     "empty JSON",
+				jsonData: ``,
+				expectError: true,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				var translation Translation
+				err := translation.FromJson(tt.jsonData)
+				
+				if tt.expectError && err == nil {
+					t.Errorf("Expected error for %s but got none", tt.name)
+				}
+				if !tt.expectError && err != nil {
+					t.Errorf("Expected no error for %s but got: %v", tt.name, err)
+				}
+			})
+		}
+	})
+}
+
 // testClientImpl is a test-specific implementation of the Client interface
 type testClientImpl struct {
 	subdomain string
