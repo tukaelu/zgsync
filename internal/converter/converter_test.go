@@ -11,7 +11,60 @@ import (
 )
 
 func TestConvertToHTML(t *testing.T) {
-	// TODO: implement this test
+	testCases := []struct {
+		name     string
+		markdown string
+		expected string
+	}{
+		{
+			name:     "simple paragraph",
+			markdown: "Hello world",
+			expected: "<p>Hello world</p>\n",
+		},
+		{
+			name:     "heading",
+			markdown: "# Hello world",
+			expected: "<h1>Hello world</h1>\n",
+		},
+		{
+			name:     "bold text",
+			markdown: "**bold text**",
+			expected: "<p><strong>bold text</strong></p>\n",
+		},
+		{
+			name:     "italic text",
+			markdown: "*italic text*",
+			expected: "<p><em>italic text</em></p>\n",
+		},
+		{
+			name:     "code block",
+			markdown: "```\ncode\n```",
+			expected: "<pre><code>code\n</code></pre>\n",
+		},
+		{
+			name:     "link",
+			markdown: "[link](http://example.com)",
+			expected: "<p><a href=\"http://example.com\">link</a></p>\n",
+		},
+		{
+			name:     "empty string",
+			markdown: "",
+			expected: "",
+		},
+	}
+
+	c := NewConverter(false)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actualHTMLContent, err := c.ConvertToHTML(tc.markdown)
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+			if strings.Compare(tc.expected, actualHTMLContent) != 0 {
+				t.Errorf("expected %s, got %s", tc.expected, actualHTMLContent)
+			}
+		})
+	}
 }
 
 func TestConvertToHTML_Div(t *testing.T) {
