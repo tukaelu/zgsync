@@ -15,7 +15,9 @@
       "Bash(ls:*)",
       "Bash(go tool cover:*)",
       "Bash(go build:*)",
-      "mcp__serena__think_about_whether_you_are_done"
+      "mcp__serena__think_about_whether_you_are_done",
+      "Bash(find:*)",
+      "mcp__serena__replace_symbol_body"
     ],
     "deny": []
   }
