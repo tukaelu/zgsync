@@ -1,0 +1,12 @@
+[tagpr]
+# vPrefix is true by default, adds "v" prefix to tags (e.g., v1.0.0)
+vPrefix = true
+
+# The branch to release from
+releaseBranch = "main"
+
+# Whether to create a GitHub release
+release = true
+
+# Not specifying versionFile since we use git tags directly for versioning
+# The version is determined from git tags and embedded during build via Makefile
