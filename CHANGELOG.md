@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.0.16](https://github.com/tukaelu/zgsync/compare/v0.0.15...v0.0.16) - 2025-08-03
+### Other Changes
+- build: upgrade GoReleaser configuration to v2 by @tukaelu in https://github.com/tukaelu/zgsync/pull/42
+
 ## [v0.0.15](https://github.com/tukaelu/zgsync/compare/v0.0.14...v0.0.15) - 2025-08-03
 ### Other Changes
 - fix(deps): update module github.com/alecthomas/kong to v1.12.1 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/33
