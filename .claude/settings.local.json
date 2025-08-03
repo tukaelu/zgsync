@@ -17,7 +17,8 @@
       "Bash(go build:*)",
       "mcp__serena__think_about_whether_you_are_done",
       "Bash(find:*)",
-      "mcp__serena__replace_symbol_body"
+      "mcp__serena__replace_symbol_body",
+      "mcp__serena__think_about_collected_information"
     ],
     "deny": []
   }
