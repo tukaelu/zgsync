@@ -2,7 +2,7 @@
 ![Latest GitHub Release](https://img.shields.io/github/release/tukaelu/zgsync.svg)
 [![Go Report Card](https://goreportcard.com/badge/tukaelu/zgsync)](https://goreportcard.com/report/tukaelu/zgsync)
 ![Github Actions Test](https://github.com/tukaelu/zgsync/actions/workflows/ci.yaml/badge.svg?branch=main)
-[![codecov](https://codecov.io/gh/tukaelu/zgsync/branch/main/graph/badge.svg)](https://codecov.io/gh/tukaelu/zgsync)
+[![codecov](https://codecov.io/github/tukaelu/zgsync/graph/badge.svg?token=HGL9UFC1HJ)](https://codecov.io/github/tukaelu/zgsync)
 
 Currently under development, and there may be breaking changes.
 
