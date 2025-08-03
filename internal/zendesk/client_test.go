@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/tukaelu/zgsync/internal/testutil"
 )
 
 func TestNewClient(t *testing.T) {
@@ -87,13 +89,8 @@ func TestClientImpl_DoRequest_EmptyEndpoint(t *testing.T) {
 	
 	_, err := client.doRequest("GET", "", nil)
 	
-	if err == nil {
-		t.Errorf("Expected error for empty endpoint but got none")
-	}
-	
-	if !strings.Contains(err.Error(), "endpoint is required") {
-		t.Errorf("Expected 'endpoint is required' error, got: %v", err)
-	}
+	errorChecker := testutil.NewErrorChecker(t)
+	errorChecker.ExpectErrorContaining(err, "endpoint is required", "doRequest with empty endpoint")
 }
 
 func TestClient_CreateArticle_Integration(t *testing.T) {

@@ -8,6 +8,8 @@ import (
 	md "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
+
+	"github.com/tukaelu/zgsync/internal/testutil"
 )
 
 func TestConvertToHTML(t *testing.T) {
@@ -54,15 +56,14 @@ func TestConvertToHTML(t *testing.T) {
 	}
 
 	c := NewConverter(false)
+	errorChecker := testutil.NewErrorChecker(t)
+	asserter := testutil.NewAssertionHelper(t)
+	
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			actualHTMLContent, err := c.ConvertToHTML(tc.markdown)
-			if err != nil {
-				t.Errorf("unexpected error: %v", err)
-			}
-			if strings.Compare(tc.expected, actualHTMLContent) != 0 {
-				t.Errorf("expected %s, got %s", tc.expected, actualHTMLContent)
-			}
+			errorChecker.ExpectNoError(err, "ConvertToHTML()")
+			asserter.Equal(tc.expected, actualHTMLContent, "HTML content")
 		})
 	}
 }
