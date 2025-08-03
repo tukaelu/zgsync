@@ -2,7 +2,6 @@ package zendesk
 
 import (
 	"fmt"
-	"strings"
 	"time"
 )
 
@@ -161,51 +160,13 @@ func (ds *MockDataStore) updateArticle(id int) *Article {
 	return &articleCopy
 }
 
-func (ds *MockDataStore) deleteArticle(id int) bool {
-	ds.mutex.Lock()
-	defer ds.mutex.Unlock()
 
-	if _, exists := ds.articles[id]; !exists {
-		return false
-	}
 
-	delete(ds.articles, id)
 
-	// Also delete related translations
-	for translationKey := range ds.translations {
-		if len(translationKey) > 0 && strings.HasPrefix(translationKey, fmt.Sprintf("%d-", id)) {
-			delete(ds.translations, translationKey)
-		}
-	}
-
-	return true
-}
-
-func (ds *MockDataStore) listArticles(locale string, sectionID int) []*Article {
-	ds.mutex.RLock()
-	defer ds.mutex.RUnlock()
-
-	var articles []*Article
-	for _, article := range ds.articles {
-		if (locale == "" || article.Locale == locale) &&
-		   (sectionID == 0 || article.SectionID == sectionID) {
-			articleCopy := *article
-			articles = append(articles, &articleCopy)
-		}
-	}
-
-	return articles
-}
 
 // Translation operations
 
-func (ds *MockDataStore) translationExists(articleID int, locale string) bool {
-	ds.mutex.RLock()
-	defer ds.mutex.RUnlock()
-	key := fmt.Sprintf("%d-%s", articleID, locale)
-	_, exists := ds.translations[key]
-	return exists
-}
+
 
 func (ds *MockDataStore) getTranslation(articleID int, locale string) *Translation {
 	ds.mutex.RLock()
@@ -269,33 +230,9 @@ func (ds *MockDataStore) updateTranslation(articleID int, locale string) *Transl
 	return &translationCopy
 }
 
-func (ds *MockDataStore) deleteTranslation(articleID int, locale string) bool {
-	ds.mutex.Lock()
-	defer ds.mutex.Unlock()
 
-	key := fmt.Sprintf("%d-%s", articleID, locale)
-	if _, exists := ds.translations[key]; !exists {
-		return false
-	}
 
-	delete(ds.translations, key)
-	return true
-}
 
-func (ds *MockDataStore) listTranslations(articleID int) []*Translation {
-	ds.mutex.RLock()
-	defer ds.mutex.RUnlock()
-
-	var translations []*Translation
-	for _, translation := range ds.translations {
-		if articleID == 0 || translation.SourceID == articleID {
-			translationCopy := *translation
-			translations = append(translations, &translationCopy)
-		}
-	}
-
-	return translations
-}
 
 // Section operations
 
@@ -306,65 +243,15 @@ func (ds *MockDataStore) sectionExists(id int) bool {
 	return exists
 }
 
-func (ds *MockDataStore) getSection(id int) *MockSection {
-	ds.mutex.RLock()
-	defer ds.mutex.RUnlock()
-	
-	section, exists := ds.sections[id]
-	if !exists {
-		return nil
-	}
-	
-	// Return a copy to prevent external modification
-	sectionCopy := *section
-	return &sectionCopy
-}
 
-func (ds *MockDataStore) createSection(name, description, locale string, categoryID int) *MockSection {
-	ds.mutex.Lock()
-	defer ds.mutex.Unlock()
 
-	id := ds.nextID.section
-	ds.nextID.section++
 
-	section := &MockSection{
-		ID:          id,
-		Name:        name,
-		Description: description,
-		CategoryID:  categoryID,
-		Locale:      locale,
-		Position:    len(ds.sections) + 1,
-	}
-
-	ds.sections[id] = section
-	
-	// Return a copy
-	sectionCopy := *section
-	return &sectionCopy
-}
 
 // User operations
 
-func (ds *MockDataStore) userExists(id int) bool {
-	ds.mutex.RLock()
-	defer ds.mutex.RUnlock()
-	_, exists := ds.users[id]
-	return exists
-}
 
-func (ds *MockDataStore) getUser(id int) *MockUser {
-	ds.mutex.RLock()
-	defer ds.mutex.RUnlock()
-	
-	user, exists := ds.users[id]
-	if !exists {
-		return nil
-	}
-	
-	// Return a copy to prevent external modification
-	userCopy := *user
-	return &userCopy
-}
+
+
 
 // Utility methods
 

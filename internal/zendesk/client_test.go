@@ -45,7 +45,7 @@ func TestNewClient(t *testing.T) {
 			}
 			
 			// Check that client can be used (interface compliance)
-			var _ Client = client
+			_ = client
 		})
 	}
 }
@@ -201,7 +201,7 @@ func TestClient_CreateArticle_Integration(t *testing.T) {
 				// Send response
 				w.WriteHeader(tt.serverStatus)
 				w.Header().Set("Content-Type", "application/json")
-				w.Write([]byte(tt.serverResponse))
+				_, _ = w.Write([]byte(tt.serverResponse))
 			}))
 			defer server.Close()
 			
@@ -293,7 +293,7 @@ func TestClient_ShowArticle_Integration(t *testing.T) {
 				
 				w.WriteHeader(tt.serverStatus)
 				w.Header().Set("Content-Type", "application/json")
-				w.Write([]byte(tt.serverResponse))
+				_, _ = w.Write([]byte(tt.serverResponse))
 			}))
 			defer server.Close()
 			
@@ -326,7 +326,7 @@ func TestClient_Translation_Operations(t *testing.T) {
 		case strings.HasSuffix(r.URL.Path, "/translations.json") && r.Method == "POST":
 			// Create translation
 			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"translation": {
 					"id": 789,
 					"locale": "ja",
@@ -337,7 +337,7 @@ func TestClient_Translation_Operations(t *testing.T) {
 		case strings.Contains(r.URL.Path, "/translations/") && r.Method == "PUT":
 			// Update translation
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"translation": {
 					"id": 789,
 					"locale": "ja",
@@ -348,7 +348,7 @@ func TestClient_Translation_Operations(t *testing.T) {
 		case strings.Contains(r.URL.Path, "/translations/") && r.Method == "GET":
 			// Show translation
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{
+			_, _ = w.Write([]byte(`{
 				"translation": {
 					"id": 789,
 					"locale": "ja",
@@ -434,7 +434,7 @@ func TestClient_ErrorHandling(t *testing.T) {
 			setupServer: func() *httptest.Server {
 				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
-					w.Write([]byte(`invalid json response`))
+					_, _ = w.Write([]byte(`invalid json response`))
 				}))
 			},
 			operation: func(c Client) error {
@@ -448,7 +448,7 @@ func TestClient_ErrorHandling(t *testing.T) {
 			setupServer: func() *httptest.Server {
 				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusServiceUnavailable)
-					w.Write([]byte(`{"error": "Service temporarily unavailable"}`))
+					_, _ = w.Write([]byte(`{"error": "Service temporarily unavailable"}`))
 				}))
 			},
 			operation: func(c Client) error {
@@ -511,11 +511,11 @@ func TestClient_AdditionalErrorHandling(t *testing.T) {
 				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusOK)
 					// Write partial response and then close connection abruptly
-					w.Write([]byte("{\"partial\":"))
+					_, _ = w.Write([]byte("{\"partial\":"))
 					// Simulate connection drop by using hijacker
 					if hijacker, ok := w.(http.Hijacker); ok {
 						conn, _, _ := hijacker.Hijack()
-						conn.Close()
+						_ = conn.Close()
 					}
 				}))
 			},
@@ -530,7 +530,7 @@ func TestClient_AdditionalErrorHandling(t *testing.T) {
 			setupServer: func() *httptest.Server {
 				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					w.WriteHeader(http.StatusTeapot) // 418 status
-					w.Write([]byte(`{"error": "I'm a teapot"}`))
+					_, _ = w.Write([]byte(`{"error": "I'm a teapot"}`))
 				}))
 			},
 			operation: func(c Client) error {
@@ -818,7 +818,7 @@ func (tc *testClientImpl) doRequest(method string, endpoint string, payload io.R
 	if err != nil {
 		return "", err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
 		return "", fmt.Errorf("unexpected status code: %d", res.StatusCode)
@@ -850,22 +850,22 @@ func TestClientImpl_RealHTTPClient(t *testing.T) {
 		switch {
 		case strings.HasSuffix(r.URL.Path, "/articles.json") && r.Method == "POST":
 			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte(`{"article":{"id":123,"title":"Test Article"}}`))
+			_, _ = w.Write([]byte(`{"article":{"id":123,"title":"Test Article"}}`))
 		case strings.Contains(r.URL.Path, "/articles/") && strings.HasSuffix(r.URL.Path, ".json") && r.Method == "GET":
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"article":{"id":123,"title":"Test Article"}}`))
+			_, _ = w.Write([]byte(`{"article":{"id":123,"title":"Test Article"}}`))
 		case strings.Contains(r.URL.Path, "/articles/") && r.Method == "PUT":
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"article":{"id":123,"title":"Updated Article"}}`))
+			_, _ = w.Write([]byte(`{"article":{"id":123,"title":"Updated Article"}}`))
 		case strings.Contains(r.URL.Path, "/translations.json") && r.Method == "POST":
 			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte(`{"translation":{"id":456,"title":"Test Translation"}}`))
+			_, _ = w.Write([]byte(`{"translation":{"id":456,"title":"Test Translation"}}`))
 		case strings.Contains(r.URL.Path, "/translations/") && r.Method == "PUT":
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"translation":{"id":456,"title":"Updated Translation"}}`))
+			_, _ = w.Write([]byte(`{"translation":{"id":456,"title":"Updated Translation"}}`))
 		case strings.Contains(r.URL.Path, "/translations/") && r.Method == "GET":
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"translation":{"id":456,"title":"Test Translation"}}`))
+			_, _ = w.Write([]byte(`{"translation":{"id":456,"title":"Test Translation"}}`))
 		default:
 			w.WriteHeader(http.StatusNotFound)
 		}
@@ -992,7 +992,7 @@ func TestClientImpl_RealHTTPClient(t *testing.T) {
 		if err != nil {
 			t.Errorf("Failed to read response body: %v", err)
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		
 		if !strings.Contains(string(body), `"id":123`) {
 			t.Errorf("Expected response to contain article ID, got: %s", string(body))
@@ -1000,16 +1000,6 @@ func TestClientImpl_RealHTTPClient(t *testing.T) {
 		
 		t.Log("Mock transport test passed successfully")
 	})
-}
-
-// clientImplWithCustomBaseURL extends clientImpl to use a custom base URL for testing
-type clientImplWithCustomBaseURL struct {
-	clientImpl
-	customBaseURL string
-}
-
-func (c *clientImplWithCustomBaseURL) baseURL() string {
-	return c.customBaseURL
 }
 
 // mockRoundTripper implements http.RoundTripper for testing
@@ -1030,38 +1020,3 @@ func (m *mockRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 }
 
 // clientImplWithMockTransport extends clientImpl to use a custom transport for testing
-type clientImplWithMockTransport struct {
-	clientImpl
-	transport http.RoundTripper
-}
-
-func (c *clientImplWithMockTransport) doRequest(method string, endpoint string, payload io.Reader) (string, error) {
-	if endpoint == "" {
-		return "", fmt.Errorf("endpoint is required")
-	}
-	reqURL := c.baseURL() + endpoint
-	req, err := http.NewRequest(method, reqURL, payload)
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Basic "+c.authorizationToken())
-
-	client := &http.Client{Transport: c.transport}
-	res, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-		return "", fmt.Errorf("unexpected status code: %d", res.StatusCode)
-	}
-
-	resPayload, err := io.ReadAll(res.Body)
-	if err != nil {
-		return "", err
-	}
-	return string(resPayload), nil
-}

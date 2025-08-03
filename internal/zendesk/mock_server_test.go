@@ -49,7 +49,7 @@ func TestAdvancedMockServer_Creation(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to connect to mock server: %v", err)
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != http.StatusOK {
 				t.Errorf("Expected status 200, got %d", resp.StatusCode)
@@ -71,7 +71,7 @@ func TestAdvancedMockServer_ArticleOperations(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to get article: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			t.Errorf("Expected status 200, got %d", resp.StatusCode)
@@ -85,6 +85,7 @@ func TestAdvancedMockServer_ArticleOperations(t *testing.T) {
 		article := result["article"]
 		if article == nil {
 			t.Error("Article should not be nil")
+			return
 		}
 
 		if article.ID != 456 {
@@ -101,7 +102,7 @@ func TestAdvancedMockServer_ArticleOperations(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to get article: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusNotFound {
 			t.Errorf("Expected status 404, got %d", resp.StatusCode)
@@ -113,7 +114,7 @@ func TestAdvancedMockServer_ArticleOperations(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to create article: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusCreated {
 			t.Errorf("Expected status 201, got %d", resp.StatusCode)
@@ -127,6 +128,7 @@ func TestAdvancedMockServer_ArticleOperations(t *testing.T) {
 		article := result["article"]
 		if article == nil {
 			t.Error("Created article should not be nil")
+			return
 		}
 
 		if article.ID <= 0 {
@@ -143,7 +145,7 @@ func TestAdvancedMockServer_ArticleOperations(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to create article: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusNotFound {
 			t.Errorf("Expected status 404 for invalid section, got %d", resp.StatusCode)
@@ -164,7 +166,7 @@ func TestAdvancedMockServer_TranslationOperations(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to get translation: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			t.Errorf("Expected status 200, got %d", resp.StatusCode)
@@ -178,6 +180,7 @@ func TestAdvancedMockServer_TranslationOperations(t *testing.T) {
 		translation := result["translation"]
 		if translation == nil {
 			t.Error("Translation should not be nil")
+			return
 		}
 
 		if translation.SourceID != 456 {
@@ -194,7 +197,7 @@ func TestAdvancedMockServer_TranslationOperations(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to get translation: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusNotFound {
 			t.Errorf("Expected status 404, got %d", resp.StatusCode)
@@ -206,7 +209,7 @@ func TestAdvancedMockServer_TranslationOperations(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to create translation: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusCreated {
 			t.Errorf("Expected status 201, got %d", resp.StatusCode)
@@ -220,6 +223,7 @@ func TestAdvancedMockServer_TranslationOperations(t *testing.T) {
 		translation := result["translation"]
 		if translation == nil {
 			t.Error("Created translation should not be nil")
+			return
 		}
 
 		if translation.SourceID != 456 {
@@ -232,7 +236,7 @@ func TestAdvancedMockServer_TranslationOperations(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to create translation: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusNotFound {
 			t.Errorf("Expected status 404 for invalid article, got %d", resp.StatusCode)
@@ -259,7 +263,7 @@ func TestAdvancedMockServer_ScenarioManagement(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to get article: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			t.Errorf("Expected status 200 in Normal scenario, got %d", resp.StatusCode)
@@ -277,7 +281,7 @@ func TestAdvancedMockServer_ScenarioManagement(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to get article: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusUnauthorized {
 			t.Errorf("Expected status 401 in AuthFailure scenario, got %d", resp.StatusCode)
@@ -303,7 +307,7 @@ func TestAdvancedMockServer_ScenarioManagement(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to get article: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			t.Errorf("Expected status 200, got %d", resp.StatusCode)
@@ -339,8 +343,8 @@ func TestAdvancedMockServer_RequestLogging(t *testing.T) {
 	server.ClearRequestLog()
 
 	// Make some requests
-	http.Get(baseURL + "/api/v2/help_center/en_us/articles/456.json")
-	http.Post(baseURL+"/api/v2/help_center/en_us/sections/123/articles.json", "application/json", strings.NewReader(`{"article":{"title":"Test"}}`))
+	_, _ = http.Get(baseURL + "/api/v2/help_center/en_us/articles/456.json")
+	_, _ = http.Post(baseURL+"/api/v2/help_center/en_us/sections/123/articles.json", "application/json", strings.NewReader(`{"article":{"title":"Test"}}`))
 
 	// Check logs
 	logs := server.GetRequestLog()
@@ -393,6 +397,7 @@ func TestAdvancedMockServer_DataStoreOperations(t *testing.T) {
 	backup := server.dataStore.Backup()
 	if backup == nil {
 		t.Error("Backup should not be nil")
+		return
 	}
 
 	if backup.Timestamp.IsZero() {
@@ -461,7 +466,7 @@ func TestAdvancedMockServer_ErrorHandling(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Request failed: %v", err)
 			}
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 
 			if resp.StatusCode != tt.expectedStatus {
 				t.Errorf("Expected status %d, got %d", tt.expectedStatus, resp.StatusCode)
@@ -483,7 +488,7 @@ func TestAdvancedMockServer_StatefulBehavior(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create article: %v", err)
 	}
-	defer createResp.Body.Close()
+	defer func() { _ = createResp.Body.Close() }()
 
 	var createResult map[string]*Article
 	if err := json.NewDecoder(createResp.Body).Decode(&createResult); err != nil {
@@ -497,7 +502,7 @@ func TestAdvancedMockServer_StatefulBehavior(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to get created article: %v", err)
 	}
-	defer getResp.Body.Close()
+	defer func() { _ = getResp.Body.Close() }()
 
 	if getResp.StatusCode != http.StatusOK {
 		t.Errorf("Expected status 200 when retrieving created article, got %d", getResp.StatusCode)
@@ -546,7 +551,7 @@ func TestAdvancedMockServer_ErrorSimulation(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Request failed: %v", err)
 			}
-			resp.Body.Close()
+			_ = resp.Body.Close()
 
 			// Should sometimes return 401 due to error simulation
 			if resp.StatusCode == http.StatusUnauthorized {
@@ -570,7 +575,7 @@ func TestAdvancedMockServer_ErrorSimulation(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Request failed: %v", err)
 			}
-			resp.Body.Close()
+			_ = resp.Body.Close()
 
 			if resp.StatusCode == http.StatusTooManyRequests {
 				// Verify rate limit headers
@@ -609,7 +614,7 @@ func TestAdvancedMockServer_ErrorSimulation(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusTeapot {
 			t.Errorf("Expected custom error status %d, got %d", http.StatusTeapot, resp.StatusCode)
@@ -636,7 +641,7 @@ func TestAdvancedMockServer_ErrorSimulationDisabled(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusOK {
 			t.Errorf("Expected status 200 with error simulation disabled, got %d", resp.StatusCode)
@@ -672,7 +677,7 @@ func TestAdvancedMockServer_CompositeErrorScenario(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		if resp.StatusCode != http.StatusCreated {
 			errorTypes[resp.StatusCode] = true

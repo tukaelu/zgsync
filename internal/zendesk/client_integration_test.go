@@ -340,8 +340,8 @@ func TestClient_AdvancedFeatures(t *testing.T) {
 		server.ClearRequestLog()
 
 		// Make a few requests
-		client.ShowArticle("en_us", 456)
-		client.CreateArticle("en_us", 123, `{"article":{"title":"test"}}`)
+		_, _ = client.ShowArticle("en_us", 456)
+		_, _ = client.CreateArticle("en_us", 123, `{"article":{"title":"test"}}`)
 
 		// Check request logs
 		logs := server.GetRequestLog()

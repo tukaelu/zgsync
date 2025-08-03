@@ -478,19 +478,19 @@ func (ls *LatencySimulator) GetLatencyReport() string {
 		return "No requests processed yet"
 	}
 
-	report := fmt.Sprintf("Latency Simulation Report\n")
-	report += fmt.Sprintf("========================\n")
+	report := "Latency Simulation Report\n"
+	report += "========================\n"
 	report += fmt.Sprintf("Total Requests: %d\n", stats.TotalRequests)
 	report += fmt.Sprintf("Average Latency: %v\n", stats.AverageLatency)
 	report += fmt.Sprintf("Min Latency: %v\n", stats.MinLatency)
 	report += fmt.Sprintf("Max Latency: %v\n", stats.MaxLatency)
-	report += fmt.Sprintf("\nRequests by Pattern:\n")
+	report += "\nRequests by Pattern:\n"
 	
 	for pattern, count := range stats.RequestsByPattern {
 		report += fmt.Sprintf("  %s: %d requests\n", pattern, count)
 	}
 	
-	report += fmt.Sprintf("\nLatency Distribution (5ms buckets):\n")
+	report += "\nLatency Distribution (5ms buckets):\n"
 	for bucket, count := range stats.LatencyHistogram {
 		if count > 0 {
 			report += fmt.Sprintf("  %v: %d requests\n", bucket, count)

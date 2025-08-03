@@ -282,7 +282,7 @@ func (rl *RateLimiter) calculateRetryAfter(bucket *TokenBucket) time.Duration {
 	}
 
 	// Fallback to window reset
-	return bucket.WindowStart.Add(bucket.WindowDuration).Sub(time.Now())
+	return time.Until(bucket.WindowStart.Add(bucket.WindowDuration))
 }
 
 // ApplyRateLimit applies rate limiting to a response
@@ -306,7 +306,7 @@ func (rl *RateLimiter) ApplyRateLimit(w http.ResponseWriter, r *http.Request) bo
 			"limit_type": "%s"
 		}`, result.LimitType, int(result.RetryAfter.Seconds()), result.LimitType)
 		
-		w.Write([]byte(errorResponse))
+		_, _ = w.Write([]byte(errorResponse))
 		return true // Request was handled (rate limited)
 	}
 
@@ -547,8 +547,8 @@ func (rl *RateLimiter) UpdateEndpointLimit(endpoint string, limit int) {
 func (rl *RateLimiter) GetRateLimitReport() string {
 	stats := rl.GetStatistics()
 	
-	report := fmt.Sprintf("Rate Limiting Report\n")
-	report += fmt.Sprintf("====================\n")
+	report := "Rate Limiting Report\n"
+	report += "====================\n"
 	report += fmt.Sprintf("Total Requests: %d\n", stats.TotalRequests)
 	report += fmt.Sprintf("Limited Requests: %d (%.2f%%)\n", stats.LimitedRequests, 
 		float64(stats.LimitedRequests)/float64(stats.TotalRequests)*100)
@@ -556,7 +556,7 @@ func (rl *RateLimiter) GetRateLimitReport() string {
 	report += fmt.Sprintf("Peak Rate: %.2f req/s\n", stats.PeakRate)
 	report += fmt.Sprintf("Window Violations: %d\n", stats.WindowViolations)
 	
-	report += fmt.Sprintf("\nEndpoint Statistics:\n")
+	report += "\nEndpoint Statistics:\n"
 	for endpoint, endpointStats := range stats.EndpointStats {
 		limitedPct := float64(0)
 		if endpointStats.Requests > 0 {

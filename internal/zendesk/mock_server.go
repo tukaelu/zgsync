@@ -244,10 +244,9 @@ func (s *AdvancedMockServer) middleware(next http.Handler) http.HandlerFunc {
 			}
 
 			// Read body for logging (note: this consumes the body)
-			if r.Body != nil {
-				// For simplicity, we'll skip body logging to avoid consumption issues
-				// In a production mock server, you'd want to use io.TeeReader
-			}
+			// For simplicity, we'll skip body logging to avoid consumption issues
+			// In a production mock server, you'd want to use io.TeeReader
+			_ = r.Body // Just reference the body to acknowledge it exists
 		}
 
 		// Create response writer wrapper for logging
@@ -392,7 +391,7 @@ func (s *AdvancedMockServer) checkRealisticErrors(w http.ResponseWriter, r *http
 
 			// Set status code and write response body
 			w.WriteHeader(errorSim.StatusCode)
-			w.Write([]byte(errorSim.Response))
+			_, _ = w.Write([]byte(errorSim.Response))
 			return true
 		}
 	}
@@ -624,7 +623,7 @@ func (s *AdvancedMockServer) handleCreateArticle(w http.ResponseWriter, r *http.
 	// Return created article
 	response := map[string]*Article{"article": article}
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // handleShowArticle handles GET /api/v2/help_center/{locale}/articles/{id}.json
@@ -654,7 +653,7 @@ func (s *AdvancedMockServer) handleShowArticle(w http.ResponseWriter, r *http.Re
 
 	// Return article
 	response := map[string]*Article{"article": article}
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // handleUpdateArticle handles PUT /api/v2/help_center/{locale}/articles/{id}
@@ -684,7 +683,7 @@ func (s *AdvancedMockServer) handleUpdateArticle(w http.ResponseWriter, r *http.
 
 	// Return updated article
 	response := map[string]*Article{"article": article}
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // handleCreateTranslation handles POST /api/v2/help_center/articles/{article_id}/translations.json
@@ -717,7 +716,7 @@ func (s *AdvancedMockServer) handleCreateTranslation(w http.ResponseWriter, r *h
 	// Return created translation
 	response := map[string]*Translation{"translation": translation}
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // handleUpdateTranslation handles PUT /api/v2/help_center/articles/{article_id}/translations/{locale}
@@ -749,7 +748,7 @@ func (s *AdvancedMockServer) handleUpdateTranslation(w http.ResponseWriter, r *h
 
 	// Return updated translation
 	response := map[string]*Translation{"translation": translation}
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 // handleShowTranslation handles GET /api/v2/help_center/articles/{article_id}/translations/{locale}
@@ -781,5 +780,5 @@ func (s *AdvancedMockServer) handleShowTranslation(w http.ResponseWriter, r *htt
 
 	// Return translation
 	response := map[string]*Translation{"translation": translation}
-	json.NewEncoder(w).Encode(response)
+	_ = json.NewEncoder(w).Encode(response)
 }

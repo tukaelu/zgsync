@@ -40,7 +40,7 @@ func (t *Translation) FromFile(path string) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	b, err := io.ReadAll(f)
 	if err != nil {
@@ -92,7 +92,7 @@ func (t *Translation) Save(path string, appendFileName bool) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	if _, err := f.WriteString("---\n"); err != nil {
 		return err

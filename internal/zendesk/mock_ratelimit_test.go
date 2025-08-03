@@ -39,6 +39,7 @@ func TestRateLimiter_Creation(t *testing.T) {
 			limiter := NewRateLimiter(tt.config)
 			if limiter == nil {
 				t.Error("Expected non-nil rate limiter")
+				return
 			}
 
 			if limiter.config == nil {
@@ -409,7 +410,7 @@ func TestAdvancedMockServer_LatencySimulation(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		// Should have some latency applied
 		if duration < 10*time.Millisecond {
@@ -428,7 +429,7 @@ func TestAdvancedMockServer_LatencySimulation(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Request %d failed: %v", i, err)
 			}
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 
 		stats := server.GetLatencyStatistics()
@@ -456,7 +457,7 @@ func TestAdvancedMockServer_LatencySimulation(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		// Should be noticeably slower
 		if slowDuration < 100*time.Millisecond {
@@ -493,7 +494,7 @@ func TestAdvancedMockServer_RateLimiting(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Request failed: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		// Check rate limit headers
 		if resp.Header.Get("X-Rate-Limit-Limit") == "" {
@@ -533,7 +534,7 @@ func TestAdvancedMockServer_RateLimiting(t *testing.T) {
 		if err != nil {
 			t.Fatalf("First request failed: %v", err)
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
 			t.Errorf("First request should succeed, got status %d", resp.StatusCode)
@@ -544,7 +545,7 @@ func TestAdvancedMockServer_RateLimiting(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Second request failed: %v", err)
 		}
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 
 		if resp.StatusCode != http.StatusTooManyRequests {
 			t.Errorf("Expected status 429, got %d", resp.StatusCode)
@@ -580,7 +581,7 @@ func TestAdvancedMockServer_RateLimiting(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Request %d failed: %v", i, err)
 			}
-			resp.Body.Close()
+			_ = resp.Body.Close()
 		}
 
 		stats := statsServer.GetRateLimitStatistics()
@@ -627,7 +628,7 @@ func TestAdvancedMockServer_RateLimiting(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Request %d failed: %v", i, err)
 			}
-			resp.Body.Close()
+			_ = resp.Body.Close()
 
 			if resp.StatusCode == http.StatusOK {
 				successCount++
@@ -680,16 +681,17 @@ func TestAdvancedMockServer_CombinedSimulation(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Request %d failed: %v", i, err)
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		// Should have some latency applied
 		if duration < 5*time.Millisecond {
 			t.Logf("Request %d: expected some latency, got %v", i, duration)
 		}
 
-		if resp.StatusCode == http.StatusOK {
+		switch resp.StatusCode {
+		case http.StatusOK:
 			successCount++
-		} else if resp.StatusCode == http.StatusTooManyRequests {
+		case http.StatusTooManyRequests:
 			rateLimitedCount++
 		}
 

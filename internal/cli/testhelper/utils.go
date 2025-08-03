@@ -26,7 +26,7 @@ func CaptureStdout(t *testing.T, fn func() error) (string, error) {
 	funcErr := fn()
 	
 	// Close writer and restore stdout
-	w.Close()
+	_ = w.Close()
 	os.Stdout = originalStdout
 	
 	// Read captured output

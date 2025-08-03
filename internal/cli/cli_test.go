@@ -28,7 +28,7 @@ func TestCli_AfterApply_Logic(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to create temp dir: %v", err)
 		}
-		defer os.RemoveAll(tmpDir)
+		defer func() { _ = os.RemoveAll(tmpDir) }()
 
 		// Create valid config file
 		configContent := `subdomain: test
@@ -49,8 +49,8 @@ default_permission_group_id: 1
 
 		// Test Global config validation
 		originalHome := os.Getenv("HOME")
-		os.Setenv("HOME", tmpDir)
-		defer os.Setenv("HOME", originalHome)
+		_ = os.Setenv("HOME", tmpDir)
+		defer func() { _ = os.Setenv("HOME", originalHome) }()
 
 		g := &Global{}
 		
@@ -130,7 +130,7 @@ func TestCli_AfterApply_DirectCall(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to create temp dir: %v", err)
 		}
-		defer os.RemoveAll(tmpDir)
+		defer func() { _ = os.RemoveAll(tmpDir) }()
 		
 		configContent := `subdomain: test
 email: test@example.com/token
@@ -150,16 +150,16 @@ default_permission_group_id: 1
 		
 		// Set up environment
 		originalHome := os.Getenv("HOME")
-		os.Setenv("HOME", tmpDir)
-		defer os.Setenv("HOME", originalHome)
+		_ = os.Setenv("HOME", tmpDir)
+		defer func() { _ = os.Setenv("HOME", originalHome) }()
 		
 		// Test config exists check
-		if err := c.Global.ConfigExists(); err != nil {
+		if err := c.ConfigExists(); err != nil {
 			t.Errorf("ConfigExists failed: %v", err)
 		}
 		
 		// Test config loading
-		if err := c.Global.LoadConfig(); err != nil {
+		if err := c.LoadConfig(); err != nil {
 			t.Errorf("LoadConfig failed: %v", err)
 		}
 		

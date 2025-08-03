@@ -61,7 +61,7 @@ func (hh *HTTPHelper) CreateMockServer(responses map[string]HTTPResponse) *httpt
 		response, exists := responses[key]
 		if !exists {
 			w.WriteHeader(http.StatusNotFound)
-			w.Write([]byte(`{"error": "Not Found"}`))
+			_, _ = w.Write([]byte(`{"error": "Not Found"}`))
 			return
 		}
 		
@@ -71,7 +71,7 @@ func (hh *HTTPHelper) CreateMockServer(responses map[string]HTTPResponse) *httpt
 		}
 		
 		w.WriteHeader(response.StatusCode)
-		w.Write([]byte(response.Body))
+		_, _ = w.Write([]byte(response.Body))
 	}
 	
 	return hh.CreateTestServer(handler)
@@ -110,7 +110,7 @@ func (hh *HTTPHelper) RunHTTPTestCases(testCases []HTTPTestCase, createClient fu
 				// Send response
 				w.WriteHeader(tc.ResponseStatus)
 				w.Header().Set("Content-Type", "application/json")
-				w.Write([]byte(tc.ResponseBody))
+				_, _ = w.Write([]byte(tc.ResponseBody))
 			}))
 			defer server.Close()
 			
@@ -145,7 +145,7 @@ func (hh *HTTPHelper) ReadHTTPBody(resp *http.Response) string {
 	if err != nil {
 		hh.t.Fatalf("Failed to read response body: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	return string(body)
 }
 

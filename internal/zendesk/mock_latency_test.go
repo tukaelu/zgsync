@@ -36,6 +36,7 @@ func TestLatencySimulator_Creation(t *testing.T) {
 			simulator := NewLatencySimulator(tt.config)
 			if simulator == nil {
 				t.Error("Expected non-nil simulator")
+				return
 			}
 
 			if simulator.config == nil {

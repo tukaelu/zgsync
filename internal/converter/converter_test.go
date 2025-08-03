@@ -322,7 +322,7 @@ func TestConvertToMarkdown_ErrorHandling(t *testing.T) {
 				t.Errorf("ConvertToMarkdown() should handle malformed HTML gracefully, but got error: %v", err)
 			}
 			// Result should be a string (even if not perfectly formatted)
-			if len(result) < 0 {
+			if len(result) == 0 {
 				t.Errorf("ConvertToMarkdown() should return some result, got empty string")
 			}
 		})

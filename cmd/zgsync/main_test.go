@@ -13,7 +13,7 @@ func TestMain(t *testing.T) {
 	if err := exec.Command("go", "build", "-o", "zgsync_test", ".").Run(); err != nil {
 		t.Fatalf("Failed to build binary for testing: %v", err)
 	}
-	defer os.Remove("zgsync_test") // Clean up
+	defer func() { _ = os.Remove("zgsync_test") }() // Clean up
 
 	tests := []struct {
 		name           string
@@ -80,10 +80,8 @@ func TestMainFunction(t *testing.T) {
 	}()
 	
 	// Test that we can reference the main function without issues
-	mainFunc := main
-	if mainFunc == nil {
-		t.Error("Main function should be accessible")
-	}
+	// The main function is never nil in Go, so we just verify it exists
+	_ = main
 	
 	// Test that cli package is properly imported and accessible
 	// This verifies the import path and that cli.Bind exists
@@ -95,7 +93,7 @@ func TestMainWithEnvironmentVariables(t *testing.T) {
 	if err := exec.Command("go", "build", "-o", "zgsync_test_env", ".").Run(); err != nil {
 		t.Fatalf("Failed to build binary for testing: %v", err)
 	}
-	defer os.Remove("zgsync_test_env")
+	defer func() { _ = os.Remove("zgsync_test_env") }()
 
 	tests := []struct {
 		name    string

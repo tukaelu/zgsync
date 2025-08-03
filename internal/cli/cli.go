@@ -19,10 +19,10 @@ func (c *cli) AfterApply(kCtx *kong.Context) error {
 	if kCtx.Command() == "version" {
 		return nil
 	}
-	if err := c.Global.ConfigExists(); err != nil {
+	if err := c.ConfigExists(); err != nil {
 		return err
 	}
-	if err := c.Global.LoadConfig(); err != nil {
+	if err := c.LoadConfig(); err != nil {
 		return err
 	}
 	return nil

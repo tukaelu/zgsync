@@ -61,7 +61,7 @@ func (g *Global) LoadConfig() error {
 func (g *Global) ConfigExists() error {
 	abs := g.AbsConfig()
 	if _, err := os.Stat(abs); os.IsNotExist(err) {
-		return fmt.Errorf("config file %s does not exists.", abs)
+		return fmt.Errorf("config file %s does not exist", abs)
 	}
 	return nil
 }

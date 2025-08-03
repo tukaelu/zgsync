@@ -22,7 +22,7 @@ func NewFileHelper(t *testing.T) *FileHelper {
 	}
 	
 	t.Cleanup(func() {
-		os.RemoveAll(tempDir)
+		_ = os.RemoveAll(tempDir)
 	})
 	
 	return &FileHelper{t: t, tempDir: tempDir}
