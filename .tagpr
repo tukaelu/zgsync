@@ -7,6 +7,7 @@ releaseBranch = "main"
 
 # Whether to create a GitHub release
 release = true
+	versionFile = -
 
 # Not specifying versionFile since we use git tags directly for versioning
 # The version is determined from git tags and embedded during build via Makefile
