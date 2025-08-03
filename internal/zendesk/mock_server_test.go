@@ -527,9 +527,9 @@ func TestAdvancedMockServer_ErrorSimulation(t *testing.T) {
 	t.Parallel()
 
 	config := &MockServerConfig{
-		EnableErrorSim:  true,
-		ErrorScenarios:  []string{"AuthenticationFailures", "RateLimiting"},
-		EnableLogging:   true,
+		EnableErrorSim: true,
+		ErrorScenarios: []string{"AuthenticationFailures", "RateLimiting"},
+		EnableLogging:  true,
 	}
 
 	server := NewAdvancedMockServer(config)
@@ -545,7 +545,7 @@ func TestAdvancedMockServer_ErrorSimulation(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			req, _ := http.NewRequest("GET", baseURL+"/api/v2/help_center/en_us/articles/456.json", nil)
 			// Don't set Authorization header to trigger auth failure
-			
+
 			client := &http.Client{}
 			resp, err := client.Do(req)
 			if err != nil {
@@ -671,7 +671,7 @@ func TestAdvancedMockServer_CompositeErrorScenario(t *testing.T) {
 
 	// Make requests that could trigger either auth or validation errors
 	errorTypes := make(map[int]bool)
-	
+
 	for i := 0; i < 20; i++ {
 		resp, err := http.Post(baseURL+"/api/v2/help_center/en_us/sections/123/articles.json", "application/json", strings.NewReader(`{"article":{"title":"Test"}}`))
 		if err != nil {

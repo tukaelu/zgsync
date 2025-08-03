@@ -13,31 +13,31 @@ import (
 
 // AdvancedMockServer provides a sophisticated mock implementation of Zendesk Help Center API
 type AdvancedMockServer struct {
-	server        *httptest.Server
-	dataStore     *MockDataStore
-	scenarios     *ScenarioManager
-	errorSim      *ErrorSimulator
-	errorTracker  *ErrorTracker
-	latencySim    *LatencySimulator
-	rateLimiter   *RateLimiter
-	config        *MockServerConfig
-	requestLog    []RequestLog
-	mutex         sync.RWMutex
+	server       *httptest.Server
+	dataStore    *MockDataStore
+	scenarios    *ScenarioManager
+	errorSim     *ErrorSimulator
+	errorTracker *ErrorTracker
+	latencySim   *LatencySimulator
+	rateLimiter  *RateLimiter
+	config       *MockServerConfig
+	requestLog   []RequestLog
+	mutex        sync.RWMutex
 }
 
 // MockServerConfig controls server behavior
 type MockServerConfig struct {
-	BaseLatency       time.Duration
-	ErrorRate         float64
-	RateLimit         int
-	EnableLogging     bool
-	StrictMode        bool // Validate request format strictly
-	EnableErrorSim    bool // Enable realistic error simulation
-	ErrorScenarios    []string // List of error scenarios to enable
-	EnableLatencySim  bool // Enable realistic latency simulation
-	EnableRateLimiting bool // Enable rate limiting
-	LatencyConfig     *LatencyConfig // Latency simulation configuration
-	RateLimitConfig   *RateLimitConfig // Rate limiting configuration
+	BaseLatency        time.Duration
+	ErrorRate          float64
+	RateLimit          int
+	EnableLogging      bool
+	StrictMode         bool             // Validate request format strictly
+	EnableErrorSim     bool             // Enable realistic error simulation
+	ErrorScenarios     []string         // List of error scenarios to enable
+	EnableLatencySim   bool             // Enable realistic latency simulation
+	EnableRateLimiting bool             // Enable rate limiting
+	LatencyConfig      *LatencyConfig   // Latency simulation configuration
+	RateLimitConfig    *RateLimitConfig // Rate limiting configuration
 }
 
 // RequestLog tracks all requests for debugging and verification
@@ -402,7 +402,7 @@ func (s *AdvancedMockServer) checkRealisticErrors(w http.ResponseWriter, r *http
 // setErrorHeaders sets appropriate headers for different error types
 func (s *AdvancedMockServer) setErrorHeaders(w http.ResponseWriter, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
-	
+
 	switch statusCode {
 	case http.StatusTooManyRequests:
 		w.Header().Set("Retry-After", "30")
@@ -571,7 +571,7 @@ func (s *AdvancedMockServer) registerRoutes(mux *http.ServeMux) {
 // handleHelpCenterRequest routes help center API requests
 func (s *AdvancedMockServer) handleHelpCenterRequest(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimPrefix(r.URL.Path, "/api/v2/help_center/")
-	
+
 	// Route to appropriate handler based on path pattern
 	switch {
 	case strings.HasSuffix(path, "/articles.json") && r.Method == "POST":
@@ -604,7 +604,7 @@ func (s *AdvancedMockServer) handleCreateArticle(w http.ResponseWriter, r *http.
 
 	locale := pathParts[0]
 	sectionIDStr := pathParts[2]
-	
+
 	sectionID, err := strconv.Atoi(sectionIDStr)
 	if err != nil {
 		http.Error(w, `{"error": "Invalid section ID"}`, http.StatusBadRequest)
@@ -619,7 +619,7 @@ func (s *AdvancedMockServer) handleCreateArticle(w http.ResponseWriter, r *http.
 
 	// Create new article
 	article := s.dataStore.createArticle(locale, sectionID)
-	
+
 	// Return created article
 	response := map[string]*Article{"article": article}
 	w.WriteHeader(http.StatusCreated)
@@ -659,7 +659,7 @@ func (s *AdvancedMockServer) handleShowArticle(w http.ResponseWriter, r *http.Re
 // handleUpdateArticle handles PUT /api/v2/help_center/{locale}/articles/{id}
 func (s *AdvancedMockServer) handleUpdateArticle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	
+
 	// Extract article ID from path
 	pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v2/help_center/"), "/")
 	if len(pathParts) < 3 {
@@ -712,7 +712,7 @@ func (s *AdvancedMockServer) handleCreateTranslation(w http.ResponseWriter, r *h
 
 	// Create translation
 	translation := s.dataStore.createTranslation(articleID, "ja") // Default locale for now
-	
+
 	// Return created translation
 	response := map[string]*Translation{"translation": translation}
 	w.WriteHeader(http.StatusCreated)
@@ -732,7 +732,7 @@ func (s *AdvancedMockServer) handleUpdateTranslation(w http.ResponseWriter, r *h
 
 	articleIDStr := pathParts[0]
 	locale := pathParts[2]
-	
+
 	articleID, err := strconv.Atoi(articleIDStr)
 	if err != nil {
 		http.Error(w, `{"error": "Invalid article ID"}`, http.StatusBadRequest)
@@ -764,7 +764,7 @@ func (s *AdvancedMockServer) handleShowTranslation(w http.ResponseWriter, r *htt
 
 	articleIDStr := pathParts[0]
 	locale := pathParts[2]
-	
+
 	articleID, err := strconv.Atoi(articleIDStr)
 	if err != nil {
 		http.Error(w, `{"error": "Invalid article ID"}`, http.StatusBadRequest)

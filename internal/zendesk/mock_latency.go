@@ -19,7 +19,7 @@ type LatencySimulator struct {
 
 // LatencyConfig controls overall latency simulation behavior
 type LatencyConfig struct {
-	BaseLatency    time.Duration     // Base latency for all requests
+	BaseLatency    time.Duration    // Base latency for all requests
 	JitterFactor   float64          // Randomness factor (0.0-1.0)
 	Distribution   DistributionType // Distribution type for latency
 	NetworkProfile NetworkProfile   // Simulated network conditions
@@ -28,11 +28,11 @@ type LatencyConfig struct {
 
 // LatencyPattern defines latency characteristics for specific endpoints
 type LatencyPattern struct {
-	PathPattern    string            // URL path pattern to match
-	Method         string            // HTTP method
-	MinLatency     time.Duration     // Minimum latency
-	MaxLatency     time.Duration     // Maximum latency
-	Distribution   DistributionType  // Distribution type
+	PathPattern    string           // URL path pattern to match
+	Method         string           // HTTP method
+	MinLatency     time.Duration    // Minimum latency
+	MaxLatency     time.Duration    // Maximum latency
+	Distribution   DistributionType // Distribution type
 	LoadFactor     float64          // Load-based latency multiplier
 	GeographicTier GeographicTier   // Geographic distance simulation
 }
@@ -51,21 +51,21 @@ const (
 type NetworkProfile int
 
 const (
-	NetworkFast NetworkProfile = iota    // Fast broadband
-	NetworkBroadband                     // Standard broadband
-	NetworkWiFi                          // WiFi connection
-	NetworkMobile4G                      // 4G mobile
-	NetworkMobile3G                      // 3G mobile
-	NetworkSlow                          // Slow connection
+	NetworkFast      NetworkProfile = iota // Fast broadband
+	NetworkBroadband                       // Standard broadband
+	NetworkWiFi                            // WiFi connection
+	NetworkMobile4G                        // 4G mobile
+	NetworkMobile3G                        // 3G mobile
+	NetworkSlow                            // Slow connection
 )
 
 // GeographicTier simulates geographic distance effects
 type GeographicTier int
 
 const (
-	GeographicLocal GeographicTier = iota // Local/same region
-	GeographicRegional                    // Same continent
-	GeographicGlobal                      // Cross-continental
+	GeographicLocal    GeographicTier = iota // Local/same region
+	GeographicRegional                       // Same continent
+	GeographicGlobal                         // Cross-continental
 )
 
 // NetworkStatistics tracks latency metrics
@@ -180,32 +180,32 @@ func (ls *LatencySimulator) SimulateLatency(r *http.Request) time.Duration {
 
 	// Find matching pattern
 	pattern := ls.findMatchingPattern(r)
-	
+
 	// Calculate base latency
 	baseLatency := ls.calculateBaseLatency(pattern)
-	
+
 	// Apply network profile effects
 	networkLatency := ls.applyNetworkProfile(baseLatency)
-	
+
 	// Apply geographic effects
 	geoLatency := ls.applyGeographicEffects(networkLatency, pattern.GeographicTier)
-	
+
 	// Apply load-based effects
 	loadLatency := ls.applyLoadEffects(geoLatency, pattern.LoadFactor)
-	
+
 	// Apply jitter if enabled
 	finalLatency := ls.applyJitter(loadLatency)
-	
+
 	// Record statistics
 	ls.recordLatencyStats(pattern, finalLatency)
-	
+
 	// Apply the latency (sleep)
 	time.Sleep(finalLatency)
-	
+
 	// Track actual processing time
 	actualDuration := time.Since(startTime)
 	ls.updateNetworkStats(actualDuration, pattern)
-	
+
 	return finalLatency
 }
 
@@ -240,13 +240,13 @@ func (ls *LatencySimulator) findMatchingPattern(r *http.Request) *LatencyPattern
 func (ls *LatencySimulator) calculateBaseLatency(pattern *LatencyPattern) time.Duration {
 	min := float64(pattern.MinLatency)
 	max := float64(pattern.MaxLatency)
-	
+
 	var value float64
-	
+
 	switch pattern.Distribution {
 	case DistributionUniform:
 		value = min + rand.Float64()*(max-min)
-		
+
 	case DistributionNormal:
 		mean := (min + max) / 2
 		stddev := (max - min) / 6 // 99.7% within range
@@ -258,14 +258,14 @@ func (ls *LatencySimulator) calculateBaseLatency(pattern *LatencyPattern) time.D
 		if value > max {
 			value = max
 		}
-		
+
 	case DistributionExponential:
 		lambda := 1.0 / ((max - min) / 3) // Mean = 1/lambda
 		value = min + rand.ExpFloat64()/lambda
 		if value > max {
 			value = max
 		}
-		
+
 	case DistributionGamma:
 		// Gamma distribution approximation using exponential
 		// This is a simplified gamma distribution using multiple exponentials
@@ -274,11 +274,11 @@ func (ls *LatencySimulator) calculateBaseLatency(pattern *LatencyPattern) time.D
 		if value > max {
 			value = max
 		}
-		
+
 	default:
 		value = min + rand.Float64()*(max-min)
 	}
-	
+
 	return time.Duration(value)
 }
 
@@ -291,27 +291,27 @@ func (ls *LatencySimulator) applyNetworkProfile(baseLatency time.Duration) time.
 	case NetworkFast:
 		multiplier = 0.8
 		additionalLatency = 1 * time.Millisecond
-		
+
 	case NetworkBroadband:
 		multiplier = 1.0
 		additionalLatency = 2 * time.Millisecond
-		
+
 	case NetworkWiFi:
 		multiplier = 1.2
 		additionalLatency = 5 * time.Millisecond
-		
+
 	case NetworkMobile4G:
 		multiplier = 1.5
 		additionalLatency = 20 * time.Millisecond
-		
+
 	case NetworkMobile3G:
 		multiplier = 3.0
 		additionalLatency = 100 * time.Millisecond
-		
+
 	case NetworkSlow:
 		multiplier = 5.0
 		additionalLatency = 500 * time.Millisecond
-		
+
 	default:
 		multiplier = 1.0
 		additionalLatency = 0
@@ -327,13 +327,13 @@ func (ls *LatencySimulator) applyGeographicEffects(latency time.Duration, tier G
 	switch tier {
 	case GeographicLocal:
 		additionalLatency = 0
-		
+
 	case GeographicRegional:
-		additionalLatency = 10 * time.Millisecond + 
+		additionalLatency = 10*time.Millisecond +
 			time.Duration(rand.Float64()*float64(20*time.Millisecond))
-		
+
 	case GeographicGlobal:
-		additionalLatency = 50 * time.Millisecond + 
+		additionalLatency = 50*time.Millisecond +
 			time.Duration(rand.Float64()*float64(100*time.Millisecond))
 	}
 
@@ -344,10 +344,10 @@ func (ls *LatencySimulator) applyGeographicEffects(latency time.Duration, tier G
 func (ls *LatencySimulator) applyLoadEffects(latency time.Duration, loadFactor float64) time.Duration {
 	// Simulate varying server load (0.5 to 2.0)
 	currentLoad := 0.5 + rand.Float64()*1.5
-	
+
 	// Apply load-based multiplier
 	loadMultiplier := 1.0 + (currentLoad-1.0)*loadFactor*0.5
-	
+
 	return time.Duration(float64(latency) * loadMultiplier)
 }
 
@@ -359,14 +359,14 @@ func (ls *LatencySimulator) applyJitter(latency time.Duration) time.Duration {
 
 	jitterRange := float64(latency) * ls.config.JitterFactor
 	jitter := (rand.Float64() - 0.5) * 2 * jitterRange // -jitterRange to +jitterRange
-	
+
 	finalLatency := time.Duration(float64(latency) + jitter)
-	
+
 	// Ensure non-negative
 	if finalLatency < 0 {
 		finalLatency = 0
 	}
-	
+
 	return finalLatency
 }
 
@@ -473,7 +473,7 @@ func (ls *LatencySimulator) SetJitterEnabled(enabled bool) {
 // GetLatencyReport generates a detailed latency report
 func (ls *LatencySimulator) GetLatencyReport() string {
 	stats := ls.GetNetworkStatistics()
-	
+
 	if stats.TotalRequests == 0 {
 		return "No requests processed yet"
 	}
@@ -485,17 +485,17 @@ func (ls *LatencySimulator) GetLatencyReport() string {
 	report += fmt.Sprintf("Min Latency: %v\n", stats.MinLatency)
 	report += fmt.Sprintf("Max Latency: %v\n", stats.MaxLatency)
 	report += "\nRequests by Pattern:\n"
-	
+
 	for pattern, count := range stats.RequestsByPattern {
 		report += fmt.Sprintf("  %s: %d requests\n", pattern, count)
 	}
-	
+
 	report += "\nLatency Distribution (5ms buckets):\n"
 	for bucket, count := range stats.LatencyHistogram {
 		if count > 0 {
 			report += fmt.Sprintf("  %v: %d requests\n", bucket, count)
 		}
 	}
-	
+
 	return report
 }

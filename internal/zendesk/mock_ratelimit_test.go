@@ -67,9 +67,9 @@ func TestRateLimiter_CheckRateLimit(t *testing.T) {
 	t.Parallel()
 
 	config := &RateLimitConfig{
-		GlobalLimit:       10,  // Small limit for testing
+		GlobalLimit:       10, // Small limit for testing
 		GlobalWindow:      time.Minute,
-		BurstLimit:        3,   // Very small burst for testing
+		BurstLimit:        3, // Very small burst for testing
 		BurstWindow:       5 * time.Second,
 		Enable429Response: true,
 	}
@@ -78,7 +78,7 @@ func TestRateLimiter_CheckRateLimit(t *testing.T) {
 
 	t.Run("AllowedRequests", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/api/v2/help_center/articles/123", nil)
-		
+
 		// First few requests should be allowed
 		for i := 0; i < 2; i++ {
 			result := limiter.CheckRateLimit(req)
@@ -95,7 +95,7 @@ func TestRateLimiter_CheckRateLimit(t *testing.T) {
 		// Create fresh limiter for this test
 		limiter := NewRateLimiter(config)
 		req := httptest.NewRequest("POST", "/api/v2/help_center/articles", nil)
-		
+
 		// Exhaust burst limit
 		for i := 0; i < config.BurstLimit; i++ {
 			result := limiter.CheckRateLimit(req)
@@ -122,9 +122,9 @@ func TestRateLimiter_ApplyRateLimit(t *testing.T) {
 	t.Parallel()
 
 	config := &RateLimitConfig{
-		GlobalLimit:       5,   // Very small limit
+		GlobalLimit:       5, // Very small limit
 		GlobalWindow:      time.Minute,
-		BurstLimit:        2,   // Very small burst
+		BurstLimit:        2, // Very small burst
 		BurstWindow:       5 * time.Second,
 		Enable429Response: true,
 		EnableHeaders:     true,
@@ -156,7 +156,7 @@ func TestRateLimiter_ApplyRateLimit(t *testing.T) {
 	t.Run("RateLimitResponse", func(t *testing.T) {
 		// Create fresh limiter for this test
 		limiter := NewRateLimiter(&RateLimitConfig{
-			GlobalLimit:       1,   // Extremely small limit
+			GlobalLimit:       1, // Extremely small limit
 			GlobalWindow:      time.Minute,
 			BurstLimit:        1,
 			BurstWindow:       5 * time.Second,
@@ -295,10 +295,10 @@ func TestRateLimiter_Statistics(t *testing.T) {
 
 	// Make requests that will trigger rate limiting
 	req := httptest.NewRequest("GET", "/api/v2/help_center/articles/123", nil)
-	
+
 	// First request allowed
 	limiter.CheckRateLimit(req)
-	
+
 	// Second request rate limited (burst limit = 1)
 	limiter.CheckRateLimit(req)
 
@@ -322,7 +322,7 @@ func TestRateLimiter_Statistics(t *testing.T) {
 	// Test reset
 	limiter.ResetStatistics()
 	stats = limiter.GetStatistics()
-	
+
 	if stats.TotalRequests != 0 {
 		t.Errorf("Expected 0 requests after reset, got %d", stats.TotalRequests)
 	}
@@ -336,7 +336,7 @@ func TestRateLimiter_UpdateLimits(t *testing.T) {
 	// Test global limit update
 	newGlobalLimit := 500
 	limiter.UpdateGlobalLimit(newGlobalLimit)
-	
+
 	if limiter.config.GlobalLimit != newGlobalLimit {
 		t.Errorf("Expected global limit %d, got %d", newGlobalLimit, limiter.config.GlobalLimit)
 	}
@@ -345,7 +345,7 @@ func TestRateLimiter_UpdateLimits(t *testing.T) {
 	endpoint := "/test"
 	endpointLimit := 100
 	limiter.UpdateEndpointLimit(endpoint, endpointLimit)
-	
+
 	if limiter.config.PerEndpointLimits[endpoint] != endpointLimit {
 		t.Errorf("Expected endpoint limit %d, got %d", endpointLimit, limiter.config.PerEndpointLimits[endpoint])
 	}
@@ -470,9 +470,9 @@ func TestAdvancedMockServer_RateLimiting(t *testing.T) {
 	t.Parallel()
 
 	rateLimitConfig := &RateLimitConfig{
-		GlobalLimit:       5,  // Small limit for testing
+		GlobalLimit:       5, // Small limit for testing
 		GlobalWindow:      time.Minute,
-		BurstLimit:        2,  // Small burst for testing
+		BurstLimit:        2, // Small burst for testing
 		BurstWindow:       10 * time.Second,
 		Enable429Response: true,
 		EnableHeaders:     true,
@@ -515,9 +515,9 @@ func TestAdvancedMockServer_RateLimiting(t *testing.T) {
 		strictConfig := &MockServerConfig{
 			EnableRateLimiting: true,
 			RateLimitConfig: &RateLimitConfig{
-				GlobalLimit:       2,   // Very small limit
+				GlobalLimit:       2, // Very small limit
 				GlobalWindow:      time.Minute,
-				BurstLimit:        1,   // Only 1 burst request
+				BurstLimit:        1, // Only 1 burst request
 				BurstWindow:       10 * time.Second,
 				Enable429Response: true,
 				EnableHeaders:     true,
@@ -561,9 +561,9 @@ func TestAdvancedMockServer_RateLimiting(t *testing.T) {
 		statsConfig := &MockServerConfig{
 			EnableRateLimiting: true,
 			RateLimitConfig: &RateLimitConfig{
-				GlobalLimit:       2,   // Small limit
+				GlobalLimit:       2, // Small limit
 				GlobalWindow:      time.Minute,
-				BurstLimit:        1,   // Very small burst
+				BurstLimit:        1, // Very small burst
 				BurstWindow:       10 * time.Second,
 				Enable429Response: true,
 				EnableHeaders:     true,
@@ -603,7 +603,7 @@ func TestAdvancedMockServer_RateLimiting(t *testing.T) {
 			RateLimitConfig: &RateLimitConfig{
 				GlobalLimit:       1000, // High limit
 				GlobalWindow:      time.Minute,
-				BurstLimit:        100,  // High burst
+				BurstLimit:        100, // High burst
 				BurstWindow:       10 * time.Second,
 				Enable429Response: true,
 				EnableHeaders:     true,
@@ -618,7 +618,7 @@ func TestAdvancedMockServer_RateLimiting(t *testing.T) {
 		// Update global limit
 		updateServer.UpdateGlobalRateLimit(2000)
 
-		// Update endpoint limit  
+		// Update endpoint limit
 		updateServer.UpdateEndpointRateLimit("/articles", 1000)
 
 		// Verify requests work with higher limits

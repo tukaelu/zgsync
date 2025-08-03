@@ -12,29 +12,29 @@ import (
 func CaptureStdout(t *testing.T, fn func() error) (string, error) {
 	// Save original stdout
 	originalStdout := os.Stdout
-	
+
 	// Create pipe
 	r, w, err := os.Pipe()
 	if err != nil {
 		t.Fatalf("Failed to create pipe: %v", err)
 	}
-	
+
 	// Replace stdout
 	os.Stdout = w
-	
+
 	// Execute function
 	funcErr := fn()
-	
+
 	// Close writer and restore stdout
 	_ = w.Close()
 	os.Stdout = originalStdout
-	
+
 	// Read captured output
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, r); err != nil {
 		t.Fatalf("Failed to read from pipe: %v", err)
 	}
-	
+
 	return buf.String(), funcErr
 }
 
@@ -53,6 +53,6 @@ var TestLocales = struct {
 	French   string
 }{
 	Japanese: "ja",
-	English:  "en_us", 
+	English:  "en_us",
 	French:   "fr",
 }

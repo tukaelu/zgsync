@@ -12,7 +12,7 @@ import (
 func TestCommandPush_Run(t *testing.T) {
 	// Create temporary test files
 	tempDir := t.TempDir()
-	
+
 	// Create test article file
 	articleFile := filepath.Join(tempDir, "test-article.md")
 	articleContent := `---
@@ -40,11 +40,11 @@ This is test content.
 	}
 
 	tests := []struct {
-		name          string
-		cmd           CommandPush
-		files         []string
-		expectError   bool
-		mockSetup     func(*testhelper.MockZendeskClient)
+		name        string
+		cmd         CommandPush
+		files       []string
+		expectError bool
+		mockSetup   func(*testhelper.MockZendeskClient)
 	}{
 		{
 			name: "push article successfully",
@@ -113,13 +113,24 @@ This is test content.
 			expectError: true,
 			mockSetup:   func(mock *testhelper.MockZendeskClient) {},
 		},
+		{
+			name: "directory path instead of file",
+			cmd: CommandPush{
+				Article: false,
+				DryRun:  false,
+				Raw:     false,
+			},
+			files:       []string{tempDir}, // Pass directory instead of file
+			expectError: true,
+			mockSetup:   func(mock *testhelper.MockZendeskClient) {},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := &testhelper.MockZendeskClient{}
 			tt.mockSetup(mockClient)
-			
+
 			cmd := tt.cmd
 			cmd.Files = tt.files
 			cmd.client = mockClient
@@ -155,23 +166,169 @@ func TestCommandPush_AfterApply(t *testing.T) {
 
 	cmd := &CommandPush{}
 	err := cmd.AfterApply(global)
-	
+
 	if err != nil {
 		t.Errorf("AfterApply() failed: %v", err)
 	}
-	
+
 	if cmd.client == nil {
 		t.Error("client should be initialized")
 	}
-	
+
 	if cmd.converter == nil {
 		t.Error("converter should be initialized")
 	}
 }
 
+func TestCommandPush_FilePermissionErrors(t *testing.T) {
+	tempDir := t.TempDir()
+
+	// Create a file with restricted read permissions
+	restrictedFile := filepath.Join(tempDir, "restricted.md")
+	restrictedContent := `---
+locale: ja
+title: Restricted File
+source_id: 789
+---
+# Restricted Content
+`
+	if err := os.WriteFile(restrictedFile, []byte(restrictedContent), 0644); err != nil {
+		t.Fatalf("Failed to create restricted file: %v", err)
+	}
+
+	// Remove read permissions (this test may not work on all platforms)
+	if err := os.Chmod(restrictedFile, 0000); err != nil {
+		t.Skipf("Cannot change file permissions on this platform: %v", err)
+	}
+	defer func() {
+		// Restore permissions for cleanup
+		_ = os.Chmod(restrictedFile, 0644)
+	}()
+
+	cmd := CommandPush{
+		Article: false,
+		DryRun:  false,
+		Raw:     false,
+		Files:   []string{restrictedFile},
+	}
+	cmd.client = &testhelper.MockZendeskClient{}
+	cmd.converter = converter.NewConverter(false)
+
+	global := &Global{
+		Config: Config{
+			DefaultLocale:     testhelper.TestLocales.English,
+			NotifySubscribers: false,
+		},
+	}
+
+	err := cmd.Run(global)
+	if err == nil {
+		t.Error("Expected permission error but got none")
+	}
+}
+
+func TestCommandPush_FrontmatterErrors(t *testing.T) {
+	tempDir := t.TempDir()
+
+	tests := []struct {
+		name        string
+		filename    string
+		content     string
+		expectError bool
+		description string
+	}{
+		{
+			name:     "invalid YAML format",
+			filename: "invalid-yaml.md",
+			content: `---
+locale: ja
+title: "Test Article
+invalid yaml structure
+---
+# Test Content`,
+			expectError: true,
+			description: "YAML parsing should fail with unterminated quoted string",
+		},
+		{
+			name:     "corrupted YAML structure",
+			filename: "corrupted-yaml.md",
+			content: `---
+locale: ja
+title: Test Article
+	invalid_indentation:
+  - item
+source_id: 123
+---
+# Test Content`,
+			expectError: true,
+			description: "Should fail with invalid YAML indentation structure",
+		},
+		{
+			name:     "empty frontmatter",
+			filename: "empty-frontmatter.md",
+			content: `---
+---
+# Test Content`,
+			expectError: false,
+			description: "Empty frontmatter should be parseable but may fail at API level",
+		},
+		{
+			name:     "no frontmatter",
+			filename: "no-frontmatter.md",
+			content: `# Test Content
+This is just markdown without frontmatter.`,
+			expectError: false,
+			description: "Files without frontmatter should be parseable but may fail at API level",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create test file with problematic frontmatter
+			testFile := filepath.Join(tempDir, tt.filename)
+			if err := os.WriteFile(testFile, []byte(tt.content), 0644); err != nil {
+				t.Fatalf("Failed to create test file: %v", err)
+			}
+
+			mockClient := &testhelper.MockZendeskClient{}
+			// Set up mock to return success if called (shouldn't be called for most error cases)
+			mockClient.UpdateTranslationFunc = func(articleID int, locale, payload string) (string, error) {
+				return testhelper.CreateDefaultTranslationResponse(1, articleID, locale), nil
+			}
+			mockClient.UpdateArticleFunc = func(locale string, articleID int, payload string) (string, error) {
+				return testhelper.CreateDefaultArticleResponse(123, 456), nil
+			}
+
+			cmd := CommandPush{
+				Article: false, // Try as translation first
+				DryRun:  false,
+				Raw:     false,
+				Files:   []string{testFile},
+			}
+			cmd.client = mockClient
+			cmd.converter = converter.NewConverter(false)
+
+			global := &Global{
+				Config: Config{
+					DefaultLocale:     testhelper.TestLocales.English,
+					NotifySubscribers: false,
+				},
+			}
+
+			err := cmd.Run(global)
+			if tt.expectError && err == nil {
+				t.Errorf("Expected error for %s but got none", tt.name)
+			}
+			if !tt.expectError && err != nil {
+				t.Errorf("Expected no error for %s but got: %v", tt.name, err)
+			}
+		})
+	}
+}
+
 func TestCommandPush_pushArticle(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	// Create test article file with ID
 	articleFile := filepath.Join(tempDir, "test-article.md")
 	articleContent := `---
@@ -216,7 +373,7 @@ title: Test Article
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := &testhelper.MockZendeskClient{}
 			tt.mockSetup(mockClient)
-			
+
 			cmd := &CommandPush{
 				DryRun: tt.dryRun,
 				client: mockClient,
@@ -242,7 +399,7 @@ title: Test Article
 
 func TestCommandPush_pushTranslation(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	// Create test translation file
 	translationFile := filepath.Join(tempDir, "test-translation.md")
 	translationContent := `---
@@ -305,7 +462,7 @@ This is test content.
 		t.Run(tt.name, func(t *testing.T) {
 			mockClient := &testhelper.MockZendeskClient{}
 			tt.mockSetup(mockClient)
-			
+
 			cmd := &CommandPush{
 				DryRun:    tt.dryRun,
 				Raw:       tt.raw,

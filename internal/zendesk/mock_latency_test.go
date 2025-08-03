@@ -64,30 +64,30 @@ func TestLatencySimulator_SimulateLatency(t *testing.T) {
 	simulator := NewLatencySimulator(config)
 
 	tests := []struct {
-		name           string
-		method         string
-		path           string
+		name               string
+		method             string
+		path               string
 		expectedMinLatency time.Duration
 		expectedMaxLatency time.Duration
 	}{
 		{
-			name:           "GET articles",
-			method:         "GET",
-			path:           "/api/v2/help_center/articles/123",
+			name:               "GET articles",
+			method:             "GET",
+			path:               "/api/v2/help_center/articles/123",
 			expectedMinLatency: 1 * time.Millisecond,
 			expectedMaxLatency: 100 * time.Millisecond,
 		},
 		{
-			name:           "POST articles",
-			method:         "POST",
-			path:           "/api/v2/help_center/articles",
+			name:               "POST articles",
+			method:             "POST",
+			path:               "/api/v2/help_center/articles",
 			expectedMinLatency: 10 * time.Millisecond,
 			expectedMaxLatency: 300 * time.Millisecond,
 		},
 		{
-			name:           "GET translations",
-			method:         "GET",
-			path:           "/api/v2/help_center/translations/456",
+			name:               "GET translations",
+			method:             "GET",
+			path:               "/api/v2/help_center/translations/456",
 			expectedMinLatency: 5 * time.Millisecond,
 			expectedMaxLatency: 150 * time.Millisecond,
 		},
@@ -96,7 +96,7 @@ func TestLatencySimulator_SimulateLatency(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			req := httptest.NewRequest(tt.method, tt.path, nil)
-			
+
 			start := time.Now()
 			latency := simulator.SimulateLatency(req)
 			actualDuration := time.Since(start)
@@ -147,7 +147,7 @@ func TestLatencySimulator_NetworkProfiles(t *testing.T) {
 			// Run multiple times to get average
 			var totalLatency time.Duration
 			runs := 5
-			
+
 			for i := 0; i < runs; i++ {
 				latency := simulator.SimulateLatency(req)
 				totalLatency += latency
@@ -205,7 +205,7 @@ func TestLatencySimulator_Distributions(t *testing.T) {
 				}
 			}
 
-			t.Logf("Distribution %s sample range: %v to %v", d.name, 
+			t.Logf("Distribution %s sample range: %v to %v", d.name,
 				minDuration(samples), maxDuration(samples))
 		})
 	}
@@ -278,14 +278,14 @@ func TestLatencySimulator_Statistics(t *testing.T) {
 	}
 
 	if stats.MaxLatency < stats.MinLatency {
-		t.Errorf("Expected max latency >= min latency, got max=%v, min=%v", 
+		t.Errorf("Expected max latency >= min latency, got max=%v, min=%v",
 			stats.MaxLatency, stats.MinLatency)
 	}
 
 	// Test reset
 	simulator.ResetStatistics()
 	stats = simulator.GetNetworkStatistics()
-	
+
 	if stats.TotalRequests != 0 {
 		t.Errorf("Expected 0 requests after reset, got %d", stats.TotalRequests)
 	}
