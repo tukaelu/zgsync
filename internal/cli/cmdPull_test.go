@@ -280,3 +280,74 @@ func TestCommandPull_DefaultLocale(t *testing.T) {
 		t.Errorf("Expected no error but got: %v", err)
 	}
 }
+
+func TestCommandPull_FileSystemErrors(t *testing.T) {
+	tests := []struct {
+		name        string
+		setupDir    func() string
+		expectError bool
+	}{
+		{
+			name: "non-existent contents directory",
+			setupDir: func() string {
+				return "/non/existent/directory"
+			},
+			expectError: true,
+		},
+		{
+			name: "read-only contents directory",
+			setupDir: func() string {
+				tempDir := t.TempDir()
+				// Make directory read-only (no write permissions)
+				if err := os.Chmod(tempDir, 0444); err != nil {
+					t.Skipf("Cannot change directory permissions on this platform: %v", err)
+				}
+				return tempDir
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			contentsDir := tt.setupDir()
+			
+			// Restore permissions for cleanup if needed
+			defer func() {
+				if tt.name == "read-only contents directory" {
+					_ = os.Chmod(contentsDir, 0755)
+				}
+			}()
+
+			mockClient := &testhelper.MockZendeskClient{}
+			mockClient.ShowArticleFunc = func(locale string, articleID int) (string, error) {
+				return testhelper.CreateDefaultArticleResponse(articleID, testhelper.TestSectionID), nil
+			}
+			mockClient.ShowTranslationFunc = func(articleID int, locale string) (string, error) {
+				return testhelper.CreateDefaultTranslationResponse(1, articleID, locale), nil
+			}
+
+			cmd := &CommandPull{
+				Locale:      testhelper.TestLocales.Japanese,
+				ArticleIDs:  []int{testhelper.TestArticleID},
+				client:      mockClient,
+				converter:   converter.NewConverter(false),
+			}
+
+			global := &Global{
+				Config: Config{
+					DefaultLocale: testhelper.TestLocales.English,
+					ContentsDir:   contentsDir,
+				},
+			}
+
+			err := cmd.Run(global)
+			if tt.expectError && err == nil {
+				t.Error("Expected error but got none")
+			}
+			if !tt.expectError && err != nil {
+				t.Errorf("Expected no error but got: %v", err)
+			}
+		})
+	}
+}

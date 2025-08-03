@@ -113,6 +113,17 @@ This is test content.
 			expectError: true,
 			mockSetup:   func(mock *testhelper.MockZendeskClient) {},
 		},
+		{
+			name: "directory path instead of file",
+			cmd: CommandPush{
+				Article: false,
+				DryRun:  false,
+				Raw:     false,
+			},
+			files:       []string{tempDir}, // Pass directory instead of file
+			expectError: true,
+			mockSetup:   func(mock *testhelper.MockZendeskClient) {},
+		},
 	}
 
 	for _, tt := range tests {
@@ -166,6 +177,53 @@ func TestCommandPush_AfterApply(t *testing.T) {
 	
 	if cmd.converter == nil {
 		t.Error("converter should be initialized")
+	}
+}
+
+func TestCommandPush_FilePermissionErrors(t *testing.T) {
+	tempDir := t.TempDir()
+	
+	// Create a file with restricted read permissions
+	restrictedFile := filepath.Join(tempDir, "restricted.md")
+	restrictedContent := `---
+locale: ja
+title: Restricted File
+source_id: 789
+---
+# Restricted Content
+`
+	if err := os.WriteFile(restrictedFile, []byte(restrictedContent), 0644); err != nil {
+		t.Fatalf("Failed to create restricted file: %v", err)
+	}
+	
+	// Remove read permissions (this test may not work on all platforms)
+	if err := os.Chmod(restrictedFile, 0000); err != nil {
+		t.Skipf("Cannot change file permissions on this platform: %v", err)
+	}
+	defer func() {
+		// Restore permissions for cleanup
+		_ = os.Chmod(restrictedFile, 0644)
+	}()
+
+	cmd := CommandPush{
+		Article: false,
+		DryRun:  false,
+		Raw:     false,
+		Files:   []string{restrictedFile},
+	}
+	cmd.client = &testhelper.MockZendeskClient{}
+	cmd.converter = converter.NewConverter(false)
+
+	global := &Global{
+		Config: Config{
+			DefaultLocale:     testhelper.TestLocales.English,
+			NotifySubscribers: false,
+		},
+	}
+
+	err := cmd.Run(global)
+	if err == nil {
+		t.Error("Expected permission error but got none")
 	}
 }
 
