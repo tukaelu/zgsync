@@ -36,6 +36,7 @@ checksum:
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
 changelog:
+  use: github  # Use GitHub Releases release notes
   sort: asc
   filters:
     exclude:
