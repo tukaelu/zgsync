@@ -8,10 +8,64 @@ import (
 	md "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
+
+	"github.com/tukaelu/zgsync/internal/testutil"
 )
 
 func TestConvertToHTML(t *testing.T) {
-	// TODO: implement this test
+	testCases := []struct {
+		name     string
+		markdown string
+		expected string
+	}{
+		{
+			name:     "simple paragraph",
+			markdown: "Hello world",
+			expected: "<p>Hello world</p>\n",
+		},
+		{
+			name:     "heading",
+			markdown: "# Hello world",
+			expected: "<h1>Hello world</h1>\n",
+		},
+		{
+			name:     "bold text",
+			markdown: "**bold text**",
+			expected: "<p><strong>bold text</strong></p>\n",
+		},
+		{
+			name:     "italic text",
+			markdown: "*italic text*",
+			expected: "<p><em>italic text</em></p>\n",
+		},
+		{
+			name:     "code block",
+			markdown: "```\ncode\n```",
+			expected: "<pre><code>code\n</code></pre>\n",
+		},
+		{
+			name:     "link",
+			markdown: "[link](http://example.com)",
+			expected: "<p><a href=\"http://example.com\">link</a></p>\n",
+		},
+		{
+			name:     "empty string",
+			markdown: "",
+			expected: "",
+		},
+	}
+
+	c := NewConverter(false)
+	errorChecker := testutil.NewErrorChecker(t)
+	asserter := testutil.NewAssertionHelper(t)
+	
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actualHTMLContent, err := c.ConvertToHTML(tc.markdown)
+			errorChecker.ExpectNoError(err, "ConvertToHTML()")
+			asserter.Equal(tc.expected, actualHTMLContent, "HTML content")
+		})
+	}
 }
 
 func TestConvertToHTML_Div(t *testing.T) {
@@ -185,7 +239,94 @@ func TestConvertToHTML_AnchorWithNoTargetBlank(t *testing.T) {
 }
 
 func TestConvertToMarkdown(t *testing.T) {
-	// TODO: implement this test
+	converter := NewConverter(false)
+	
+	tests := []struct {
+		name     string
+		html     string
+		expected string
+	}{
+		{
+			name:     "simple paragraph",
+			html:     "<p>Hello, World!</p>",
+			expected: "Hello, World!",
+		},
+		{
+			name:     "heading with paragraph",
+			html:     "<h1>Title</h1><p>Content</p>",
+			expected: "# Title\n\nContent",
+		},
+		{
+			name:     "div with class",
+			html:     "<div class=\"info\">Important information</div>",
+			expected: ":::{.info}\nImportant information\n:::",
+		},
+		{
+			name:     "heading with attributes",
+			html:     "<h2 id=\"section1\" class=\"highlight\">Section Title</h2>",
+			expected: "## Section Title {#section1 .highlight}",
+		},
+		{
+			name:     "nested elements",
+			html:     "<div><h3>Nested</h3><p>Content inside div</p></div>",
+			expected: ":::\n### Nested\n\nContent inside div\n:::",
+		},
+		{
+			name:     "empty input",
+			html:     "",
+			expected: "",
+		},
+		{
+			name:     "complex div with multiple attributes",
+			html:     "<div id=\"main\" class=\"container\" data-section=\"content\">Test content</div>",
+			expected: ":::{#main .container data-section=content}\nTest content\n:::",
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := converter.ConvertToMarkdown(tt.html)
+			if err != nil {
+				t.Errorf("ConvertToMarkdown() failed: %v", err)
+			}
+			if result != tt.expected {
+				t.Errorf("ConvertToMarkdown() = %q, want %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestConvertToMarkdown_ErrorHandling(t *testing.T) {
+	converter := NewConverter(false)
+	
+	// Test with invalid HTML that might cause issues
+	tests := []struct {
+		name string
+		html string
+	}{
+		{
+			name: "malformed HTML",
+			html: "<p>Unclosed paragraph",
+		},
+		{
+			name: "nested unclosed tags",
+			html: "<div><p>Nested <strong>content",
+		},
+	}
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// ConvertToMarkdown should handle malformed HTML gracefully
+			result, err := converter.ConvertToMarkdown(tt.html)
+			if err != nil {
+				t.Errorf("ConvertToMarkdown() should handle malformed HTML gracefully, but got error: %v", err)
+			}
+			// Result should be a string (even if not perfectly formatted)
+			if len(result) == 0 {
+				t.Errorf("ConvertToMarkdown() should return some result, got empty string")
+			}
+		})
+	}
 }
 
 func TestConvertToMarkdown_PluckAttributes(t *testing.T) {

@@ -118,7 +118,7 @@ func (c *clientImpl) doRequest(method string, endpoint string, payload io.Reader
 	if err != nil {
 		return "", err
 	}
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
 		return "", fmt.Errorf("unexpected status code: %d", res.StatusCode)

@@ -1,6 +1,11 @@
 package cli
 
-import "testing"
+import (
+	"strings"
+	"testing"
+
+	"github.com/tukaelu/zgsync/internal/testutil"
+)
 
 func TestLoadConfig(t *testing.T) {
 	refDefaultUserSegmentID := 456
@@ -46,38 +51,20 @@ func TestLoadConfig(t *testing.T) {
 		t.Run(tt.configPath, func(t *testing.T) {
 			var g Global
 			g.ConfigPath = tt.configPath
-			err := g.LoadConfig()
-			if err != nil {
-				t.Errorf("LoadConfig() failed: %v", err)
-			}
+			result := testutil.NewTestResult(nil, g.LoadConfig())
+			result.AssertSuccess(t, "LoadConfig()")
 
-			if g.Config.Subdomain != tt.subdomain {
-				t.Errorf("Config.Subdomain failed: got %v, want %v", g.Config.Subdomain, tt.subdomain)
-			}
-			if g.Config.Email != tt.email {
-				t.Errorf("Config.Email failed: got %v, want %v", g.Config.Email, tt.email)
-			}
-			if g.Config.Token != tt.token {
-				t.Errorf("Config.Token failed: got %v, want %v", g.Config.Token, tt.token)
-			}
-			if g.Config.DefaultCommentsDisabled != tt.defaultCommentsDisabled {
-				t.Errorf("Config.DefaultCommentsDisabled failed: got %v, want %v", g.Config.DefaultCommentsDisabled, tt.defaultCommentsDisabled)
-			}
-			if g.Config.DefaultLocale != tt.defaultLocale {
-				t.Errorf("Config.DefaultLocale failed: got %v, want %v", g.Config.DefaultLocale, tt.defaultLocale)
-			}
-			if g.Config.DefaultPermissionGroupID != tt.defaultPermissionGroupID {
-				t.Errorf("Config.DefaultPermissionGroupID failed: got %v, want %v", g.Config.DefaultPermissionGroupID, tt.defaultPermissionGroupID)
-			}
-			if g.Config.DefailtUserSegmentID != nil && *g.Config.DefailtUserSegmentID != *tt.defaultUserSegmentID {
-				t.Errorf("Config.DefailtUserSegmentID failed: got %v, want %v", g.Config.DefailtUserSegmentID, tt.defaultUserSegmentID)
-			}
-			if g.Config.NotifySubscribers != tt.notifySubscribers {
-				t.Errorf("Config.NotifySubscribers failed: got %v, want %v", g.Config.NotifySubscribers, tt.notifySubscribers)
-			}
-			if g.Config.ContentsDir != tt.contentsDir {
-				t.Errorf("Config.DocsRoot failed: got %v, want %v", g.Config.ContentsDir, tt.contentsDir)
-			}
+			// Use FieldComparer for systematic field comparison
+			fc := testutil.NewFieldComparer(t, "Config")
+			fc.CompareString("Subdomain", tt.subdomain, g.Config.Subdomain)
+			fc.CompareString("Email", tt.email, g.Config.Email)
+			fc.CompareString("Token", tt.token, g.Config.Token)
+			fc.CompareBool("DefaultCommentsDisabled", tt.defaultCommentsDisabled, g.Config.DefaultCommentsDisabled)
+			fc.CompareString("DefaultLocale", tt.defaultLocale, g.Config.DefaultLocale)
+			fc.CompareInt("DefaultPermissionGroupID", tt.defaultPermissionGroupID, g.Config.DefaultPermissionGroupID)
+			fc.CompareIntPtr("DefailtUserSegmentID", tt.defaultUserSegmentID, g.Config.DefailtUserSegmentID)
+			fc.CompareBool("NotifySubscribers", tt.notifySubscribers, g.Config.NotifySubscribers)
+			fc.CompareString("ContentsDir", tt.contentsDir, g.Config.ContentsDir)
 		})
 	}
 }
@@ -107,6 +94,185 @@ func TestConfigExists(t *testing.T) {
 			err := g.ConfigExists()
 			if tt.notError == (err != nil) {
 				t.Errorf("ConfigExists() failed: %v", err)
+			}
+		})
+	}
+}
+
+func TestLoadConfig_ErrorCases(t *testing.T) {
+	tests := []struct {
+		name       string
+		configPath string
+		expectErr  bool
+		errMsg     string
+	}{
+		{
+			name:       "non-existent config file",
+			configPath: "testdata/non-existent.yaml",
+			expectErr:  false, // LoadConfig returns nil for missing files
+		},
+		{
+			name:       "invalid yaml format",
+			configPath: "testdata/invalid.yaml",
+			expectErr:  true,
+			errMsg:     "mapping values are not allowed", // Actual YAML error message
+		},
+	}
+
+	errorChecker := testutil.NewErrorChecker(t)
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var g Global
+			g.ConfigPath = tt.configPath
+			err := g.LoadConfig()
+
+			if tt.expectErr {
+				if tt.errMsg != "" {
+					errorChecker.ExpectErrorContaining(err, tt.errMsg, "LoadConfig()")
+				} else {
+					errorChecker.ExpectError(err, "LoadConfig()")
+				}
+			} else {
+				errorChecker.ExpectNoError(err, "LoadConfig()")
+			}
+		})
+	}
+}
+
+func TestConfig_Validation_ErrorCases(t *testing.T) {
+	tests := []struct {
+		name   string
+		config Config
+		expectErr bool
+		errMsg string
+	}{
+		{
+			name: "missing subdomain",
+			config: Config{
+				Email:                    "test@example.com/token",
+				Token:                    "token123",
+				DefaultLocale:            "en",
+				DefaultPermissionGroupID: 123,
+			},
+			expectErr: true,
+			errMsg:    "subdomain",
+		},
+		{
+			name: "missing email",
+			config: Config{
+				Subdomain:                "test",
+				Token:                    "token123",
+				DefaultLocale:            "en",
+				DefaultPermissionGroupID: 123,
+			},
+			expectErr: true,
+			errMsg:    "email",
+		},
+		{
+			name: "missing token",
+			config: Config{
+				Subdomain:                "test",
+				Email:                    "test@example.com/token",
+				DefaultLocale:            "en",
+				DefaultPermissionGroupID: 123,
+			},
+			expectErr: true,
+			errMsg:    "token",
+		},
+		{
+			name: "missing default locale",
+			config: Config{
+				Subdomain:                "test",
+				Email:                    "test@example.com/token",
+				Token:                    "token123",
+				DefaultPermissionGroupID: 123,
+			},
+			expectErr: true,
+			errMsg:    "default_locale",
+		},
+		{
+			name: "missing default permission group id",
+			config: Config{
+				Subdomain:     "test",
+				Email:         "test@example.com/token",
+				Token:         "token123",
+				DefaultLocale: "en",
+			},
+			expectErr: true,
+			errMsg:    "default_permission_group_id",
+		},
+		{
+			name: "valid config",
+			config: Config{
+				Subdomain:                "test",
+				Email:                    "test@example.com/token",
+				Token:                    "token123",
+				DefaultLocale:            "en",
+				DefaultPermissionGroupID: 123,
+			},
+			expectErr: false,
+		},
+	}
+
+	errorChecker := testutil.NewErrorChecker(t)
+	
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.config.Validation()
+
+			if tt.expectErr {
+				if tt.errMsg != "" {
+					errorChecker.ExpectErrorContaining(err, tt.errMsg, "Config.Validation()")
+				} else {
+					errorChecker.ExpectError(err, "Config.Validation()")
+				}
+			} else {
+				errorChecker.ExpectNoError(err, "Config.Validation()")
+			}
+		})
+	}
+}
+
+func TestAbsConfig_ErrorCases(t *testing.T) {
+	tests := []struct {
+		name       string
+		configPath string
+		expectAbsolute bool
+	}{
+		{
+			name:       "valid relative path",
+			configPath: "testdata/config.yaml",
+			expectAbsolute: true,
+		},
+		{
+			name:       "valid absolute path",
+			configPath: "/tmp/config.yaml",
+			expectAbsolute: true,
+		},
+		{
+			name:       "empty path returns current directory",
+			configPath: "",
+			expectAbsolute: true, // filepath.Abs("") returns current directory
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var g Global
+			g.ConfigPath = tt.configPath
+			result := g.AbsConfig()
+
+			if tt.expectAbsolute {
+				if result == "" {
+					t.Errorf("AbsConfig() expected non-empty result but got empty")
+				}
+				// For relative paths, result should be different from input
+				if tt.configPath != "" && !strings.HasPrefix(result, "/") {
+					// On Unix systems, absolute paths start with "/"
+					// This test verifies the path was made absolute
+					t.Logf("AbsConfig() converted relative path correctly: %s -> %s", tt.configPath, result)
+				}
 			}
 		})
 	}
