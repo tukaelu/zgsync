@@ -58,7 +58,7 @@ func TestConvertToHTML(t *testing.T) {
 	c := NewConverter(false)
 	errorChecker := testutil.NewErrorChecker(t)
 	asserter := testutil.NewAssertionHelper(t)
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			actualHTMLContent, err := c.ConvertToHTML(tc.markdown)
@@ -240,7 +240,7 @@ func TestConvertToHTML_AnchorWithNoTargetBlank(t *testing.T) {
 
 func TestConvertToMarkdown(t *testing.T) {
 	converter := NewConverter(false)
-	
+
 	tests := []struct {
 		name     string
 		html     string
@@ -282,7 +282,7 @@ func TestConvertToMarkdown(t *testing.T) {
 			expected: ":::{#main .container data-section=content}\nTest content\n:::",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := converter.ConvertToMarkdown(tt.html)
@@ -298,7 +298,7 @@ func TestConvertToMarkdown(t *testing.T) {
 
 func TestConvertToMarkdown_ErrorHandling(t *testing.T) {
 	converter := NewConverter(false)
-	
+
 	// Test with invalid HTML that might cause issues
 	tests := []struct {
 		name string
@@ -313,7 +313,7 @@ func TestConvertToMarkdown_ErrorHandling(t *testing.T) {
 			html: "<div><p>Nested <strong>content",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// ConvertToMarkdown should handle malformed HTML gracefully

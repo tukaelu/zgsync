@@ -122,7 +122,7 @@ func TestLoadConfig_ErrorCases(t *testing.T) {
 	}
 
 	errorChecker := testutil.NewErrorChecker(t)
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var g Global
@@ -144,10 +144,10 @@ func TestLoadConfig_ErrorCases(t *testing.T) {
 
 func TestConfig_Validation_ErrorCases(t *testing.T) {
 	tests := []struct {
-		name   string
-		config Config
+		name      string
+		config    Config
 		expectErr bool
-		errMsg string
+		errMsg    string
 	}{
 		{
 			name: "missing subdomain",
@@ -218,7 +218,7 @@ func TestConfig_Validation_ErrorCases(t *testing.T) {
 	}
 
 	errorChecker := testutil.NewErrorChecker(t)
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.config.Validation()
@@ -238,23 +238,23 @@ func TestConfig_Validation_ErrorCases(t *testing.T) {
 
 func TestAbsConfig_ErrorCases(t *testing.T) {
 	tests := []struct {
-		name       string
-		configPath string
+		name           string
+		configPath     string
 		expectAbsolute bool
 	}{
 		{
-			name:       "valid relative path",
-			configPath: "testdata/config.yaml",
+			name:           "valid relative path",
+			configPath:     "testdata/config.yaml",
 			expectAbsolute: true,
 		},
 		{
-			name:       "valid absolute path",
-			configPath: "/tmp/config.yaml",
+			name:           "valid absolute path",
+			configPath:     "/tmp/config.yaml",
 			expectAbsolute: true,
 		},
 		{
-			name:       "empty path returns current directory",
-			configPath: "",
+			name:           "empty path returns current directory",
+			configPath:     "",
 			expectAbsolute: true, // filepath.Abs("") returns current directory
 		},
 	}
@@ -298,17 +298,17 @@ email: test@example.com/token
 token: testtoken
 default_locale: en
 default_permission_group_id: 123`
-				
+
 				// Create config file
 				if err := os.WriteFile(configFile, []byte(configContent), 0644); err != nil {
 					t.Fatalf("Failed to create config file: %v", err)
 				}
-				
+
 				// Remove read permissions
 				if err := os.Chmod(configFile, 0000); err != nil {
 					t.Skipf("Cannot change file permissions on this platform: %v", err)
 				}
-				
+
 				return configFile
 			},
 			expectError: false, // LoadConfig is lenient about missing/inaccessible files
@@ -333,11 +333,11 @@ default_locale: en
 default_permission_group_id: "not_a_number"
 	invalid_yaml_structure:
   - malformed`
-				
+
 				if err := os.WriteFile(configFile, []byte(corruptedContent), 0644); err != nil {
 					t.Fatalf("Failed to create corrupted config file: %v", err)
 				}
-				
+
 				return configFile
 			},
 			expectError: true,
@@ -348,7 +348,7 @@ default_permission_group_id: "not_a_number"
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			configPath := tt.setupConfig()
-			
+
 			// Restore permissions for cleanup if needed
 			defer func() {
 				if tt.name == "config file permission denied" {
@@ -360,7 +360,7 @@ default_permission_group_id: "not_a_number"
 			var g Global
 			g.ConfigPath = configPath
 			err := g.LoadConfig()
-			
+
 			if tt.expectError && err == nil {
 				t.Errorf("Expected error for %s but got none", tt.name)
 			}
@@ -373,12 +373,12 @@ default_permission_group_id: "not_a_number"
 
 func TestConfig_CommandExecution_WithInvalidConfig(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	// Create a config file with missing required fields
 	configFile := filepath.Join(tempDir, "incomplete-config.yaml")
 	incompleteContent := `subdomain: test
 # Missing required fields: email, token, default_locale, default_permission_group_id`
-	
+
 	if err := os.WriteFile(configFile, []byte(incompleteContent), 0644); err != nil {
 		t.Fatalf("Failed to create incomplete config file: %v", err)
 	}

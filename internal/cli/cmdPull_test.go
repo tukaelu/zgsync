@@ -141,13 +141,13 @@ func TestCommandPull_Run(t *testing.T) {
 				if _, err := os.Stat(expectedFile); os.IsNotExist(err) {
 					t.Errorf("Expected translation file %s to exist", expectedFile)
 				}
-				
+
 				content, err := os.ReadFile(expectedFile)
 				if err != nil {
 					t.Errorf("Failed to read file: %v", err)
 					return
 				}
-				
+
 				if !strings.Contains(string(content), "<h1>Raw HTML</h1>") {
 					t.Errorf("Expected raw HTML content to be preserved")
 				}
@@ -188,10 +188,10 @@ func TestCommandPull_Run(t *testing.T) {
 			if err := os.MkdirAll(testDir, 0755); err != nil {
 				t.Fatalf("Failed to create test directory: %v", err)
 			}
-			
+
 			mockClient := &testhelper.MockZendeskClient{}
 			tt.mockSetup(mockClient)
-			
+
 			cmd := tt.cmd
 			cmd.client = mockClient
 			cmd.converter = converter.NewConverter(false)
@@ -210,7 +210,7 @@ func TestCommandPull_Run(t *testing.T) {
 			if !tt.expectError && err != nil {
 				t.Errorf("Expected no error but got: %v", err)
 			}
-			
+
 			if !tt.expectError {
 				tt.validateFiles(t, testDir)
 			}
@@ -230,15 +230,15 @@ func TestCommandPull_AfterApply(t *testing.T) {
 
 	cmd := &CommandPull{}
 	err := cmd.AfterApply(global)
-	
+
 	if err != nil {
 		t.Errorf("AfterApply() failed: %v", err)
 	}
-	
+
 	if cmd.client == nil {
 		t.Error("client should be initialized")
 	}
-	
+
 	if cmd.converter == nil {
 		t.Error("converter should be initialized")
 	}
@@ -246,7 +246,7 @@ func TestCommandPull_AfterApply(t *testing.T) {
 
 func TestCommandPull_DefaultLocale(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	mockClient := &testhelper.MockZendeskClient{}
 	mockClient.ShowArticleFunc = func(locale string, articleID int) (string, error) {
 		if locale != testhelper.TestLocales.French {
@@ -260,12 +260,12 @@ func TestCommandPull_DefaultLocale(t *testing.T) {
 		}
 		return testhelper.CreateDefaultTranslationResponse(1, articleID, locale), nil
 	}
-	
+
 	cmd := &CommandPull{
-		Locale:         "", // Empty locale should use default
-		ArticleIDs:     []int{testhelper.TestArticleID},
-		client:         mockClient,
-		converter:      converter.NewConverter(false),
+		Locale:     "", // Empty locale should use default
+		ArticleIDs: []int{testhelper.TestArticleID},
+		client:     mockClient,
+		converter:  converter.NewConverter(false),
 	}
 
 	global := &Global{
@@ -311,7 +311,7 @@ func TestCommandPull_FileSystemErrors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			contentsDir := tt.setupDir()
-			
+
 			// Restore permissions for cleanup if needed
 			defer func() {
 				if tt.name == "read-only contents directory" {
@@ -328,10 +328,10 @@ func TestCommandPull_FileSystemErrors(t *testing.T) {
 			}
 
 			cmd := &CommandPull{
-				Locale:      testhelper.TestLocales.Japanese,
-				ArticleIDs:  []int{testhelper.TestArticleID},
-				client:      mockClient,
-				converter:   converter.NewConverter(false),
+				Locale:     testhelper.TestLocales.Japanese,
+				ArticleIDs: []int{testhelper.TestArticleID},
+				client:     mockClient,
+				converter:  converter.NewConverter(false),
 			}
 
 			global := &Global{

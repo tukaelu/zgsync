@@ -83,7 +83,7 @@ func TestTranslationFromJson(t *testing.T) {
 
 func TestTranslationFromFile_ErrorCases(t *testing.T) {
 	t.Parallel()
-	
+
 	tests := []struct {
 		name        string
 		filepath    string
@@ -104,10 +104,10 @@ func TestTranslationFromFile_ErrorCases(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			translation := &Translation{}
 			err := translation.FromFile(tt.filepath)
-			
+
 			if tt.expectError && err == nil {
 				t.Errorf("Expected error but got none")
 			}
@@ -120,7 +120,7 @@ func TestTranslationFromFile_ErrorCases(t *testing.T) {
 
 func TestTranslationFromJson_ErrorCases(t *testing.T) {
 	t.Parallel()
-	
+
 	tests := []struct {
 		name        string
 		jsonContent string
@@ -146,10 +146,10 @@ func TestTranslationFromJson_ErrorCases(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			translation := &Translation{}
 			err := translation.FromJson(tt.jsonContent)
-			
+
 			if tt.expectError && err == nil {
 				t.Errorf("Expected error but got none")
 			}
@@ -162,7 +162,7 @@ func TestTranslationFromJson_ErrorCases(t *testing.T) {
 
 func TestTranslationToPayload(t *testing.T) {
 	t.Parallel()
-	
+
 	tests := []struct {
 		name           string
 		translation    Translation
@@ -206,7 +206,7 @@ func TestTranslationToPayload(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			payload, err := tt.translation.ToPayload()
 			if err != nil {
 				t.Errorf("ToPayload() failed: %v", err)
@@ -231,7 +231,7 @@ func TestTranslationToPayload(t *testing.T) {
 
 func TestTranslationSave(t *testing.T) {
 	t.Parallel()
-	
+
 	tests := []struct {
 		name           string
 		translation    Translation
@@ -257,7 +257,7 @@ func TestTranslationSave(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			tempDir := t.TempDir()
 			savePath := tempDir
 
@@ -282,20 +282,20 @@ func TestTranslationSave(t *testing.T) {
 			}
 
 			contentStr := string(content)
-			
+
 			// Check for YAML frontmatter structure
 			if !strings.HasPrefix(contentStr, "---\n") {
 				t.Errorf("File should start with YAML frontmatter delimiter")
 			}
-			
+
 			if !strings.Contains(contentStr, "title: "+tt.translation.Title) {
 				t.Errorf("File should contain title: %s", tt.translation.Title)
 			}
-			
+
 			if !strings.Contains(contentStr, "locale: "+tt.translation.Locale) {
 				t.Errorf("File should contain locale: %s", tt.translation.Locale)
 			}
-			
+
 			if !strings.Contains(contentStr, tt.translation.Body) {
 				t.Errorf("File should contain body content: %s", tt.translation.Body)
 			}
@@ -305,7 +305,7 @@ func TestTranslationSave(t *testing.T) {
 
 func TestTranslationSave_ErrorCases(t *testing.T) {
 	t.Parallel()
-	
+
 	tests := []struct {
 		name           string
 		translation    Translation
@@ -321,7 +321,7 @@ func TestTranslationSave_ErrorCases(t *testing.T) {
 				Title:    "Test",
 				Locale:   "ja",
 			},
-			path:           "/root/no-permission",  // Assuming this would fail
+			path:           "/root/no-permission", // Assuming this would fail
 			appendFileName: true,
 			expectError:    true,
 		},
@@ -330,9 +330,9 @@ func TestTranslationSave_ErrorCases(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			err := tt.translation.Save(tt.path, tt.appendFileName)
-			
+
 			if tt.expectError && err == nil {
 				t.Errorf("Expected error but got none")
 			}

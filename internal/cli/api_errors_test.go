@@ -13,7 +13,7 @@ import (
 
 func TestAPIResponseErrors_Push(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	// Create test translation file
 	testFile := filepath.Join(tempDir, "test.md")
 	testContent := `---
@@ -22,17 +22,17 @@ title: "Test Translation"
 source_id: 123
 ---
 # Test Content`
-	
+
 	if err := os.WriteFile(testFile, []byte(testContent), 0644); err != nil {
 		t.Fatalf("Failed to create test file: %v", err)
 	}
 
 	tests := []struct {
-		name        string
-		setupMock   func(*testhelper.MockZendeskClient)
-		expectError bool
+		name          string
+		setupMock     func(*testhelper.MockZendeskClient)
+		expectError   bool
 		errorKeywords []string
-		description string
+		description   string
 	}{
 		{
 			name: "HTTP 500 Internal Server Error",
@@ -41,9 +41,9 @@ source_id: 123
 					return "", fmt.Errorf("HTTP 500 Internal Server Error: unexpected status code: 500")
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"500", "Internal Server Error"},
-			description: "Should handle 500 server errors gracefully",
+			description:   "Should handle 500 server errors gracefully",
 		},
 		{
 			name: "HTTP 404 Article Not Found",
@@ -52,9 +52,9 @@ source_id: 123
 					return "", fmt.Errorf("HTTP 404 Not Found: Article with ID %d not found", articleID)
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"404", "Not Found"},
-			description: "Should handle 404 resource not found errors",
+			description:   "Should handle 404 resource not found errors",
 		},
 		{
 			name: "HTTP 503 Service Unavailable",
@@ -63,9 +63,9 @@ source_id: 123
 					return "", fmt.Errorf("HTTP 503 Service Unavailable: Service temporarily unavailable")
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"503", "Service Unavailable"},
-			description: "Should handle 503 service unavailable errors",
+			description:   "Should handle 503 service unavailable errors",
 		},
 		{
 			name: "HTTP 429 Rate Limited",
@@ -74,9 +74,9 @@ source_id: 123
 					return "", fmt.Errorf("HTTP 429 Too Many Requests: Rate limit exceeded")
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"429", "Too Many Requests", "Rate limit"},
-			description: "Should handle 429 rate limit errors",
+			description:   "Should handle 429 rate limit errors",
 		},
 		{
 			name: "Network connection timeout",
@@ -85,9 +85,9 @@ source_id: 123
 					return "", fmt.Errorf("network error: dial tcp: i/o timeout")
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"network", "timeout"},
-			description: "Should handle network timeout errors",
+			description:   "Should handle network timeout errors",
 		},
 		{
 			name: "Connection refused error",
@@ -96,9 +96,9 @@ source_id: 123
 					return "", fmt.Errorf("network error: dial tcp 127.0.0.1:443: connect: connection refused")
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"connection refused"},
-			description: "Should handle connection refused errors",
+			description:   "Should handle connection refused errors",
 		},
 		{
 			name: "Malformed JSON response",
@@ -128,9 +128,9 @@ source_id: 123
 					return "", fmt.Errorf("HTTP 400 Bad Request: Invalid article data - missing required field 'title'")
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"400", "Bad Request", "Invalid"},
-			description: "Should handle 400 bad request errors with detailed messages",
+			description:   "Should handle 400 bad request errors with detailed messages",
 		},
 		{
 			name: "HTTP 422 Unprocessable Entity",
@@ -139,9 +139,9 @@ source_id: 123
 					return "", fmt.Errorf("HTTP 422 Unprocessable Entity: Validation failed - title cannot be blank")
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"422", "Unprocessable Entity", "Validation"},
-			description: "Should handle 422 validation errors",
+			description:   "Should handle 422 validation errors",
 		},
 	}
 
@@ -197,11 +197,11 @@ func TestAPIResponseErrors_Pull(t *testing.T) {
 	tempDir := t.TempDir()
 
 	tests := []struct {
-		name        string
-		setupMock   func(*testhelper.MockZendeskClient)
-		expectError bool
+		name          string
+		setupMock     func(*testhelper.MockZendeskClient)
+		expectError   bool
 		errorKeywords []string
-		description string
+		description   string
 	}{
 		{
 			name: "HTTP 500 on ShowArticle",
@@ -210,12 +210,12 @@ func TestAPIResponseErrors_Pull(t *testing.T) {
 					return "", fmt.Errorf("HTTP 500 Internal Server Error: Database connection failed")
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"500", "Internal Server Error"},
-			description: "Should handle 500 errors when fetching articles",
+			description:   "Should handle 500 errors when fetching articles",
 		},
 		{
-			name: "HTTP 404 on ShowTranslation", 
+			name: "HTTP 404 on ShowTranslation",
 			setupMock: func(mock *testhelper.MockZendeskClient) {
 				mock.ShowArticleFunc = func(locale string, articleID int) (string, error) {
 					return testhelper.CreateDefaultArticleResponse(articleID, testhelper.TestSectionID), nil
@@ -224,9 +224,9 @@ func TestAPIResponseErrors_Pull(t *testing.T) {
 					return "", fmt.Errorf("HTTP 404 Not Found: Translation not found for article %d in locale %s", articleID, locale)
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"404", "Not Found"},
-			description: "Should handle 404 errors when translation doesn't exist",
+			description:   "Should handle 404 errors when translation doesn't exist",
 		},
 		{
 			name: "Network timeout on ShowArticle",
@@ -235,9 +235,9 @@ func TestAPIResponseErrors_Pull(t *testing.T) {
 					return "", fmt.Errorf("Get request failed: context deadline exceeded")
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"deadline exceeded", "timeout"},
-			description: "Should handle network timeouts",
+			description:   "Should handle network timeouts",
 		},
 		{
 			name: "Malformed JSON response from ShowArticle",
@@ -269,9 +269,9 @@ func TestAPIResponseErrors_Pull(t *testing.T) {
 					return "", fmt.Errorf("HTTP 403 Forbidden: Access denied - insufficient permissions")
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"403", "Forbidden", "Access denied"},
-			description: "Should handle 403 permission errors",
+			description:   "Should handle 403 permission errors",
 		},
 		{
 			name: "HTTP 502 Bad Gateway",
@@ -280,9 +280,9 @@ func TestAPIResponseErrors_Pull(t *testing.T) {
 					return "", fmt.Errorf("HTTP 502 Bad Gateway: Upstream server error")
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"502", "Bad Gateway"},
-			description: "Should handle 502 gateway errors",
+			description:   "Should handle 502 gateway errors",
 		},
 	}
 
@@ -292,10 +292,10 @@ func TestAPIResponseErrors_Pull(t *testing.T) {
 			tt.setupMock(mockClient)
 
 			cmd := &CommandPull{
-				Locale:      testhelper.TestLocales.Japanese,
-				ArticleIDs:  []int{testhelper.TestArticleID},
-				client:      mockClient,
-				converter:   converter.NewConverter(false),
+				Locale:     testhelper.TestLocales.Japanese,
+				ArticleIDs: []int{testhelper.TestArticleID},
+				client:     mockClient,
+				converter:  converter.NewConverter(false),
 			}
 
 			global := &Global{
@@ -336,11 +336,11 @@ func TestAPIResponseErrors_Empty(t *testing.T) {
 	tempDir := t.TempDir()
 
 	tests := []struct {
-		name        string
-		setupMock   func(*testhelper.MockZendeskClient)
-		expectError bool
+		name          string
+		setupMock     func(*testhelper.MockZendeskClient)
+		expectError   bool
 		errorKeywords []string
-		description string
+		description   string
 	}{
 		{
 			name: "HTTP 500 on CreateArticle",
@@ -349,9 +349,9 @@ func TestAPIResponseErrors_Empty(t *testing.T) {
 					return "", fmt.Errorf("HTTP 500 Internal Server Error: Article creation failed")
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"500", "Internal Server Error"},
-			description: "Should handle 500 errors during article creation",
+			description:   "Should handle 500 errors during article creation",
 		},
 		{
 			name: "HTTP 404 Section Not Found",
@@ -360,9 +360,9 @@ func TestAPIResponseErrors_Empty(t *testing.T) {
 					return "", fmt.Errorf("HTTP 404 Not Found: Section with ID %d not found", sectionID)
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"404", "Not Found", "Section"},
-			description: "Should handle 404 errors when section doesn't exist",
+			description:   "Should handle 404 errors when section doesn't exist",
 		},
 		{
 			name: "HTTP 403 Forbidden Create Permission",
@@ -371,9 +371,9 @@ func TestAPIResponseErrors_Empty(t *testing.T) {
 					return "", fmt.Errorf("HTTP 403 Forbidden: User does not have permission to create articles in this section")
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"403", "Forbidden", "permission"},
-			description: "Should handle 403 permission errors for article creation",
+			description:   "Should handle 403 permission errors for article creation",
 		},
 		{
 			name: "Network connection error",
@@ -382,9 +382,9 @@ func TestAPIResponseErrors_Empty(t *testing.T) {
 					return "", fmt.Errorf("network error: no route to host")
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"network", "no route to host"},
-			description: "Should handle network connectivity errors",
+			description:   "Should handle network connectivity errors",
 		},
 		{
 			name: "Invalid JSON response from CreateArticle",
@@ -393,9 +393,9 @@ func TestAPIResponseErrors_Empty(t *testing.T) {
 					return "invalid json response body", nil // Malformed response
 				}
 			},
-			expectError: true, // The command will fail when trying to parse JSON in a.FromJson(res)
+			expectError:   true, // The command will fail when trying to parse JSON in a.FromJson(res)
 			errorKeywords: []string{"invalid character"},
-			description: "Should handle invalid JSON responses",
+			description:   "Should handle invalid JSON responses",
 		},
 		{
 			name: "HTTP 422 Validation Error",
@@ -404,9 +404,9 @@ func TestAPIResponseErrors_Empty(t *testing.T) {
 					return "", fmt.Errorf("HTTP 422 Unprocessable Entity: Title cannot be blank")
 				}
 			},
-			expectError: true,
+			expectError:   true,
 			errorKeywords: []string{"422", "Unprocessable Entity", "Title"},
-			description: "Should handle 422 validation errors",
+			description:   "Should handle 422 validation errors",
 		},
 	}
 
@@ -459,7 +459,7 @@ func TestAPIResponseErrors_Empty(t *testing.T) {
 
 func TestAPIResponseErrors_JSONParsing(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	tests := []struct {
 		name        string
 		command     string
@@ -468,7 +468,7 @@ func TestAPIResponseErrors_JSONParsing(t *testing.T) {
 		description string
 	}{
 		{
-			name: "Pull command with corrupted JSON response",
+			name:    "Pull command with corrupted JSON response",
 			command: "pull",
 			setupMock: func(mock *testhelper.MockZendeskClient) {
 				mock.ShowArticleFunc = func(locale string, articleID int) (string, error) {
@@ -480,7 +480,7 @@ func TestAPIResponseErrors_JSONParsing(t *testing.T) {
 			description: "Should handle JSON parsing errors in pull command",
 		},
 		{
-			name: "Pull command with unexpected JSON structure",
+			name:    "Pull command with unexpected JSON structure",
 			command: "pull",
 			setupMock: func(mock *testhelper.MockZendeskClient) {
 				mock.ShowArticleFunc = func(locale string, articleID int) (string, error) {
@@ -492,7 +492,7 @@ func TestAPIResponseErrors_JSONParsing(t *testing.T) {
 			description: "Should handle unexpected JSON structure gracefully",
 		},
 		{
-			name: "Pull command with null response fields",
+			name:    "Pull command with null response fields",
 			command: "pull",
 			setupMock: func(mock *testhelper.MockZendeskClient) {
 				mock.ShowArticleFunc = func(locale string, articleID int) (string, error) {
@@ -513,10 +513,10 @@ func TestAPIResponseErrors_JSONParsing(t *testing.T) {
 			switch tt.command {
 			case "pull":
 				cmd := &CommandPull{
-					Locale:      testhelper.TestLocales.Japanese,
-					ArticleIDs:  []int{testhelper.TestArticleID},
-					client:      mockClient,
-					converter:   converter.NewConverter(false),
+					Locale:     testhelper.TestLocales.Japanese,
+					ArticleIDs: []int{testhelper.TestArticleID},
+					client:     mockClient,
+					converter:  converter.NewConverter(false),
 				}
 
 				global := &Global{

@@ -67,10 +67,10 @@ source_id: 123
 				tempDir := t.TempDir()
 
 				cmd := &CommandPull{
-					Locale:      testhelper.TestLocales.Japanese,
-					ArticleIDs:  []int{testhelper.TestArticleID},
-					client:      mock,
-					converter:   converter.NewConverter(false),
+					Locale:     testhelper.TestLocales.Japanese,
+					ArticleIDs: []int{testhelper.TestArticleID},
+					client:     mock,
+					converter:  converter.NewConverter(false),
 				}
 
 				global := &Global{
@@ -169,12 +169,12 @@ source_id: 123
 			// Additional validation: check that error message contains authentication-related keywords
 			if tt.expectError && err != nil {
 				errorMsg := err.Error()
-				hasAuthKeyword := strings.Contains(errorMsg, "Unauthorized") || 
-								strings.Contains(errorMsg, "authentication") || 
-								strings.Contains(errorMsg, "credentials") ||
-								strings.Contains(errorMsg, "token") ||
-								strings.Contains(errorMsg, "401")
-				
+				hasAuthKeyword := strings.Contains(errorMsg, "Unauthorized") ||
+					strings.Contains(errorMsg, "authentication") ||
+					strings.Contains(errorMsg, "credentials") ||
+					strings.Contains(errorMsg, "token") ||
+					strings.Contains(errorMsg, "401")
+
 				if !hasAuthKeyword {
 					t.Logf("Authentication error message: %s", errorMsg)
 				}

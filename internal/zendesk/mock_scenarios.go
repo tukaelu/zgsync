@@ -99,10 +99,10 @@ func (sm *ScenarioManager) initializeDefaultScenarios() {
 	}
 
 	sm.behaviors["SlowTranslations"] = &BehaviorSet{
-		Name:       "SlowTranslations",
-		ErrorRate:  0.0,
-		LatencyMin: 5 * time.Millisecond,
-		LatencyMax: 20 * time.Millisecond,
+		Name:            "SlowTranslations",
+		ErrorRate:       0.0,
+		LatencyMin:      5 * time.Millisecond,
+		LatencyMax:      20 * time.Millisecond,
 		FailurePatterns: make(map[string]ErrorPattern),
 		CustomHandlers:  make(map[string]http.HandlerFunc),
 	}
@@ -210,7 +210,7 @@ func (sm *ScenarioManager) RemoveScenario(name string) bool {
 	}
 
 	delete(sm.behaviors, name)
-	
+
 	// If the deleted scenario was active, switch to Normal
 	if sm.activeScenario == name {
 		sm.activeScenario = "Normal"
@@ -279,9 +279,9 @@ var PredefinedTestScenarios = map[string]TestScenarioConfig{
 		ErrorPatterns: make(map[string]ErrorPattern),
 	},
 	"SlowButReliable": {
-		ErrorRate:  0.0,
-		MinLatency: 100 * time.Millisecond,
-		MaxLatency: 200 * time.Millisecond,
+		ErrorRate:     0.0,
+		MinLatency:    100 * time.Millisecond,
+		MaxLatency:    200 * time.Millisecond,
 		ErrorPatterns: make(map[string]ErrorPattern),
 	},
 	"NetworkIssues": {

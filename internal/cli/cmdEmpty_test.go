@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	
+
 	"testing"
 
 	"github.com/tukaelu/zgsync/internal/cli/testhelper"
@@ -140,7 +140,7 @@ func TestCommandEmpty_Run(t *testing.T) {
 						t.Errorf("Failed to parse payload JSON: %v", err)
 						return "", err
 					}
-					
+
 					if article, ok := payloadData["article"].(map[string]interface{}); ok {
 						if userSegmentID, exists := article["user_segment_id"]; !exists {
 							t.Error("Expected payload to contain user_segment_id")
@@ -150,7 +150,7 @@ func TestCommandEmpty_Run(t *testing.T) {
 					} else {
 						t.Error("Payload should contain article object")
 					}
-					
+
 					article := testhelper.Article{
 						ID:        333,
 						SectionID: sectionID,
@@ -180,10 +180,10 @@ func TestCommandEmpty_Run(t *testing.T) {
 			if err := os.MkdirAll(testDir, 0755); err != nil {
 				t.Fatalf("Failed to create test directory: %v", err)
 			}
-			
+
 			mockClient := &testhelper.MockZendeskClient{}
 			tt.mockSetup(mockClient)
-			
+
 			cmd := tt.cmd
 			cmd.client = mockClient
 
@@ -204,7 +204,7 @@ func TestCommandEmpty_Run(t *testing.T) {
 			if !tt.expectError && err != nil {
 				t.Errorf("Expected no error but got: %v", err)
 			}
-			
+
 			if !tt.expectError {
 				tt.validateFiles(t, testDir)
 			}
@@ -223,11 +223,11 @@ func TestCommandEmpty_AfterApply(t *testing.T) {
 
 	cmd := &CommandEmpty{}
 	err := cmd.AfterApply(global)
-	
+
 	if err != nil {
 		t.Errorf("AfterApply() failed: %v", err)
 	}
-	
+
 	if cmd.client == nil {
 		t.Error("client should be initialized")
 	}

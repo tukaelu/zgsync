@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tukaelu/zgsync/internal/cli/testhelper"
 	zgsync "github.com/tukaelu/zgsync"
+	"github.com/tukaelu/zgsync/internal/cli/testhelper"
 )
 
 func TestCommandVersion_Run(t *testing.T) {
@@ -24,7 +24,7 @@ func TestCommandVersion_Run(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cmd := &CommandVersion{}
-			
+
 			// Use testhelper to capture stdout safely
 			output, err := testhelper.CaptureStdout(t, func() error {
 				return cmd.Run()
@@ -44,7 +44,7 @@ func TestCommandVersion_Run(t *testing.T) {
 
 func TestCommandVersion_OutputFormat(t *testing.T) {
 	cmd := &CommandVersion{}
-	
+
 	// Use testhelper to capture stdout safely
 	output, err := testhelper.CaptureStdout(t, func() error {
 		return cmd.Run()
@@ -94,15 +94,15 @@ func TestCommandVersion_OutputFormat(t *testing.T) {
 func TestCommandVersion_NoSideEffects(t *testing.T) {
 	// Test that running the command multiple times produces the same output
 	outputs := make([]string, 2)
-	
+
 	for i := 0; i < 2; i++ {
 		cmd := &CommandVersion{}
-		
+
 		// Use testhelper to capture stdout safely
 		output, err := testhelper.CaptureStdout(t, func() error {
 			return cmd.Run()
 		})
-		
+
 		outputs[i] = output
 
 		if err != nil {
@@ -118,9 +118,9 @@ func TestCommandVersion_NoSideEffects(t *testing.T) {
 func TestCommandVersion_Parallel(t *testing.T) {
 	// Test that the command works correctly when run in parallel
 	t.Parallel()
-	
+
 	cmd := &CommandVersion{}
-	
+
 	// Use testhelper to capture stdout safely
 	output, err := testhelper.CaptureStdout(t, func() error {
 		return cmd.Run()

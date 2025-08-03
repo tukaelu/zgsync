@@ -20,11 +20,11 @@ func NewFileHelper(t *testing.T) *FileHelper {
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}
-	
+
 	t.Cleanup(func() {
 		_ = os.RemoveAll(tempDir)
 	})
-	
+
 	return &FileHelper{t: t, tempDir: tempDir}
 }
 
@@ -37,17 +37,17 @@ func (fh *FileHelper) TempDir() string {
 func (fh *FileHelper) CreateFile(filename, content string) string {
 	fh.t.Helper()
 	filePath := filepath.Join(fh.tempDir, filename)
-	
+
 	// Create directory if needed
 	dir := filepath.Dir(filePath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		fh.t.Fatalf("Failed to create directory %s: %v", dir, err)
 	}
-	
+
 	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
 		fh.t.Fatalf("Failed to create file %s: %v", filePath, err)
 	}
-	
+
 	return filePath
 }
 
@@ -88,7 +88,7 @@ func (fh *FileHelper) AssertFileContent(filename, expectedContent string) {
 	fh.t.Helper()
 	fh.AssertFileExists(filename)
 	content := fh.ReadFile(filename)
-	
+
 	ah := NewAssertionHelper(fh.t)
 	ah.Equal(expectedContent, content, "file content")
 }
@@ -98,7 +98,7 @@ func (fh *FileHelper) AssertFileContains(filename, expectedSubstring string) {
 	fh.t.Helper()
 	fh.AssertFileExists(filename)
 	content := fh.ReadFile(filename)
-	
+
 	ah := NewAssertionHelper(fh.t)
 	ah.Contains(content, expectedSubstring, "file content")
 }

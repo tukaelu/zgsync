@@ -13,12 +13,12 @@ import (
 func TestClient_IntegrationWithAdvancedMockServer(t *testing.T) {
 	// Create advanced mock server with default configuration
 	config := &MockServerConfig{
-		EnableLogging:     true,
-		EnableErrorSim:    false, // Start with error simulation disabled
-		EnableLatencySim:  false, // Start with latency simulation disabled
+		EnableLogging:      true,
+		EnableErrorSim:     false, // Start with error simulation disabled
+		EnableLatencySim:   false, // Start with latency simulation disabled
 		EnableRateLimiting: false, // Start with rate limiting disabled
 	}
-	
+
 	server := NewAdvancedMockServer(config)
 	defer server.Close()
 
@@ -26,7 +26,7 @@ func TestClient_IntegrationWithAdvancedMockServer(t *testing.T) {
 	client := createAdvancedTestClient(t, server.URL())
 
 	t.Run("ArticleOperations", func(t *testing.T) {
-		
+
 		t.Run("CreateAndRetrieveArticle", func(t *testing.T) {
 			// Create an article
 			payload := `{"article":{"title":"Integration Test Article","locale":"en_us"}}`
@@ -96,7 +96,7 @@ func TestClient_IntegrationWithAdvancedMockServer(t *testing.T) {
 	})
 
 	t.Run("TranslationOperations", func(t *testing.T) {
-		
+
 		t.Run("CreateAndRetrieveTranslation", func(t *testing.T) {
 			// First create an article (prerequisite for translation)
 			articlePayload := `{"article":{"title":"Test Article for Translation","locale":"en_us"}}`
@@ -183,10 +183,10 @@ func TestClient_ErrorScenarios(t *testing.T) {
 			EnableErrorSim: true,
 			ErrorScenarios: []string{"auth_failure"},
 		}
-		
+
 		server := NewAdvancedMockServer(config)
 		defer server.Close()
-		
+
 		// Set the server to use auth failure scenario
 		err := server.SetScenario("AuthFailure")
 		if err != nil {
@@ -214,7 +214,7 @@ func TestClient_ErrorScenarios(t *testing.T) {
 			EnableErrorSim: true,
 			ErrorScenarios: []string{"server_error"},
 		}
-		
+
 		server := NewAdvancedMockServer(config)
 		defer server.Close()
 
@@ -224,7 +224,7 @@ func TestClient_ErrorScenarios(t *testing.T) {
 		// Note: This tests probabilistic error simulation, so we make multiple requests
 		errorCount := 0
 		totalRequests := 10
-		
+
 		for i := 0; i < totalRequests; i++ {
 			_, err := client.ShowArticle("en_us", 456)
 			if err != nil {
@@ -253,7 +253,7 @@ func TestClient_PerformanceScenarios(t *testing.T) {
 				EnableJitter:   true,
 			},
 		}
-		
+
 		server := NewAdvancedMockServer(config)
 		defer server.Close()
 
@@ -282,15 +282,15 @@ func TestClient_PerformanceScenarios(t *testing.T) {
 			EnableLogging:      true,
 			EnableRateLimiting: true,
 			RateLimitConfig: &RateLimitConfig{
-				GlobalLimit:       5,   // Very low limit for testing
+				GlobalLimit:       5, // Very low limit for testing
 				GlobalWindow:      time.Minute,
-				BurstLimit:        2,   // Very low burst
+				BurstLimit:        2, // Very low burst
 				BurstWindow:       10 * time.Second,
 				Enable429Response: true,
 				EnableHeaders:     true,
 			},
 		}
-		
+
 		server := NewAdvancedMockServer(config)
 		defer server.Close()
 
@@ -313,7 +313,7 @@ func TestClient_PerformanceScenarios(t *testing.T) {
 			}
 		}
 
-		t.Logf("Rate limiting test: %d successful, %d rate limited out of %d requests", 
+		t.Logf("Rate limiting test: %d successful, %d rate limited out of %d requests",
 			successCount, rateLimitedCount, totalRequests)
 
 		// Should have some rate limited requests with such a low limit
@@ -330,7 +330,7 @@ func TestClient_AdvancedFeatures(t *testing.T) {
 		config := &MockServerConfig{
 			EnableLogging: true,
 		}
-		
+
 		server := NewAdvancedMockServer(config)
 		defer server.Close()
 
@@ -369,7 +369,7 @@ func TestClient_AdvancedFeatures(t *testing.T) {
 		config := &MockServerConfig{
 			EnableLogging: true,
 		}
-		
+
 		server := NewAdvancedMockServer(config)
 		defer server.Close()
 
@@ -415,15 +415,15 @@ func TestClient_AdvancedFeatures(t *testing.T) {
 // createAdvancedTestClient creates a test client pointing to the given server URL
 func createAdvancedTestClient(t *testing.T, serverURL string) Client {
 	t.Helper()
-	
+
 	// Use the existing createTestClient but with the mock server URL
 	// We need to replace the URL in the existing test client
 	client := createTestClient(t, serverURL)
-	
+
 	// Cast to get the underlying implementation and update the test base URL
 	if impl, ok := client.(*testClientImpl); ok {
 		impl.testBaseURL = serverURL
 	}
-	
+
 	return client
 }

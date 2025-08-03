@@ -60,7 +60,7 @@ func (ds *MockDataStore) initializeDefaultDataUnsafe() {
 	ds.users[2] = &MockUser{
 		ID:    2,
 		Name:  "Test Admin",
-		Email: "admin@example.com", 
+		Email: "admin@example.com",
 		Role:  "admin",
 	}
 
@@ -104,12 +104,12 @@ func (ds *MockDataStore) articleExists(id int) bool {
 func (ds *MockDataStore) getArticle(id int) *Article {
 	ds.mutex.RLock()
 	defer ds.mutex.RUnlock()
-	
+
 	article, exists := ds.articles[id]
 	if !exists {
 		return nil
 	}
-	
+
 	// Return a copy to prevent external modification
 	articleCopy := *article
 	return &articleCopy
@@ -137,7 +137,7 @@ func (ds *MockDataStore) createArticle(locale string, sectionID int) *Article {
 	}
 
 	ds.articles[id] = article
-	
+
 	// Return a copy
 	articleCopy := *article
 	return &articleCopy
@@ -154,19 +154,13 @@ func (ds *MockDataStore) updateArticle(id int) *Article {
 
 	// Simulate update by modifying title
 	article.Title = fmt.Sprintf("Updated Article %d", id)
-	
+
 	// Return a copy
 	articleCopy := *article
 	return &articleCopy
 }
 
-
-
-
-
 // Translation operations
-
-
 
 func (ds *MockDataStore) getTranslation(articleID int, locale string) *Translation {
 	ds.mutex.RLock()
@@ -177,7 +171,7 @@ func (ds *MockDataStore) getTranslation(articleID int, locale string) *Translati
 	if !exists {
 		return nil
 	}
-	
+
 	// Return a copy to prevent external modification
 	translationCopy := *translation
 	return &translationCopy
@@ -206,7 +200,7 @@ func (ds *MockDataStore) createTranslation(articleID int, locale string) *Transl
 
 	key := fmt.Sprintf("%d-%s", articleID, locale)
 	ds.translations[key] = translation
-	
+
 	// Return a copy
 	translationCopy := *translation
 	return &translationCopy
@@ -224,15 +218,11 @@ func (ds *MockDataStore) updateTranslation(articleID int, locale string) *Transl
 
 	// Simulate update by modifying title
 	translation.Title = fmt.Sprintf("Updated Translation %d (%s)", translation.ID, locale)
-	
+
 	// Return a copy
 	translationCopy := *translation
 	return &translationCopy
 }
-
-
-
-
 
 // Section operations
 
@@ -243,15 +233,7 @@ func (ds *MockDataStore) sectionExists(id int) bool {
 	return exists
 }
 
-
-
-
-
 // User operations
-
-
-
-
 
 // Utility methods
 

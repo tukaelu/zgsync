@@ -15,7 +15,7 @@ import (
 
 func TestConcurrentPushRequests(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	// Create multiple test files for concurrent testing
 	testFiles := make([]string, 5)
 	for i := 0; i < 5; i++ {
@@ -26,7 +26,7 @@ title: "Test Translation %d"
 source_id: %d
 ---
 # Test Content %d`, i, 123+i, i)
-		
+
 		if err := os.WriteFile(testFile, []byte(testContent), 0644); err != nil {
 			t.Fatalf("Failed to create test file %d: %v", i, err)
 		}
@@ -49,7 +49,7 @@ source_id: %d
 					callCount++
 					currentCall := callCount
 					mu.Unlock()
-					
+
 					// Simulate connection limit after 3 concurrent requests
 					if currentCall > 3 {
 						return "", fmt.Errorf("HTTP 429 Too Many Requests: Connection limit exceeded - maximum 3 concurrent connections")
@@ -70,7 +70,7 @@ source_id: %d
 					callCount++
 					currentCall := callCount
 					mu.Unlock()
-					
+
 					// Simulate throttling for rapid requests
 					if currentCall > 2 {
 						return "", fmt.Errorf("HTTP 429 Too Many Requests: Request rate too high - please slow down")
@@ -117,12 +117,12 @@ source_id: %d
 			// Run concurrent push operations
 			var wg sync.WaitGroup
 			errors := make(chan error, len(testFiles))
-			
+
 			for _, testFile := range testFiles {
 				wg.Add(1)
 				go func(file string) {
 					defer wg.Done()
-					
+
 					cmd := CommandPush{
 						Article: false,
 						DryRun:  false,
@@ -144,23 +144,23 @@ source_id: %d
 					}
 				}(testFile)
 			}
-			
+
 			wg.Wait()
 			close(errors)
-			
+
 			// Collect all errors
 			var allErrors []error
 			for err := range errors {
 				allErrors = append(allErrors, err)
 			}
-			
+
 			if tt.expectError && len(allErrors) == 0 {
 				t.Errorf("Expected errors for %s but got none", tt.name)
 			}
 			if !tt.expectError && len(allErrors) > 0 {
 				t.Errorf("Expected no errors for %s but got: %v", tt.name, allErrors)
 			}
-			
+
 			// Log error details for debugging
 			if len(allErrors) > 0 {
 				t.Logf("Concurrent request errors for %s: %d total errors", tt.name, len(allErrors))
@@ -192,7 +192,7 @@ func TestConcurrentPullRequests(t *testing.T) {
 					callCount++
 					currentCall := callCount
 					mu.Unlock()
-					
+
 					// Simulate bandwidth limit
 					if currentCall > 3 {
 						return "", fmt.Errorf("HTTP 429 Too Many Requests: Bandwidth limit exceeded")
@@ -268,17 +268,17 @@ func TestConcurrentPullRequests(t *testing.T) {
 			// Run concurrent pull operations
 			var wg sync.WaitGroup
 			errors := make(chan error, len(articleIDs))
-			
+
 			for _, articleID := range articleIDs {
 				wg.Add(1)
 				go func(id int) {
 					defer wg.Done()
-					
+
 					cmd := &CommandPull{
-						Locale:      testhelper.TestLocales.Japanese,
-						ArticleIDs:  []int{id},
-						client:      mockClient,
-						converter:   converter.NewConverter(false),
+						Locale:     testhelper.TestLocales.Japanese,
+						ArticleIDs: []int{id},
+						client:     mockClient,
+						converter:  converter.NewConverter(false),
 					}
 
 					global := &Global{
@@ -293,23 +293,23 @@ func TestConcurrentPullRequests(t *testing.T) {
 					}
 				}(articleID)
 			}
-			
+
 			wg.Wait()
 			close(errors)
-			
+
 			// Collect all errors
 			var allErrors []error
 			for err := range errors {
 				allErrors = append(allErrors, err)
 			}
-			
+
 			if tt.expectError && len(allErrors) == 0 {
 				t.Errorf("Expected errors for %s but got none", tt.name)
 			}
 			if !tt.expectError && len(allErrors) > 0 {
 				t.Errorf("Expected no errors for %s but got: %v", tt.name, allErrors)
 			}
-			
+
 			// Log error details for debugging
 			if len(allErrors) > 0 {
 				t.Logf("Concurrent pull errors for %s: %d total errors", tt.name, len(allErrors))
@@ -323,7 +323,7 @@ func TestConcurrentPullRequests(t *testing.T) {
 
 func TestConcurrentMixedOperations(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	// Create test file for push operations
 	testFile := filepath.Join(tempDir, "test.md")
 	testContent := `---
@@ -332,7 +332,7 @@ title: "Test Translation"
 source_id: 123
 ---
 # Test Content`
-	
+
 	if err := os.WriteFile(testFile, []byte(testContent), 0644); err != nil {
 		t.Fatalf("Failed to create test file: %v", err)
 	}
@@ -348,41 +348,41 @@ source_id: 123
 			setupMock: func(mock *testhelper.MockZendeskClient) {
 				operationCount := 0
 				var mu sync.Mutex
-				
+
 				mock.UpdateTranslationFunc = func(articleID int, locale, payload string) (string, error) {
 					mu.Lock()
 					operationCount++
 					currentOp := operationCount
 					mu.Unlock()
-					
+
 					if currentOp > 4 {
 						return "", fmt.Errorf("dial tcp: connection pool exhausted")
 					}
 					return testhelper.CreateDefaultTranslationResponse(1, articleID, locale), nil
 				}
-				
+
 				mock.ShowArticleFunc = func(locale string, articleID int) (string, error) {
 					mu.Lock()
 					operationCount++
 					currentOp := operationCount
 					mu.Unlock()
-					
+
 					if currentOp > 4 {
 						return "", fmt.Errorf("dial tcp: connection pool exhausted")
 					}
 					return testhelper.CreateDefaultArticleResponse(articleID, testhelper.TestSectionID), nil
 				}
-				
+
 				mock.ShowTranslationFunc = func(articleID int, locale string) (string, error) {
 					return testhelper.CreateDefaultTranslationResponse(1, articleID, locale), nil
 				}
-				
+
 				mock.CreateArticleFunc = func(locale string, sectionID int, payload string) (string, error) {
 					mu.Lock()
 					operationCount++
 					currentOp := operationCount
 					mu.Unlock()
-					
+
 					if currentOp > 4 {
 						return "", fmt.Errorf("dial tcp: connection pool exhausted")
 					}
@@ -397,40 +397,40 @@ source_id: 123
 			setupMock: func(mock *testhelper.MockZendeskClient) {
 				totalRequests := 0
 				var mu sync.Mutex
-				
+
 				rateLimitCheck := func() error {
 					mu.Lock()
 					totalRequests++
 					current := totalRequests
 					mu.Unlock()
-					
+
 					if current > 6 {
 						return fmt.Errorf("HTTP 429 Too Many Requests: API rate limit exceeded - %d requests per minute limit", current)
 					}
 					return nil
 				}
-				
+
 				mock.UpdateTranslationFunc = func(articleID int, locale, payload string) (string, error) {
 					if err := rateLimitCheck(); err != nil {
 						return "", err
 					}
 					return testhelper.CreateDefaultTranslationResponse(1, articleID, locale), nil
 				}
-				
+
 				mock.ShowArticleFunc = func(locale string, articleID int) (string, error) {
 					if err := rateLimitCheck(); err != nil {
 						return "", err
 					}
 					return testhelper.CreateDefaultArticleResponse(articleID, testhelper.TestSectionID), nil
 				}
-				
+
 				mock.ShowTranslationFunc = func(articleID int, locale string) (string, error) {
 					if err := rateLimitCheck(); err != nil {
 						return "", err
 					}
 					return testhelper.CreateDefaultTranslationResponse(1, articleID, locale), nil
 				}
-				
+
 				mock.CreateArticleFunc = func(locale string, sectionID int, payload string) (string, error) {
 					if err := rateLimitCheck(); err != nil {
 						return "", err
@@ -448,17 +448,17 @@ source_id: 123
 					time.Sleep(5 * time.Millisecond)
 					return testhelper.CreateDefaultTranslationResponse(1, articleID, locale), nil
 				}
-				
+
 				mock.ShowArticleFunc = func(locale string, articleID int) (string, error) {
 					time.Sleep(3 * time.Millisecond)
 					return testhelper.CreateDefaultArticleResponse(articleID, testhelper.TestSectionID), nil
 				}
-				
+
 				mock.ShowTranslationFunc = func(articleID int, locale string) (string, error) {
 					time.Sleep(2 * time.Millisecond)
 					return testhelper.CreateDefaultTranslationResponse(1, articleID, locale), nil
 				}
-				
+
 				mock.CreateArticleFunc = func(locale string, sectionID int, payload string) (string, error) {
 					time.Sleep(8 * time.Millisecond)
 					return testhelper.CreateDefaultArticleResponse(200, sectionID), nil
@@ -476,13 +476,13 @@ source_id: 123
 
 			var wg sync.WaitGroup
 			errors := make(chan error, 10)
-			
+
 			// Launch concurrent push operations
 			for i := 0; i < 2; i++ {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					
+
 					cmd := CommandPush{
 						Article: false,
 						DryRun:  false,
@@ -504,18 +504,18 @@ source_id: 123
 					}
 				}()
 			}
-			
+
 			// Launch concurrent pull operations
 			for i := 0; i < 2; i++ {
 				wg.Add(1)
 				go func(articleID int) {
 					defer wg.Done()
-					
+
 					cmd := &CommandPull{
-						Locale:      testhelper.TestLocales.Japanese,
-						ArticleIDs:  []int{articleID},
-						client:      mockClient,
-						converter:   converter.NewConverter(false),
+						Locale:     testhelper.TestLocales.Japanese,
+						ArticleIDs: []int{articleID},
+						client:     mockClient,
+						converter:  converter.NewConverter(false),
 					}
 
 					global := &Global{
@@ -530,13 +530,13 @@ source_id: 123
 					}
 				}(300 + i)
 			}
-			
+
 			// Launch concurrent empty operations
 			for i := 0; i < 2; i++ {
 				wg.Add(1)
 				go func(idx int) {
 					defer wg.Done()
-					
+
 					cmd := &CommandEmpty{
 						SectionID: testhelper.TestSectionID,
 						Title:     fmt.Sprintf("Test Article %d", idx),
@@ -557,23 +557,23 @@ source_id: 123
 					}
 				}(i)
 			}
-			
+
 			wg.Wait()
 			close(errors)
-			
+
 			// Collect all errors
 			var allErrors []error
 			for err := range errors {
 				allErrors = append(allErrors, err)
 			}
-			
+
 			if tt.expectError && len(allErrors) == 0 {
 				t.Errorf("Expected errors for %s but got none", tt.name)
 			}
 			if !tt.expectError && len(allErrors) > 0 {
 				t.Errorf("Expected no errors for %s but got: %v", tt.name, allErrors)
 			}
-			
+
 			// Validate error types for expected error cases
 			if tt.expectError && len(allErrors) > 0 {
 				foundExpectedError := false
@@ -586,7 +586,7 @@ source_id: 123
 						break
 					}
 				}
-				
+
 				if !foundExpectedError {
 					t.Logf("Mixed operation errors for %s: expected connection/rate limit errors", tt.name)
 					for i, err := range allErrors {
@@ -629,13 +629,13 @@ func TestConcurrentRequestsResourceManagement(t *testing.T) {
 			setupMock: func(mock *testhelper.MockZendeskClient) {
 				requestCount := 0
 				var mu sync.Mutex
-				
+
 				mock.ShowArticleFunc = func(locale string, articleID int) (string, error) {
 					mu.Lock()
 					requestCount++
 					current := requestCount
 					mu.Unlock()
-					
+
 					// Simulate file descriptor limit
 					if current > 5 {
 						return "", fmt.Errorf("dial tcp: too many open files")
@@ -677,17 +677,17 @@ func TestConcurrentRequestsResourceManagement(t *testing.T) {
 			var wg sync.WaitGroup
 			errors := make(chan error, 10)
 			articleIDs := []int{500, 501, 502, 503, 504, 505, 506, 507, 508, 509}
-			
+
 			for _, articleID := range articleIDs {
 				wg.Add(1)
 				go func(id int) {
 					defer wg.Done()
-					
+
 					cmd := &CommandPull{
-						Locale:      testhelper.TestLocales.Japanese,
-						ArticleIDs:  []int{id},
-						client:      mockClient,
-						converter:   converter.NewConverter(false),
+						Locale:     testhelper.TestLocales.Japanese,
+						ArticleIDs: []int{id},
+						client:     mockClient,
+						converter:  converter.NewConverter(false),
 					}
 
 					global := &Global{
@@ -702,23 +702,23 @@ func TestConcurrentRequestsResourceManagement(t *testing.T) {
 					}
 				}(articleID)
 			}
-			
+
 			wg.Wait()
 			close(errors)
-			
+
 			// Collect all errors
 			var allErrors []error
 			for err := range errors {
 				allErrors = append(allErrors, err)
 			}
-			
+
 			if tt.expectError && len(allErrors) == 0 {
 				t.Errorf("Expected errors for %s but got none", tt.name)
 			}
 			if !tt.expectError && len(allErrors) > 0 {
 				t.Errorf("Expected no errors for %s but got: %v", tt.name, allErrors)
 			}
-			
+
 			// Validate that we get expected resource management errors
 			if tt.expectError && len(allErrors) > 0 {
 				foundResourceError := false
@@ -731,7 +731,7 @@ func TestConcurrentRequestsResourceManagement(t *testing.T) {
 						break
 					}
 				}
-				
+
 				if !foundResourceError {
 					t.Logf("Resource management errors for %s:", tt.name)
 					for i, err := range allErrors {

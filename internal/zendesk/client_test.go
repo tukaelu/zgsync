@@ -37,13 +37,13 @@ func TestNewClient(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			client := NewClient(tt.subdomain, tt.email, tt.token)
-			
+
 			if client == nil {
 				t.Errorf("NewClient() returned nil")
 			}
-			
+
 			// Check that client can be used (interface compliance)
 			_ = client
 		})
@@ -52,13 +52,13 @@ func TestNewClient(t *testing.T) {
 
 func TestClientImpl_BaseURL(t *testing.T) {
 	t.Parallel()
-	
+
 	client := NewClient("mycompany", "user@example.com", "token123")
 	impl := client.(*clientImpl)
-	
+
 	expected := "https://mycompany.zendesk.com"
 	actual := impl.baseURL()
-	
+
 	if actual != expected {
 		t.Errorf("baseURL() = %s, want %s", actual, expected)
 	}
@@ -66,13 +66,13 @@ func TestClientImpl_BaseURL(t *testing.T) {
 
 func TestClientImpl_AuthorizationToken(t *testing.T) {
 	t.Parallel()
-	
+
 	client := NewClient("test", "user@example.com/token", "secrettoken")
 	impl := client.(*clientImpl)
-	
+
 	expected := "dXNlckBleGFtcGxlLmNvbS90b2tlbjpzZWNyZXR0b2tlbg=="
 	actual := impl.authorizationToken()
-	
+
 	if actual != expected {
 		t.Errorf("authorizationToken() = %s, want %s", actual, expected)
 	}
@@ -80,22 +80,22 @@ func TestClientImpl_AuthorizationToken(t *testing.T) {
 
 func TestClientImpl_DoRequest_EmptyEndpoint(t *testing.T) {
 	t.Parallel()
-	
+
 	client := &clientImpl{
 		subdomain: "test",
 		email:     "test@example.com/token",
 		token:     "testtoken",
 	}
-	
+
 	_, err := client.doRequest("GET", "", nil)
-	
+
 	errorChecker := testutil.NewErrorChecker(t)
 	errorChecker.ExpectErrorContaining(err, "endpoint is required", "doRequest with empty endpoint")
 }
 
 func TestClient_CreateArticle_Integration(t *testing.T) {
 	t.Parallel()
-	
+
 	tests := []struct {
 		name           string
 		locale         string
@@ -126,17 +126,17 @@ func TestClient_CreateArticle_Integration(t *testing.T) {
 				if r.Method != "POST" {
 					t.Errorf("Expected POST method, got %s", r.Method)
 				}
-				
+
 				expectedPath := "/api/v2/help_center/en_us/sections/123/articles.json"
 				if r.URL.Path != expectedPath {
 					t.Errorf("Expected path %s, got %s", expectedPath, r.URL.Path)
 				}
-				
+
 				auth := r.Header.Get("Authorization")
 				if !strings.HasPrefix(auth, "Basic ") {
 					t.Errorf("Expected Basic auth header, got %s", auth)
 				}
-				
+
 				contentType := r.Header.Get("Content-Type")
 				if contentType != "application/json" {
 					t.Errorf("Expected application/json content type, got %s", contentType)
@@ -192,25 +192,25 @@ func TestClient_CreateArticle_Integration(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			// Create test server with validation
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				// Validate request
 				tt.validateReq(t, r)
-				
+
 				// Send response
 				w.WriteHeader(tt.serverStatus)
 				w.Header().Set("Content-Type", "application/json")
 				_, _ = w.Write([]byte(tt.serverResponse))
 			}))
 			defer server.Close()
-			
+
 			// Create client with test server
 			client := createTestClient(t, server.URL)
-			
+
 			// Execute test
 			result, err := client.CreateArticle(tt.locale, tt.sectionID, tt.payload)
-			
+
 			// Validate results
 			if tt.expectError && err == nil {
 				t.Errorf("Expected error but got none")
@@ -218,7 +218,7 @@ func TestClient_CreateArticle_Integration(t *testing.T) {
 			if !tt.expectError && err != nil {
 				t.Errorf("Expected no error but got: %v", err)
 			}
-			
+
 			if !tt.expectError {
 				tt.validateResp(t, result)
 			}
@@ -228,7 +228,7 @@ func TestClient_CreateArticle_Integration(t *testing.T) {
 
 func TestClient_ShowArticle_Integration(t *testing.T) {
 	t.Parallel()
-	
+
 	tests := []struct {
 		name           string
 		locale         string
@@ -279,35 +279,35 @@ func TestClient_ShowArticle_Integration(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				// Validate request method and path
 				if r.Method != "GET" {
 					t.Errorf("Expected GET method, got %s", r.Method)
 				}
-				
+
 				expectedPath := fmt.Sprintf("/api/v2/help_center/%s/articles/%d.json", tt.locale, tt.articleID)
 				if r.URL.Path != expectedPath {
 					t.Errorf("Expected path %s, got %s", expectedPath, r.URL.Path)
 				}
-				
+
 				w.WriteHeader(tt.serverStatus)
 				w.Header().Set("Content-Type", "application/json")
 				_, _ = w.Write([]byte(tt.serverResponse))
 			}))
 			defer server.Close()
-			
+
 			client := createTestClient(t, server.URL)
-			
+
 			result, err := client.ShowArticle(tt.locale, tt.articleID)
-			
+
 			if tt.expectError && err == nil {
 				t.Errorf("Expected error but got none")
 			}
 			if !tt.expectError && err != nil {
 				t.Errorf("Expected no error but got: %v", err)
 			}
-			
+
 			if !tt.expectError {
 				// Validate response contains expected data
 				if !strings.Contains(result, fmt.Sprintf(`"id": %d`, tt.articleID)) {
@@ -320,7 +320,7 @@ func TestClient_ShowArticle_Integration(t *testing.T) {
 
 func TestClient_Translation_Operations(t *testing.T) {
 	t.Parallel()
-	
+
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case strings.HasSuffix(r.URL.Path, "/translations.json") && r.Method == "POST":
@@ -363,9 +363,9 @@ func TestClient_Translation_Operations(t *testing.T) {
 		}
 	}))
 	defer server.Close()
-	
+
 	client := createTestClient(t, server.URL)
-	
+
 	// Test CreateTranslation
 	t.Run("CreateTranslation", func(t *testing.T) {
 		payload := `{"translation":{"locale":"ja","title":"Japanese Title"}}`
@@ -377,7 +377,7 @@ func TestClient_Translation_Operations(t *testing.T) {
 			t.Errorf("Response should contain translation ID")
 		}
 	})
-	
+
 	// Test UpdateTranslation
 	t.Run("UpdateTranslation", func(t *testing.T) {
 		payload := `{"translation":{"title":"Updated Japanese Title"}}`
@@ -389,7 +389,7 @@ func TestClient_Translation_Operations(t *testing.T) {
 			t.Errorf("Response should contain updated title")
 		}
 	})
-	
+
 	// Test ShowTranslation
 	t.Run("ShowTranslation", func(t *testing.T) {
 		result, err := client.ShowTranslation(123, "ja")
@@ -404,12 +404,12 @@ func TestClient_Translation_Operations(t *testing.T) {
 
 func TestClient_ErrorHandling(t *testing.T) {
 	t.Parallel()
-	
+
 	tests := []struct {
-		name         string
-		setupServer  func() *httptest.Server
-		operation    func(Client) error
-		expectError  string
+		name        string
+		setupServer func() *httptest.Server
+		operation   func(Client) error
+		expectError string
 	}{
 		{
 			name: "network timeout simulation",
@@ -462,14 +462,14 @@ func TestClient_ErrorHandling(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			server := tt.setupServer()
 			defer server.Close()
-			
+
 			client := createTestClient(t, server.URL)
-			
+
 			err := tt.operation(client)
-			
+
 			if tt.expectError != "" {
 				if err == nil {
 					t.Errorf("Expected error containing '%s' but got none", tt.expectError)
@@ -485,10 +485,10 @@ func TestClient_AdditionalErrorHandling(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name         string
-		setupServer  func() *httptest.Server
-		operation    func(Client) error
-		expectError  string
+		name        string
+		setupServer func() *httptest.Server
+		operation   func(Client) error
+		expectError string
 	}{
 		{
 			name: "request creation failure",
@@ -560,16 +560,16 @@ func TestClient_AdditionalErrorHandling(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			server := tt.setupServer()
 			if tt.name != "network connection failure" {
 				defer server.Close()
 			}
-			
+
 			client := createTestClient(t, server.URL)
-			
+
 			err := tt.operation(client)
-			
+
 			if tt.expectError != "" {
 				if err == nil {
 					t.Errorf("Expected error containing '%s' but got none", tt.expectError)
@@ -584,11 +584,11 @@ func TestClient_AdditionalErrorHandling(t *testing.T) {
 // TestClient_APIResponseErrors tests various API response error scenarios
 func TestClient_APIResponseErrors(t *testing.T) {
 	tests := []struct {
-		name           string
-		statusCode     int
-		responseBody   string
-		wantError      string
-		description    string
+		name         string
+		statusCode   int
+		responseBody string
+		wantError    string
+		description  string
 	}{
 		{
 			name:         "404 not found error",
@@ -668,7 +668,7 @@ func TestClient_APIResponseErrors(t *testing.T) {
 
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.statusCode)
-				w.Write([]byte(tt.responseBody))
+				_, _ = w.Write([]byte(tt.responseBody))
 			}))
 			defer ts.Close()
 
@@ -738,7 +738,7 @@ func TestClient_EmptyResponseBody(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.statusCode)
 				if tt.responseBody != "" {
-					w.Write([]byte(tt.responseBody))
+					_, _ = w.Write([]byte(tt.responseBody))
 				}
 			}))
 			defer ts.Close()
@@ -812,7 +812,7 @@ func TestClient_MalformedJSONResponse(t *testing.T) {
 
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.statusCode)
-				w.Write([]byte(tt.responseBody))
+				_, _ = w.Write([]byte(tt.responseBody))
 			}))
 			defer ts.Close()
 
@@ -878,7 +878,7 @@ func TestClient_NetworkErrors(t *testing.T) {
 					hj, ok := w.(http.Hijacker)
 					if ok {
 						conn, _, _ := hj.Hijack()
-						conn.Close()
+						_ = conn.Close()
 					}
 				}))
 			},
@@ -946,15 +946,15 @@ func TestClient_LargeResponseHandling(t *testing.T) {
 
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusOK)
-				
+
 				if tt.responseSize == 0 {
-					w.Write([]byte(`{"articles": []}`))
+					_, _ = w.Write([]byte(`{"articles": []}`))
 				} else {
 					// Generate large response
 					response := `{"data": "`
 					response += strings.Repeat("x", tt.responseSize)
 					response += `"}`
-					w.Write([]byte(response))
+					_, _ = w.Write([]byte(response))
 				}
 			}))
 			defer ts.Close()
@@ -1024,9 +1024,9 @@ func TestClient_SpecialCharactersInPayload(t *testing.T) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				body, _ := io.ReadAll(r.Body)
 				receivedBody = body
-				
+
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte(`{"article": {"id": 123}}`))
+				_, _ = w.Write([]byte(`{"article": {"id": 123}}`))
 			}))
 			defer ts.Close()
 
@@ -1057,18 +1057,18 @@ func TestArticleAndTranslation_ErrorHandling(t *testing.T) {
 	// Test Article struct error handling
 	t.Run("Article_FromFile_Errors", func(t *testing.T) {
 		tests := []struct {
-			name     string
-			filename string
+			name        string
+			filename    string
 			expectError bool
 		}{
 			{
-				name:     "non-existent file",
-				filename: "testdata/non-existent-article.md",
+				name:        "non-existent file",
+				filename:    "testdata/non-existent-article.md",
 				expectError: true,
 			},
 			{
-				name:     "invalid frontmatter",
-				filename: "testdata/invalid-frontmatter-article.md",
+				name:        "invalid frontmatter",
+				filename:    "testdata/invalid-frontmatter-article.md",
 				expectError: true,
 			},
 		}
@@ -1077,7 +1077,7 @@ func TestArticleAndTranslation_ErrorHandling(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				var article Article
 				err := article.FromFile(tt.filename)
-				
+
 				if tt.expectError && err == nil {
 					t.Errorf("Expected error for %s but got none", tt.name)
 				}
@@ -1090,23 +1090,23 @@ func TestArticleAndTranslation_ErrorHandling(t *testing.T) {
 
 	t.Run("Article_FromJson_Errors", func(t *testing.T) {
 		tests := []struct {
-			name     string
-			jsonData string
+			name        string
+			jsonData    string
 			expectError bool
 		}{
 			{
-				name:     "invalid JSON",
-				jsonData: `{"article": invalid json}`,
+				name:        "invalid JSON",
+				jsonData:    `{"article": invalid json}`,
 				expectError: true,
 			},
 			{
-				name:     "empty JSON",
-				jsonData: ``,
+				name:        "empty JSON",
+				jsonData:    ``,
 				expectError: true,
 			},
 			{
-				name:     "malformed article structure",
-				jsonData: `{"not_article": {"id": 123}}`,
+				name:        "malformed article structure",
+				jsonData:    `{"not_article": {"id": 123}}`,
 				expectError: false, // This should not error, just result in empty article
 			},
 		}
@@ -1115,7 +1115,7 @@ func TestArticleAndTranslation_ErrorHandling(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				var article Article
 				err := article.FromJson(tt.jsonData)
-				
+
 				if tt.expectError && err == nil {
 					t.Errorf("Expected error for %s but got none", tt.name)
 				}
@@ -1128,18 +1128,18 @@ func TestArticleAndTranslation_ErrorHandling(t *testing.T) {
 
 	t.Run("Translation_FromFile_Errors", func(t *testing.T) {
 		tests := []struct {
-			name     string
-			filename string
+			name        string
+			filename    string
 			expectError bool
 		}{
 			{
-				name:     "non-existent file",
-				filename: "testdata/non-existent-translation.md",
+				name:        "non-existent file",
+				filename:    "testdata/non-existent-translation.md",
 				expectError: true,
 			},
 			{
-				name:     "invalid frontmatter",
-				filename: "testdata/invalid-frontmatter-translation.md",
+				name:        "invalid frontmatter",
+				filename:    "testdata/invalid-frontmatter-translation.md",
 				expectError: true,
 			},
 		}
@@ -1148,7 +1148,7 @@ func TestArticleAndTranslation_ErrorHandling(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				var translation Translation
 				err := translation.FromFile(tt.filename)
-				
+
 				if tt.expectError && err == nil {
 					t.Errorf("Expected error for %s but got none", tt.name)
 				}
@@ -1161,18 +1161,18 @@ func TestArticleAndTranslation_ErrorHandling(t *testing.T) {
 
 	t.Run("Translation_FromJson_Errors", func(t *testing.T) {
 		tests := []struct {
-			name     string
-			jsonData string
+			name        string
+			jsonData    string
 			expectError bool
 		}{
 			{
-				name:     "invalid JSON",
-				jsonData: `{"translation": invalid json}`,
+				name:        "invalid JSON",
+				jsonData:    `{"translation": invalid json}`,
 				expectError: true,
 			},
 			{
-				name:     "empty JSON",
-				jsonData: ``,
+				name:        "empty JSON",
+				jsonData:    ``,
 				expectError: true,
 			},
 		}
@@ -1181,7 +1181,7 @@ func TestArticleAndTranslation_ErrorHandling(t *testing.T) {
 			t.Run(tt.name, func(t *testing.T) {
 				var translation Translation
 				err := translation.FromJson(tt.jsonData)
-				
+
 				if tt.expectError && err == nil {
 					t.Errorf("Expected error for %s but got none", tt.name)
 				}
@@ -1195,11 +1195,11 @@ func TestArticleAndTranslation_ErrorHandling(t *testing.T) {
 
 // testClientImpl is a test-specific implementation of the Client interface
 type testClientImpl struct {
-	subdomain string
-	email     string
-	token     string
+	subdomain   string
+	email       string
+	token       string
 	testBaseURL string
-	client    *http.Client
+	client      *http.Client
 }
 
 func (tc *testClientImpl) baseURL() string {
@@ -1314,7 +1314,7 @@ func createTestClient(t *testing.T, serverURL string) Client {
 // TestClientImpl_RealHTTPClient tests the actual HTTP client implementation
 func TestClientImpl_RealHTTPClient(t *testing.T) {
 	t.Parallel()
-	
+
 	// Create mock server for testing real HTTP client
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
@@ -1345,23 +1345,23 @@ func TestClientImpl_RealHTTPClient(t *testing.T) {
 	// Create real client implementation (not test implementation)
 	client := NewClient("test", "test@example.com/token", "testtoken")
 	realClient := client.(*clientImpl)
-	
+
 	// Override base URL for testing - we need to modify the client to use test server
 	// Since clientImpl doesn't have a configurable baseURL, we'll test with a custom approach
-	
+
 	t.Run("CreateArticle_RealImplementation", func(t *testing.T) {
 		t.Parallel()
-		
+
 		// We'll test the URL generation and payload formatting of the real implementation
 		// but intercept the HTTP call to avoid making real network requests
-		
+
 		// Test URL generation by calling baseURL method
 		baseURL := realClient.baseURL()
 		expectedBaseURL := "https://test.zendesk.com"
 		if baseURL != expectedBaseURL {
 			t.Errorf("Expected baseURL %s, got %s", expectedBaseURL, baseURL)
 		}
-		
+
 		// Test authorization token generation
 		authToken := realClient.authorizationToken()
 		expectedToken := base64.StdEncoding.EncodeToString([]byte("test@example.com/token:testtoken"))
@@ -1369,11 +1369,11 @@ func TestClientImpl_RealHTTPClient(t *testing.T) {
 			t.Errorf("Expected authToken %s, got %s", expectedToken, authToken)
 		}
 	})
-	
+
 	t.Run("doRequest_ErrorHandling", func(t *testing.T) {
 		// Test doRequest method directly to avoid actual network calls
 		realClient := client.(*clientImpl)
-		
+
 		// Test empty endpoint error
 		_, err := realClient.doRequest("GET", "", nil)
 		if err == nil {
@@ -1383,11 +1383,11 @@ func TestClientImpl_RealHTTPClient(t *testing.T) {
 			t.Errorf("Expected 'endpoint is required' error, got: %v", err)
 		}
 	})
-	
+
 	t.Run("EndpointGeneration", func(t *testing.T) {
 		// Test endpoint generation without making actual HTTP requests
 		// We test the logic that generates endpoints for each API method
-		
+
 		// Test CreateArticle endpoint generation
 		expectedEndpoint := "/api/v2/help_center/en_us/sections/123/articles.json"
 		locale := "en_us"
@@ -1396,7 +1396,7 @@ func TestClientImpl_RealHTTPClient(t *testing.T) {
 		if actualEndpoint != expectedEndpoint {
 			t.Errorf("CreateArticle endpoint: expected %s, got %s", expectedEndpoint, actualEndpoint)
 		}
-		
+
 		// Test ShowArticle endpoint generation
 		expectedEndpoint = "/api/v2/help_center/ja/articles/456"
 		locale = "ja"
@@ -1405,7 +1405,7 @@ func TestClientImpl_RealHTTPClient(t *testing.T) {
 		if actualEndpoint != expectedEndpoint {
 			t.Errorf("ShowArticle endpoint: expected %s, got %s", expectedEndpoint, actualEndpoint)
 		}
-		
+
 		// Test CreateTranslation endpoint generation
 		expectedEndpoint = "/api/v2/help_center/articles/789/translations"
 		articleID = 789
@@ -1413,7 +1413,7 @@ func TestClientImpl_RealHTTPClient(t *testing.T) {
 		if actualEndpoint != expectedEndpoint {
 			t.Errorf("CreateTranslation endpoint: expected %s, got %s", expectedEndpoint, actualEndpoint)
 		}
-		
+
 		// Test ShowTranslation endpoint generation
 		expectedEndpoint = "/api/v2/help_center/articles/789/translations/fr"
 		articleID = 789
@@ -1422,10 +1422,10 @@ func TestClientImpl_RealHTTPClient(t *testing.T) {
 		if actualEndpoint != expectedEndpoint {
 			t.Errorf("ShowTranslation endpoint: expected %s, got %s", expectedEndpoint, actualEndpoint)
 		}
-		
+
 		t.Log("All endpoint generation tests passed")
 	})
-	
+
 	t.Run("HTTPClientWithMockTransport", func(t *testing.T) {
 		// Test the mock transport functionality independently
 		mockTransport := &mockRoundTripper{
@@ -1442,13 +1442,13 @@ func TestClientImpl_RealHTTPClient(t *testing.T) {
 				},
 			},
 		}
-		
+
 		// Test mock transport directly
 		req, err := http.NewRequest("POST", "https://test.zendesk.com/api/v2/help_center/en_us/sections/123/articles.json", nil)
 		if err != nil {
 			t.Fatalf("Failed to create request: %v", err)
 		}
-		
+
 		resp, err := mockTransport.RoundTrip(req)
 		if err != nil {
 			t.Errorf("Mock transport failed: %v", err)
@@ -1456,18 +1456,18 @@ func TestClientImpl_RealHTTPClient(t *testing.T) {
 		if resp.StatusCode != http.StatusCreated {
 			t.Errorf("Expected status 201, got %d", resp.StatusCode)
 		}
-		
+
 		// Read response body
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Errorf("Failed to read response body: %v", err)
 		}
 		_ = resp.Body.Close()
-		
+
 		if !strings.Contains(string(body), `"id":123`) {
 			t.Errorf("Expected response to contain article ID, got: %s", string(body))
 		}
-		
+
 		t.Log("Mock transport test passed successfully")
 	})
 }
@@ -1699,7 +1699,7 @@ func TestClient_AuthorizationHeaderGeneration(t *testing.T) {
 				t.Errorf("Authorization header mismatch for %s", tt.name)
 				t.Errorf("Expected: %s", tt.expectedHeader)
 				t.Errorf("Actual:   %s", actualHeader)
-				
+
 				// Decode to show the actual credentials
 				expectedDecoded, _ := base64.StdEncoding.DecodeString(tt.expectedHeader)
 				actualDecoded, _ := base64.StdEncoding.DecodeString(actualHeader)

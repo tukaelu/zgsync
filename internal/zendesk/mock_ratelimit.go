@@ -11,23 +11,23 @@ import (
 
 // RateLimiter provides realistic API rate limiting simulation
 type RateLimiter struct {
-	config           *RateLimitConfig
-	buckets          map[string]*TokenBucket
-	requestHistory   *RequestHistory
-	rateLimitStats   *RateLimitStatistics
-	mutex            sync.RWMutex
+	config         *RateLimitConfig
+	buckets        map[string]*TokenBucket
+	requestHistory *RequestHistory
+	rateLimitStats *RateLimitStatistics
+	mutex          sync.RWMutex
 }
 
 // RateLimitConfig controls rate limiting behavior
 type RateLimitConfig struct {
-	GlobalLimit       int           // Global requests per window
-	GlobalWindow      time.Duration // Global rate limit window
-	BurstLimit        int           // Maximum burst requests
-	BurstWindow       time.Duration // Burst window duration
+	GlobalLimit       int            // Global requests per window
+	GlobalWindow      time.Duration  // Global rate limit window
+	BurstLimit        int            // Maximum burst requests
+	BurstWindow       time.Duration  // Burst window duration
 	PerEndpointLimits map[string]int // Per-endpoint limits
-	Enable429Response bool          // Return 429 when limit exceeded
-	EnableHeaders     bool          // Add rate limit headers
-	GracePeriod       time.Duration // Grace period before enforcement
+	Enable429Response bool           // Return 429 when limit exceeded
+	EnableHeaders     bool           // Add rate limit headers
+	GracePeriod       time.Duration  // Grace period before enforcement
 }
 
 // TokenBucket implements token bucket algorithm for rate limiting
@@ -50,14 +50,14 @@ type RequestHistory struct {
 
 // RateLimitStatistics tracks rate limiting metrics
 type RateLimitStatistics struct {
-	TotalRequests      int64
-	LimitedRequests    int64
-	BurstRequests      int64
-	AverageRate        float64
-	PeakRate           float64
-	WindowViolations   int64
-	EndpointStats      map[string]*EndpointStats
-	mutex              sync.RWMutex
+	TotalRequests    int64
+	LimitedRequests  int64
+	BurstRequests    int64
+	AverageRate      float64
+	PeakRate         float64
+	WindowViolations int64
+	EndpointStats    map[string]*EndpointStats
+	mutex            sync.RWMutex
 }
 
 // EndpointStats tracks statistics per endpoint
@@ -70,21 +70,21 @@ type EndpointStats struct {
 
 // RateLimitResult represents the result of rate limit checking
 type RateLimitResult struct {
-	Allowed        bool
-	Remaining      int
-	ResetTime      time.Time
-	RetryAfter     time.Duration
-	LimitType      string // "global", "endpoint", "burst"
-	CurrentRate    float64
+	Allowed     bool
+	Remaining   int
+	ResetTime   time.Time
+	RetryAfter  time.Duration
+	LimitType   string // "global", "endpoint", "burst"
+	CurrentRate float64
 }
 
 // NewRateLimiter creates a new rate limiter
 func NewRateLimiter(config *RateLimitConfig) *RateLimiter {
 	if config == nil {
 		config = &RateLimitConfig{
-			GlobalLimit:       100,                           // 100 requests per minute
+			GlobalLimit:       100, // 100 requests per minute
 			GlobalWindow:      time.Minute,
-			BurstLimit:        20,                            // 20 requests per 10 seconds
+			BurstLimit:        20, // 20 requests per 10 seconds
 			BurstWindow:       10 * time.Second,
 			PerEndpointLimits: make(map[string]int),
 			Enable429Response: true,
@@ -93,7 +93,7 @@ func NewRateLimiter(config *RateLimitConfig) *RateLimiter {
 		}
 
 		// Default per-endpoint limits (realistic Zendesk API limits)
-		config.PerEndpointLimits["/articles"] = 200  // Higher limit for reads
+		config.PerEndpointLimits["/articles"] = 200 // Higher limit for reads
 		config.PerEndpointLimits["/translations"] = 100
 		config.PerEndpointLimits["/sections"] = 300
 	}
@@ -245,7 +245,7 @@ func (rl *RateLimiter) checkTokenBucket(bucket *TokenBucket, now time.Time, buck
 	rl.recordRateLimitViolation(bucketType)
 
 	retryAfter := rl.calculateRetryAfter(bucket)
-	
+
 	return &RateLimitResult{
 		Allowed:    false,
 		Remaining:  0,
@@ -268,7 +268,7 @@ func (rl *RateLimiter) refillTokens(bucket *TokenBucket, now time.Time) {
 	// Refill based on elapsed time
 	elapsed := now.Sub(bucket.LastRefill)
 	tokensToAdd := bucket.RefillRate * elapsed.Seconds()
-	
+
 	bucket.Tokens = math.Min(float64(bucket.Capacity), bucket.Tokens+tokensToAdd)
 	bucket.LastRefill = now
 }
@@ -298,14 +298,14 @@ func (rl *RateLimiter) ApplyRateLimit(w http.ResponseWriter, r *http.Request) bo
 		// Return 429 Too Many Requests
 		w.Header().Set("Retry-After", strconv.Itoa(int(result.RetryAfter.Seconds())))
 		w.WriteHeader(http.StatusTooManyRequests)
-		
+
 		errorResponse := fmt.Sprintf(`{
 			"error": "Rate limit exceeded",
 			"description": "API rate limit exceeded for %s",
 			"retry_after": %d,
 			"limit_type": "%s"
 		}`, result.LimitType, int(result.RetryAfter.Seconds()), result.LimitType)
-		
+
 		_, _ = w.Write([]byte(errorResponse))
 		return true // Request was handled (rate limited)
 	}
@@ -318,7 +318,7 @@ func (rl *RateLimiter) addRateLimitHeaders(w http.ResponseWriter, result *RateLi
 	w.Header().Set("X-Rate-Limit-Limit", strconv.Itoa(rl.config.GlobalLimit))
 	w.Header().Set("X-Rate-Limit-Remaining", strconv.Itoa(result.Remaining))
 	w.Header().Set("X-Rate-Limit-Reset", strconv.FormatInt(result.ResetTime.Unix(), 10))
-	
+
 	if !result.Allowed {
 		w.Header().Set("X-Rate-Limit-Type", result.LimitType)
 	}
@@ -328,14 +328,14 @@ func (rl *RateLimiter) addRateLimitHeaders(w http.ResponseWriter, result *RateLi
 
 func (rl *RateLimiter) getEndpointKey(r *http.Request) string {
 	path := r.URL.Path
-	
+
 	// Normalize path to match configured endpoints
 	for endpoint := range rl.config.PerEndpointLimits {
 		if contains(path, endpoint) {
 			return endpoint
 		}
 	}
-	
+
 	return "default"
 }
 
@@ -361,10 +361,10 @@ func (rl *RateLimiter) recordRequest(endpoint, clientKey string, now time.Time) 
 	if rl.rateLimitStats.EndpointStats[endpoint] == nil {
 		rl.rateLimitStats.EndpointStats[endpoint] = &EndpointStats{}
 	}
-	
+
 	stats := rl.rateLimitStats.EndpointStats[endpoint]
 	stats.Requests++
-	
+
 	// Calculate current rate (requests per second over last minute)
 	rl.updateCurrentRate(endpoint, now)
 }
@@ -385,13 +385,13 @@ func (rl *RateLimiter) updateCurrentRate(endpoint string, now time.Time) {
 	cutoff := now.Add(-time.Minute)
 	requests := rl.requestHistory.requests[key]
 	validRequests := make([]time.Time, 0)
-	
+
 	for _, reqTime := range requests {
 		if reqTime.After(cutoff) {
 			validRequests = append(validRequests, reqTime)
 		}
 	}
-	
+
 	rl.requestHistory.requests[key] = validRequests
 
 	// Calculate rate (requests per second)
@@ -411,11 +411,11 @@ func (rl *RateLimiter) recordRateLimitViolation(limitType string) {
 	defer rl.rateLimitStats.mutex.Unlock()
 
 	rl.rateLimitStats.LimitedRequests++
-	
+
 	if limitType == "burst" {
 		rl.rateLimitStats.BurstRequests++
 	}
-	
+
 	rl.rateLimitStats.WindowViolations++
 }
 
@@ -450,7 +450,7 @@ func (rl *RateLimiter) getCurrentRate(endpoint string) float64 {
 	if stats := rl.rateLimitStats.EndpointStats[endpoint]; stats != nil {
 		return stats.CurrentRate
 	}
-	
+
 	return 0.0
 }
 
@@ -527,7 +527,7 @@ func (rl *RateLimiter) UpdateEndpointLimit(endpoint string, limit int) {
 		rl.config.PerEndpointLimits = make(map[string]int)
 	}
 	rl.config.PerEndpointLimits[endpoint] = limit
-	
+
 	// Create or update bucket
 	if rl.buckets[endpoint] == nil {
 		rl.buckets[endpoint] = &TokenBucket{
@@ -535,7 +535,7 @@ func (rl *RateLimiter) UpdateEndpointLimit(endpoint string, limit int) {
 			WindowDuration: rl.config.GlobalWindow,
 		}
 	}
-	
+
 	bucket := rl.buckets[endpoint]
 	bucket.mutex.Lock()
 	bucket.Capacity = limit
@@ -546,38 +546,38 @@ func (rl *RateLimiter) UpdateEndpointLimit(endpoint string, limit int) {
 // GetRateLimitReport generates a detailed rate limiting report
 func (rl *RateLimiter) GetRateLimitReport() string {
 	stats := rl.GetStatistics()
-	
+
 	report := "Rate Limiting Report\n"
 	report += "====================\n"
 	report += fmt.Sprintf("Total Requests: %d\n", stats.TotalRequests)
-	report += fmt.Sprintf("Limited Requests: %d (%.2f%%)\n", stats.LimitedRequests, 
+	report += fmt.Sprintf("Limited Requests: %d (%.2f%%)\n", stats.LimitedRequests,
 		float64(stats.LimitedRequests)/float64(stats.TotalRequests)*100)
 	report += fmt.Sprintf("Burst Violations: %d\n", stats.BurstRequests)
 	report += fmt.Sprintf("Peak Rate: %.2f req/s\n", stats.PeakRate)
 	report += fmt.Sprintf("Window Violations: %d\n", stats.WindowViolations)
-	
+
 	report += "\nEndpoint Statistics:\n"
 	for endpoint, endpointStats := range stats.EndpointStats {
 		limitedPct := float64(0)
 		if endpointStats.Requests > 0 {
 			limitedPct = float64(endpointStats.LimitedRequests) / float64(endpointStats.Requests) * 100
 		}
-		
+
 		report += fmt.Sprintf("  %s:\n", endpoint)
 		report += fmt.Sprintf("    Requests: %d\n", endpointStats.Requests)
 		report += fmt.Sprintf("    Limited: %d (%.2f%%)\n", endpointStats.LimitedRequests, limitedPct)
 		report += fmt.Sprintf("    Current Rate: %.2f req/s\n", endpointStats.CurrentRate)
 	}
-	
+
 	return report
 }
 
 // Utility function
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && 
-		   (s[0:len(substr)] == substr || 
-		    s[len(s)-len(substr):] == substr ||
-		    indexOf(s, substr) >= 0)
+	return len(s) >= len(substr) &&
+		(s[0:len(substr)] == substr ||
+			s[len(s)-len(substr):] == substr ||
+			indexOf(s, substr) >= 0)
 }
 
 func indexOf(s, substr string) int {

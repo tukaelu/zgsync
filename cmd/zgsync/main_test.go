@@ -70,7 +70,7 @@ func TestMainFunction(t *testing.T) {
 	// Test that main function exists and can be called without panicking
 	// We can't directly test main() as it calls cli.Bind() which may exit the process
 	// Instead, we verify the main package structure and that cli.Bind is accessible
-	
+
 	// Verify that the main function signature exists by checking it doesn't panic
 	// when we reference it (even though we can't safely call it)
 	defer func() {
@@ -78,11 +78,11 @@ func TestMainFunction(t *testing.T) {
 			t.Errorf("Main function reference caused panic: %v", r)
 		}
 	}()
-	
+
 	// Test that we can reference the main function without issues
 	// The main function is never nil in Go, so we just verify it exists
 	_ = main
-	
+
 	// Test that cli package is properly imported and accessible
 	// This verifies the import path and that cli.Bind exists
 	t.Log("Main function structure verified - calls cli.Bind() as expected")
@@ -96,9 +96,9 @@ func TestMainWithEnvironmentVariables(t *testing.T) {
 	defer func() { _ = os.Remove("zgsync_test_env") }()
 
 	tests := []struct {
-		name    string
-		envVars map[string]string
-		args    []string
+		name        string
+		envVars     map[string]string
+		args        []string
 		expectError bool
 	}{
 		{
@@ -110,8 +110,8 @@ func TestMainWithEnvironmentVariables(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "version with clean environment",
-			envVars: map[string]string{},
+			name:        "version with clean environment",
+			envVars:     map[string]string{},
 			args:        []string{"version"},
 			expectError: false,
 		},
@@ -120,7 +120,7 @@ func TestMainWithEnvironmentVariables(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cmd := exec.Command("./zgsync_test_env", tt.args...)
-			
+
 			// Set custom environment
 			env := os.Environ()
 			for key, value := range tt.envVars {

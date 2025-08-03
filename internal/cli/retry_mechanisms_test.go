@@ -15,7 +15,7 @@ import (
 
 func TestRetryMechanisms_TransientErrors(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	// Create test translation file
 	testFile := filepath.Join(tempDir, "test.md")
 	testContent := `---
@@ -24,7 +24,7 @@ title: "Test Translation"
 source_id: 123
 ---
 # Test Content`
-	
+
 	if err := os.WriteFile(testFile, []byte(testContent), 0644); err != nil {
 		t.Fatalf("Failed to create test file: %v", err)
 	}
@@ -181,7 +181,7 @@ source_id: 123
 
 func TestRetryMechanisms_SimulatedRetryLogic(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	// Create test translation file
 	testFile := filepath.Join(tempDir, "test.md")
 	testContent := `---
@@ -190,7 +190,7 @@ title: "Test Translation"
 source_id: 123
 ---
 # Test Content`
-	
+
 	if err := os.WriteFile(testFile, []byte(testContent), 0644); err != nil {
 		t.Fatalf("Failed to create test file: %v", err)
 	}
@@ -211,7 +211,7 @@ source_id: 123
 					callCount++
 					current := callCount
 					mu.Unlock()
-					
+
 					// Fail first 2 attempts with retryable errors, succeed on 3rd
 					if current == 1 {
 						return "", fmt.Errorf("HTTP 502 Bad Gateway: Server temporarily overloaded")
@@ -235,7 +235,7 @@ source_id: 123
 					callCount++
 					current := callCount
 					mu.Unlock()
-					
+
 					// Rate limit on first few attempts
 					if current <= 2 {
 						return "", fmt.Errorf("HTTP 429 Too Many Requests: Rate limit exceeded. Retry after %d seconds", current*30)
@@ -266,7 +266,7 @@ source_id: 123
 					callCount++
 					current := callCount
 					mu.Unlock()
-					
+
 					// First attempt: retryable error
 					if current == 1 {
 						return "", fmt.Errorf("HTTP 503 Service Unavailable: Server overloaded")
@@ -378,10 +378,10 @@ func TestRetryMechanisms_BackoffStrategies(t *testing.T) {
 			tt.setupMock(mockClient)
 
 			cmd := &CommandPull{
-				Locale:      testhelper.TestLocales.Japanese,
-				ArticleIDs:  []int{testhelper.TestArticleID},
-				client:      mockClient,
-				converter:   converter.NewConverter(false),
+				Locale:     testhelper.TestLocales.Japanese,
+				ArticleIDs: []int{testhelper.TestArticleID},
+				client:     mockClient,
+				converter:  converter.NewConverter(false),
 			}
 
 			global := &Global{
@@ -431,7 +431,7 @@ func TestRetryMechanisms_CircuitBreakerSimulation(t *testing.T) {
 					failureCount++
 					current := failureCount
 					mu.Unlock()
-					
+
 					// Simulate circuit breaker opening after 3 failures
 					if current >= 3 {
 						return "", fmt.Errorf("Circuit breaker OPEN: Too many consecutive failures")
@@ -462,7 +462,7 @@ func TestRetryMechanisms_CircuitBreakerSimulation(t *testing.T) {
 					callCount++
 					current := callCount
 					mu.Unlock()
-					
+
 					// Simulate recovery after circuit breaker opens
 					if current == 1 {
 						return "", fmt.Errorf("Circuit breaker CLOSED: Service recovered")
@@ -518,7 +518,7 @@ func TestRetryMechanisms_CircuitBreakerSimulation(t *testing.T) {
 
 func TestRetryMechanisms_BulkOperationRetries(t *testing.T) {
 	tempDir := t.TempDir()
-	
+
 	// Create multiple test files
 	testFiles := make([]string, 3)
 	for i := 0; i < 3; i++ {
@@ -529,7 +529,7 @@ title: "Test Translation %d"
 source_id: %d
 ---
 # Test Content %d`, i, 123+i, i)
-		
+
 		if err := os.WriteFile(testFile, []byte(testContent), 0644); err != nil {
 			t.Fatalf("Failed to create test file %d: %v", i, err)
 		}
@@ -552,7 +552,7 @@ source_id: %d
 					callCount++
 					current := callCount
 					mu.Unlock()
-					
+
 					// Make second file fail with retryable error
 					if articleID == 124 && current <= 2 {
 						return "", fmt.Errorf("HTTP 503 Service Unavailable: Temporary service degradation")
@@ -573,7 +573,7 @@ source_id: %d
 					requestTimes = append(requestTimes, time.Now())
 					count := len(requestTimes)
 					mu.Unlock()
-					
+
 					// Fail first request to test retry spacing
 					if count == 1 {
 						return "", fmt.Errorf("HTTP 429 Too Many Requests: Rate limit exceeded")
@@ -641,7 +641,7 @@ func isTransientError(errorMsg string) bool {
 		"context deadline exceeded",
 		"dial tcp: i/o timeout",
 	}
-	
+
 	for _, pattern := range retryablePatterns {
 		if strings.Contains(errorMsg, pattern) {
 			return true

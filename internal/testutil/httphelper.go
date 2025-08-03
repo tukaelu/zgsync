@@ -22,13 +22,13 @@ func NewHTTPHelper(t *testing.T) *HTTPHelper {
 
 // HTTPTestCase represents a test case for HTTP operations
 type HTTPTestCase struct {
-	Name           string
-	Method         string
-	Path           string
-	RequestBody    string
-	ResponseStatus int
-	ResponseBody   string
-	ValidateRequest func(*testing.T, *http.Request)
+	Name             string
+	Method           string
+	Path             string
+	RequestBody      string
+	ResponseStatus   int
+	ResponseBody     string
+	ValidateRequest  func(*testing.T, *http.Request)
 	ValidateResponse func(*testing.T, string)
 }
 
@@ -55,7 +55,7 @@ func (hh *HTTPHelper) CreateJSONResponse(data interface{}) string {
 // CreateMockServer creates a mock server with predefined responses
 func (hh *HTTPHelper) CreateMockServer(responses map[string]HTTPResponse) *httptest.Server {
 	hh.t.Helper()
-	
+
 	handler := func(w http.ResponseWriter, r *http.Request) {
 		key := r.Method + " " + r.URL.Path
 		response, exists := responses[key]
@@ -64,16 +64,16 @@ func (hh *HTTPHelper) CreateMockServer(responses map[string]HTTPResponse) *httpt
 			_, _ = w.Write([]byte(`{"error": "Not Found"}`))
 			return
 		}
-		
+
 		// Set response headers
 		for k, v := range response.Headers {
 			w.Header().Set(k, v)
 		}
-		
+
 		w.WriteHeader(response.StatusCode)
 		_, _ = w.Write([]byte(response.Body))
 	}
-	
+
 	return hh.CreateTestServer(handler)
 }
 
@@ -96,24 +96,24 @@ func NewHTTPResponse(statusCode int, body string) HTTPResponse {
 // RunHTTPTestCases runs a series of HTTP test cases
 func (hh *HTTPHelper) RunHTTPTestCases(testCases []HTTPTestCase, createClient func(string) interface{}) {
 	hh.t.Helper()
-	
+
 	for _, tc := range testCases {
 		hh.t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				// Validate request if specified
 				if tc.ValidateRequest != nil {
 					tc.ValidateRequest(t, r)
 				}
-				
+
 				// Send response
 				w.WriteHeader(tc.ResponseStatus)
 				w.Header().Set("Content-Type", "application/json")
 				_, _ = w.Write([]byte(tc.ResponseBody))
 			}))
 			defer server.Close()
-			
+
 			// This would need to be implemented based on the specific client type
 			// For now, it's a placeholder for the concept
 			t.Logf("Would test %s %s against %s", tc.Method, tc.Path, server.URL)
@@ -152,22 +152,22 @@ func (hh *HTTPHelper) ReadHTTPBody(resp *http.Response) string {
 // AssertJSONResponse asserts that a response body is valid JSON and contains expected data
 func (hh *HTTPHelper) AssertJSONResponse(body string, expectedData interface{}) {
 	hh.t.Helper()
-	
+
 	var actualData interface{}
 	if err := json.Unmarshal([]byte(body), &actualData); err != nil {
 		hh.t.Fatalf("Response body is not valid JSON: %v", err)
 	}
-	
+
 	expectedJSON, err := json.Marshal(expectedData)
 	if err != nil {
 		hh.t.Fatalf("Failed to marshal expected data: %v", err)
 	}
-	
+
 	var expectedParsed interface{}
 	if err := json.Unmarshal(expectedJSON, &expectedParsed); err != nil {
 		hh.t.Fatalf("Failed to unmarshal expected data: %v", err)
 	}
-	
+
 	ah := NewAssertionHelper(hh.t)
 	ah.Equal(fmt.Sprintf("%+v", expectedParsed), fmt.Sprintf("%+v", actualData), "JSON response")
 }

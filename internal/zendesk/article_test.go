@@ -136,7 +136,7 @@ func TestArticleFromJson(t *testing.T) {
 
 func TestArticleFromFile_ErrorCases(t *testing.T) {
 	t.Parallel()
-	
+
 	tests := []struct {
 		name        string
 		filepath    string
@@ -157,10 +157,10 @@ func TestArticleFromFile_ErrorCases(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			article := &Article{}
 			err := article.FromFile(tt.filepath)
-			
+
 			if tt.expectError && err == nil {
 				t.Errorf("Expected error but got none")
 			}
@@ -173,7 +173,7 @@ func TestArticleFromFile_ErrorCases(t *testing.T) {
 
 func TestArticleFromJson_ErrorCases(t *testing.T) {
 	t.Parallel()
-	
+
 	tests := []struct {
 		name        string
 		jsonContent string
@@ -199,10 +199,10 @@ func TestArticleFromJson_ErrorCases(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			article := &Article{}
 			err := article.FromJson(tt.jsonContent)
-			
+
 			if tt.expectError && err == nil {
 				t.Errorf("Expected error but got none")
 			}
@@ -215,7 +215,7 @@ func TestArticleFromJson_ErrorCases(t *testing.T) {
 
 func TestArticleToPayload(t *testing.T) {
 	t.Parallel()
-	
+
 	tests := []struct {
 		name           string
 		article        Article
@@ -275,7 +275,7 @@ func TestArticleToPayload(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			payload, err := tt.article.ToPayload(tt.notify)
 			if err != nil {
 				t.Errorf("ToPayload() failed: %v", err)
@@ -300,7 +300,7 @@ func TestArticleToPayload(t *testing.T) {
 
 func TestArticleSave(t *testing.T) {
 	t.Parallel()
-	
+
 	tests := []struct {
 		name           string
 		article        Article
@@ -326,7 +326,7 @@ func TestArticleSave(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			tempDir := t.TempDir()
 			savePath := tempDir
 
@@ -351,16 +351,16 @@ func TestArticleSave(t *testing.T) {
 			}
 
 			contentStr := string(content)
-			
+
 			// Check for YAML frontmatter structure
 			if !strings.HasPrefix(contentStr, "---\n") {
 				t.Errorf("File should start with YAML frontmatter delimiter")
 			}
-			
+
 			if !strings.Contains(contentStr, "title: "+tt.article.Title) {
 				t.Errorf("File should contain title: %s", tt.article.Title)
 			}
-			
+
 			if !strings.Contains(contentStr, "locale: "+tt.article.Locale) {
 				t.Errorf("File should contain locale: %s", tt.article.Locale)
 			}
@@ -370,7 +370,7 @@ func TestArticleSave(t *testing.T) {
 
 func TestArticleSave_ErrorCases(t *testing.T) {
 	t.Parallel()
-	
+
 	tests := []struct {
 		name           string
 		article        Article
@@ -385,7 +385,7 @@ func TestArticleSave_ErrorCases(t *testing.T) {
 				Title:  "Test",
 				Locale: "en_us",
 			},
-			path:           "/root/no-permission",  // Assuming this would fail
+			path:           "/root/no-permission", // Assuming this would fail
 			appendFileName: true,
 			expectError:    true,
 		},
@@ -394,9 +394,9 @@ func TestArticleSave_ErrorCases(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			
+
 			err := tt.article.Save(tt.path, tt.appendFileName)
-			
+
 			if tt.expectError && err == nil {
 				t.Errorf("Expected error but got none")
 			}
