@@ -227,6 +227,105 @@ source_id: 789
 	}
 }
 
+func TestCommandPush_FrontmatterErrors(t *testing.T) {
+	tempDir := t.TempDir()
+
+	tests := []struct {
+		name        string
+		filename    string
+		content     string
+		expectError bool
+		description string
+	}{
+		{
+			name:     "invalid YAML format",
+			filename: "invalid-yaml.md",
+			content: `---
+locale: ja
+title: "Test Article
+invalid yaml structure
+---
+# Test Content`,
+			expectError: true,
+			description: "YAML parsing should fail with unterminated quoted string",
+		},
+		{
+			name:     "corrupted YAML structure",
+			filename: "corrupted-yaml.md",
+			content: `---
+locale: ja
+title: Test Article
+	invalid_indentation:
+  - item
+source_id: 123
+---
+# Test Content`,
+			expectError: true,
+			description: "Should fail with invalid YAML indentation structure",
+		},
+		{
+			name:     "empty frontmatter",
+			filename: "empty-frontmatter.md",
+			content: `---
+---
+# Test Content`,
+			expectError: false,
+			description: "Empty frontmatter should be parseable but may fail at API level",
+		},
+		{
+			name:     "no frontmatter",
+			filename: "no-frontmatter.md",
+			content: `# Test Content
+This is just markdown without frontmatter.`,
+			expectError: false,
+			description: "Files without frontmatter should be parseable but may fail at API level",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create test file with problematic frontmatter
+			testFile := filepath.Join(tempDir, tt.filename)
+			if err := os.WriteFile(testFile, []byte(tt.content), 0644); err != nil {
+				t.Fatalf("Failed to create test file: %v", err)
+			}
+
+			mockClient := &testhelper.MockZendeskClient{}
+			// Set up mock to return success if called (shouldn't be called for most error cases)
+			mockClient.UpdateTranslationFunc = func(articleID int, locale, payload string) (string, error) {
+				return testhelper.CreateDefaultTranslationResponse(1, articleID, locale), nil
+			}
+			mockClient.UpdateArticleFunc = func(locale string, articleID int, payload string) (string, error) {
+				return testhelper.CreateDefaultArticleResponse(123, 456), nil
+			}
+
+			cmd := CommandPush{
+				Article: false, // Try as translation first
+				DryRun:  false,
+				Raw:     false,
+				Files:   []string{testFile},
+			}
+			cmd.client = mockClient
+			cmd.converter = converter.NewConverter(false)
+
+			global := &Global{
+				Config: Config{
+					DefaultLocale:     testhelper.TestLocales.English,
+					NotifySubscribers: false,
+				},
+			}
+
+			err := cmd.Run(global)
+			if tt.expectError && err == nil {
+				t.Errorf("Expected error for %s but got none", tt.name)
+			}
+			if !tt.expectError && err != nil {
+				t.Errorf("Expected no error for %s but got: %v", tt.name, err)
+			}
+		})
+	}
+}
+
 func TestCommandPush_pushArticle(t *testing.T) {
 	tempDir := t.TempDir()
 	
