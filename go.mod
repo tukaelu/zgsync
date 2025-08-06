@@ -2,7 +2,7 @@ module github.com/tukaelu/zgsync
 
 go 1.23.0
 
-toolchain go1.24.5
+toolchain go1.24.6
 
 require (
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
