@@ -6,6 +6,7 @@ toolchain go1.24.5
 
 require (
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
+	github.com/JohannesKaufmann/html-to-markdown/v2 v2.3.3
 	github.com/PuerkitoBio/goquery v1.10.3
 	github.com/adrg/frontmatter v0.2.0
 	github.com/alecthomas/kong v1.12.1
