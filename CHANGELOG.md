@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.0.17](https://github.com/tukaelu/zgsync/compare/v0.0.16...v0.0.17) - 2025-10-04
+### Other Changes
+- test: add comprehensive error handling and edge case tests by @tukaelu in https://github.com/tukaelu/zgsync/pull/44
+- fix(deps): update module github.com/yuin/goldmark to v1.7.13 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/28
+- chore(deps): update golangci/golangci-lint-action action to v8 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/29
+- chore(deps): update dependency go to v1.24.6 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/46
+- fix(deps): update module github.com/johanneskaufmann/html-to-markdown to v2 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/19
+
 ## [v0.0.16](https://github.com/tukaelu/zgsync/compare/v0.0.15...v0.0.16) - 2025-08-03
 ### Other Changes
 - build: upgrade GoReleaser configuration to v2 by @tukaelu in https://github.com/tukaelu/zgsync/pull/42
