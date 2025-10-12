@@ -24,27 +24,34 @@ builds:
       - arm64
 
 archives:
-  - formats: ['tar.gz']
+  - formats: ["tar.gz"]
     format_overrides:
       - goos: darwin
-        formats: ['zip']
+        formats: ["zip"]
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     files:
       - README.md
       - LICENSE
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 changelog:
-  use: github  # Use GitHub Releases release notes
+  use: github # Use GitHub Releases release notes
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
-homebrew_casks:
+      - "^docs:"
+      - "^test:"
+brews:
   - repository:
       owner: tukaelu
       name: homebrew-tap
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    homepage: "https://github.com/tukaelu/zgsync"
+    description: "CLI that syncs Markdown help center content to Zendesk."
+    license: "MIT"
+    install: |
+      bin.install "zgsync"
+    test: |
+      system "#{bin}/zgsync", "--version"
