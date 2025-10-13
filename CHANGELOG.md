@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.0.18](https://github.com/tukaelu/zgsync/compare/v0.0.17...v0.0.18) - 2025-10-13
+### Other Changes
+- chore(deps): update actions/checkout action to v5 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/48
+- chore(deps): update actions/setup-go action to v6 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/50
+- fix(deps): update module golang.org/x/net to v0.44.0 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/47
+- chore(deps): update dependency go to v1.25.2 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/49
+- fix(deps): update module golang.org/x/net to v0.46.0 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/53
+- fix homebrew configuration by @tukaelu in https://github.com/tukaelu/zgsync/pull/54
+
 ## [v0.0.17](https://github.com/tukaelu/zgsync/compare/v0.0.16...v0.0.17) - 2025-10-04
 ### Other Changes
 - test: add comprehensive error handling and edge case tests by @tukaelu in https://github.com/tukaelu/zgsync/pull/44
