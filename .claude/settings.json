@@ -5,5 +5,13 @@
       "mcp__serena__*"
     ],
     "deny": []
+  },
+  "env": {
+    "BASH_DEFAULT_TIMEOUT_MS": "300000"
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "npx ccusage@latest statusline",
+    "padding": 0
   }
 }
