@@ -11,6 +11,7 @@ allowed-tools:
   - Bash(make:*)
   - Edit
   - Read
+  - Task
   - Write
 ---
 
@@ -31,18 +32,40 @@ Confirm the following:
 
 Ask the user if anything is unclear.
 
-### Step 2. Generate cmdXxx.go
+### Step 2. Fetch API specification
+
+Invoke the `zendesk-help-center-researcher` agent via the Task tool for the Zendesk API methods confirmed in Step 1.
+
+```
+Task tool:
+  subagent_type: zendesk-help-center-researcher
+  prompt: "Investigate the API specification for [operation confirmed in Step 1]"
+```
+
+Use the returned JSON array for the implementation in Step 3.
+Confirm all of the following fields:
+- `method` / `endpoint`: HTTP method and endpoint URL
+- `path_parameters` / `query_parameters`: Parameter names, types, and required/optional
+- `request_body`: Wrapper key and field list for the request body
+- `response`: Wrapper key and field list for the response
+- `notes`: Special notes such as permissions and rate limits
+
+If the agent returns JSON containing an `error` field, report it to the user and prompt them
+to manually verify the API specification before proceeding to the next step.
+
+### Step 3. Generate cmdXxx.go
 
 Create `internal/cli/cmd{Name}.go`.
 
 Refer to the implementation template and Kong tag reference in [references/templates.md](references/templates.md).
+Use the API specification from Step 2 to determine the correct endpoint path, parameters, and response field names.
 
 **Naming conventions:**
 - File name: `cmdXxx.go` (e.g. `cmdSync.go`)
 - Type name: `CommandXxx` (e.g. `CommandSync`)
 - If a Zendesk API client is required, instantiate it in `AfterApply`
 
-### Step 3. Register in cli.go
+### Step 4. Register in cli.go
 
 Add a field to the `cli` struct in `internal/cli/cli.go`:
 
@@ -54,7 +77,7 @@ type cli struct {
 }
 ```
 
-### Step 4. Generate test file
+### Step 5. Generate test file
 
 Create `internal/cli/cmd{Name}_test.go`.
 
@@ -65,7 +88,7 @@ Minimum test case structure:
 - Error cases (API errors, validation errors)
 - `TestCommand{Name}_AfterApply` (client initialization check)
 
-### Step 5. Verify
+### Step 6. Verify
 
 ```bash
 make test
