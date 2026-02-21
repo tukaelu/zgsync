@@ -1832,6 +1832,16 @@ func TestClient_AllMethods_AuthenticationFailure(t *testing.T) {
 			t.Errorf("Expected 401 error, got: %v", err)
 		}
 	})
+
+	t.Run("ArchiveArticle authentication failure", func(t *testing.T) {
+		err := client.ArchiveArticle(123)
+		if err == nil {
+			t.Error("Expected authentication error but got none")
+		}
+		if !strings.Contains(err.Error(), "401") {
+			t.Errorf("Expected 401 error, got: %v", err)
+		}
+	})
 }
 
 // TestClient_BasicAuthHeaderFormat tests the format of Basic authentication headers
