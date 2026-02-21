@@ -15,7 +15,6 @@ type RateLimiter struct {
 	buckets        map[string]*TokenBucket
 	requestHistory *RequestHistory
 	rateLimitStats *RateLimitStatistics
-	mutex          sync.RWMutex
 }
 
 // RateLimitConfig controls rate limiting behavior
