@@ -18,15 +18,17 @@ type Client interface {
 	CreateArticle(locale string, sectionID int, payload string) (string, error)
 	UpdateArticle(locale string, articleID int, payload string) (string, error)
 	ShowArticle(locale string, articleID int) (string, error)
+	ArchiveArticle(articleID int) error
 	CreateTranslation(articleID int, payload string) (string, error)
 	UpdateTranslation(articleID int, locale string, payload string) (string, error)
 	ShowTranslation(articleID int, locale string) (string, error)
 }
 
 type clientImpl struct {
-	subdomain string
-	email     string
-	token     string
+	subdomain       string
+	email           string
+	token           string
+	baseURLOverride string
 }
 
 func NewClient(subdomain, email, token string) Client {
@@ -67,6 +69,15 @@ func (c *clientImpl) ShowArticle(locale string, articleID int) (string, error) {
 		articleID,
 	)
 	return c.doRequest(http.MethodGet, endpoint, nil)
+}
+
+// refs: https://developer.zendesk.com/api-reference/help_center/help-center-api/articles/#archive-article
+func (c *clientImpl) ArchiveArticle(articleID int) error {
+	endpoint := fmt.Sprintf(
+		"/api/v2/help_center/articles/%d",
+		articleID,
+	)
+	return c.doDeleteRequest(endpoint)
 }
 
 // refs: https://developer.zendesk.com/api-reference/help_center/help-center-api/translations/#create-translation
@@ -131,7 +142,35 @@ func (c *clientImpl) doRequest(method string, endpoint string, payload io.Reader
 	return string(resPayload), nil
 }
 
+func (c *clientImpl) doDeleteRequest(endpoint string) error {
+	if endpoint == "" {
+		return fmt.Errorf("endpoint is required")
+	}
+	reqURL := c.baseURL() + endpoint
+	req, err := http.NewRequest(http.MethodDelete, reqURL, nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Authorization", "Basic "+c.authorizationToken())
+
+	client := &http.Client{}
+	res, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = res.Body.Close() }()
+
+	if res.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+	return nil
+}
+
 func (c *clientImpl) baseURL() string {
+	if c.baseURLOverride != "" {
+		return c.baseURLOverride
+	}
 	return fmt.Sprintf(BaseURL, c.subdomain)
 }
 

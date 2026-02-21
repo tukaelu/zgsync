@@ -93,6 +93,38 @@ func TestClient_IntegrationWithAdvancedMockServer(t *testing.T) {
 				t.Logf("Got error (as expected): %v", err)
 			}
 		})
+
+		t.Run("ArchiveArticle", func(t *testing.T) {
+			// Create an article to archive
+			payload := `{"article":{"title":"Article to Archive","locale":"en_us"}}`
+			createResult, err := client.CreateArticle("en_us", 123, payload)
+			if err != nil {
+				t.Fatalf("Failed to create article: %v", err)
+			}
+
+			var createResponse struct {
+				Article struct {
+					ID int `json:"id"`
+				} `json:"article"`
+			}
+			if err := json.Unmarshal([]byte(createResult), &createResponse); err != nil {
+				t.Fatalf("Failed to parse create response: %v", err)
+			}
+			articleID := createResponse.Article.ID
+
+			// Archive the article
+			if err := client.ArchiveArticle(articleID); err != nil {
+				t.Errorf("Expected no error archiving article, got: %v", err)
+			}
+		})
+
+		t.Run("ArchiveArticleNotFound", func(t *testing.T) {
+			// Try to archive a non-existent article
+			err := client.ArchiveArticle(999999)
+			if err == nil {
+				t.Error("Expected error archiving non-existent article, but got none")
+			}
+		})
 	})
 
 	t.Run("TranslationOperations", func(t *testing.T) {

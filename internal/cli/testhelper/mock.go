@@ -9,6 +9,7 @@ type MockZendeskClient struct {
 	CreateArticleFunc     func(locale string, sectionID int, payload string) (string, error)
 	UpdateArticleFunc     func(locale string, articleID int, payload string) (string, error)
 	ShowArticleFunc       func(locale string, articleID int) (string, error)
+	ArchiveArticleFunc    func(articleID int) error
 	CreateTranslationFunc func(articleID int, payload string) (string, error)
 	UpdateTranslationFunc func(articleID int, locale string, payload string) (string, error)
 	ShowTranslationFunc   func(articleID int, locale string) (string, error)
@@ -79,6 +80,14 @@ func (m *MockZendeskClient) ShowArticle(locale string, articleID int) (string, e
 		return m.ShowArticleFunc(locale, articleID)
 	}
 	return CreateDefaultArticleResponse(articleID, 456), nil
+}
+
+// ArchiveArticle implements zendesk.Client
+func (m *MockZendeskClient) ArchiveArticle(articleID int) error {
+	if m.ArchiveArticleFunc != nil {
+		return m.ArchiveArticleFunc(articleID)
+	}
+	return nil
 }
 
 // CreateTranslation implements zendesk.Client

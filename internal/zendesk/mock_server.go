@@ -580,6 +580,8 @@ func (s *AdvancedMockServer) handleHelpCenterRequest(w http.ResponseWriter, r *h
 		s.handleShowArticle(w, r)
 	case strings.Contains(path, "/articles/") && r.Method == "PUT":
 		s.handleUpdateArticle(w, r)
+	case strings.HasPrefix(path, "articles/") && !strings.Contains(path, "/translations") && r.Method == "DELETE":
+		s.handleArchiveArticle(w, r)
 	case strings.Contains(path, "/translations.json") && r.Method == "POST":
 		s.handleCreateTranslation(w, r)
 	case strings.Contains(path, "/translations/") && r.Method == "PUT":
@@ -781,4 +783,23 @@ func (s *AdvancedMockServer) handleShowTranslation(w http.ResponseWriter, r *htt
 	// Return translation
 	response := map[string]*Translation{"translation": translation}
 	_ = json.NewEncoder(w).Encode(response)
+}
+
+// handleArchiveArticle handles DELETE /api/v2/help_center/articles/{article_id}
+func (s *AdvancedMockServer) handleArchiveArticle(w http.ResponseWriter, r *http.Request) {
+	// Extract article ID from path
+	pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v2/help_center/articles/"), "/")
+	articleIDStr := pathParts[0]
+	articleID, err := strconv.Atoi(articleIDStr)
+	if err != nil {
+		http.Error(w, `{"error": "Invalid article ID"}`, http.StatusBadRequest)
+		return
+	}
+
+	if !s.dataStore.deleteArticle(articleID) {
+		http.Error(w, `{"error": "Article not found"}`, http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
