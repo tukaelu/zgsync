@@ -25,9 +25,10 @@ type Client interface {
 }
 
 type clientImpl struct {
-	subdomain string
-	email     string
-	token     string
+	subdomain       string
+	email           string
+	token           string
+	baseURLOverride string
 }
 
 func NewClient(subdomain, email, token string) Client {
@@ -167,6 +168,9 @@ func (c *clientImpl) doDeleteRequest(endpoint string) error {
 }
 
 func (c *clientImpl) baseURL() string {
+	if c.baseURLOverride != "" {
+		return c.baseURLOverride
+	}
 	return fmt.Sprintf(BaseURL, c.subdomain)
 }
 
