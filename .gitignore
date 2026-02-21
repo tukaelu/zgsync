@@ -1,5 +1,5 @@
 dist/
 example/
-.serena/
 *.out
 coverage.html
+.claude/settings.local.json
