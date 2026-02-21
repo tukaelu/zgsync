@@ -56,7 +56,7 @@ enable_link_target_blank: false
 
 ## Usage
 
-zgsync consists of the subcommands pull, push, and empty.  
+zgsync consists of the subcommands pull, push, empty, and archive.
 By default, it handles Translations among the data models of the Zendesk Help Center, but it can also handle Articles by specifying a specific option.
 
 zgsync saves Translations in files named `{Article ID}-{Locale}.md`. When using the pull or empty commands, specifying the `--save-article` option saves Articles in files named `{Article ID}.md`.  
@@ -122,6 +122,19 @@ Flags:
 ```
 
 The empty subcommand should not be used when adding a new Translation to an existing Article.
+
+### archive
+
+The archive subcommand archives an article on the remote. It accepts either an article ID or a local article file path as the target.
+
+```
+Usage: zgsync archive <target> [flags]
+
+Archives an article on the remote.
+
+Arguments:
+  <target>    Specify the article ID or file path of the article to archive.
+```
 
 ## Markdown file format
 
