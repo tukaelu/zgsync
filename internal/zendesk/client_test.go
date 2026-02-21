@@ -1900,3 +1900,83 @@ func TestClient_BasicAuthHeaderFormat(t *testing.T) {
 		})
 	}
 }
+
+func TestClient_ArchiveArticle_Integration(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		articleID    int
+		serverStatus int
+		expectError  bool
+	}{
+		{
+			name:         "successful archive",
+			articleID:    123,
+			serverStatus: http.StatusNoContent,
+			expectError:  false,
+		},
+		{
+			name:         "article not found",
+			articleID:    999,
+			serverStatus: http.StatusNotFound,
+			expectError:  true,
+		},
+		{
+			name:         "server error",
+			articleID:    456,
+			serverStatus: http.StatusInternalServerError,
+			expectError:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodDelete {
+					t.Errorf("Expected DELETE method, got %s", r.Method)
+				}
+
+				expectedPath := fmt.Sprintf("/api/v2/help_center/articles/%d", tt.articleID)
+				if r.URL.Path != expectedPath {
+					t.Errorf("Expected path %s, got %s", expectedPath, r.URL.Path)
+				}
+
+				w.WriteHeader(tt.serverStatus)
+			}))
+			defer server.Close()
+
+			client := createTestClient(t, server.URL)
+
+			err := client.ArchiveArticle(tt.articleID)
+
+			if tt.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tt.expectError && err != nil {
+				t.Errorf("Expected no error but got: %v", err)
+			}
+		})
+	}
+}
+
+func TestClientImpl_DoDeleteRequest_EmptyEndpoint(t *testing.T) {
+	t.Parallel()
+
+	client := &clientImpl{
+		subdomain: "test",
+		email:     "test@example.com/token",
+		token:     "testtoken",
+	}
+
+	err := client.doDeleteRequest("")
+
+	if err == nil {
+		t.Error("Expected error for empty endpoint but got none")
+	}
+	if err != nil && !strings.Contains(err.Error(), "endpoint is required") {
+		t.Errorf("Expected 'endpoint is required' error, got: %v", err)
+	}
+}

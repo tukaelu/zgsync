@@ -81,6 +81,12 @@ title: Test Article Without ID
 			},
 		},
 		{
+			name:        "default mock returns no error",
+			target:      "123456",
+			expectError: false,
+			mockSetup:   func(mock *testhelper.MockZendeskClient) {},
+		},
+		{
 			name:        "file without article ID returns error",
 			target:      noIDFile,
 			expectError: true,
