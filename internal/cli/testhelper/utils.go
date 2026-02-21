@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
-// CaptureStdout captures stdout during function execution and returns the output
-// This function is safe for parallel test execution
+// CaptureStdout captures stdout during function execution and returns the output.
+// WARNING: This function modifies global os.Stdout and is NOT safe for parallel test execution.
 func CaptureStdout(t *testing.T, fn func() error) (string, error) {
 	// Save original stdout
 	originalStdout := os.Stdout
@@ -37,6 +39,40 @@ func CaptureStdout(t *testing.T, fn func() error) (string, error) {
 
 	return buf.String(), funcErr
 }
+
+// AssertErrorContainsKeyword checks that the error message contains at least one of the given keywords.
+// This is useful for validating that error context is preserved when errors propagate through layers.
+func AssertErrorContainsKeyword(t *testing.T, err error, keywords []string) {
+	t.Helper()
+	if len(keywords) == 0 {
+		return
+	}
+	errorMsg := err.Error()
+	for _, keyword := range keywords {
+		if strings.Contains(errorMsg, keyword) {
+			return
+		}
+	}
+	t.Errorf("Error message %q does not contain any of keywords: %v", errorMsg, keywords)
+}
+
+// CreateTestFile creates a test file in the given directory and returns its path.
+func CreateTestFile(t *testing.T, dir, filename, content string) string {
+	t.Helper()
+	filePath := filepath.Join(dir, filename)
+	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
+		t.Fatalf("Failed to create test file %s: %v", filePath, err)
+	}
+	return filePath
+}
+
+// TestTranslationContent is a common Markdown frontmatter used across CLI tests for translation push.
+const TestTranslationContent = `---
+locale: ja
+title: "Test Translation"
+source_id: 123
+---
+# Test Content`
 
 // Constants for common test values to reduce magic numbers
 const (
