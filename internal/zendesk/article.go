@@ -16,20 +16,20 @@ import (
 type Article struct {
 	AuthorID          int      `json:"author_id,omitempty" yaml:"author_id"`
 	Body              string   `json:"body,omitempty" yaml:"-"`
-	CommentsDisabled  bool     `json:"comments_disabled,omitempty" yaml:"comments_disabled"`
+	CommentsDisabled  bool     `json:"comments_disabled" yaml:"comments_disabled"`
 	ContentTagIDs     []string `json:"content_tag_ids,omitempty" yaml:"content_tag_ids"`
 	CreatedAt         string   `json:"created_at,omitempty" yaml:"created_at"`
-	Draft             bool     `json:"draft,omitempty" yaml:"draft"`
+	Draft             bool     `json:"draft" yaml:"draft"`
 	EditedAt          string   `json:"edited_at,omitempty" yaml:"edited_at"`
 	HtmlURL           string   `json:"html_url,omitempty" yaml:"html_url"`
 	ID                int      `json:"id,omitempty" yaml:"id"`
 	LabelNames        []string `json:"label_names,omitempty" yaml:"label_names"`
 	Locale            string   `json:"locale" yaml:"locale"`
-	Outdated          bool     `json:"outdated,omitempty" yaml:"outdated"`
+	Outdated          bool     `json:"outdated" yaml:"outdated"`
 	OutdatedLocales   []string `json:"outdated_locales,omitempty" yaml:"outdated_locales"`
 	PermissionGroupID int      `json:"permission_group_id,omitempty" yaml:"permission_group_id"`
 	Position          int      `json:"position,omitempty" yaml:"position"`
-	Promoted          bool     `json:"promoted,omitempty" yaml:"promoted"`
+	Promoted          bool     `json:"promoted" yaml:"promoted"`
 	SectionID         int      `json:"section_id,omitempty" yaml:"section_id"`
 	SourceLocale      string   `json:"source_locale,omitempty" yaml:"source_locale"`
 	Title             string   `json:"title" yaml:"title"`
