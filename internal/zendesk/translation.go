@@ -16,8 +16,8 @@ import (
 type Translation struct {
 	Title       string `json:"title" yaml:"title"`
 	Locale      string `json:"locale" yaml:"locale"`
-	Draft       bool   `json:"draft,omitempty" yaml:"draft"`
-	Outdated    bool   `json:"outdated,omitempty" yaml:"outdated"`
+	Draft       bool   `json:"draft" yaml:"draft"`
+	Outdated    bool   `json:"outdated" yaml:"outdated"`
 	SectionID   int    `json:"-" yaml:"section_id,omitempty"`
 	SourceID    int    `json:"source_id,omitempty" yaml:"source_id"`
 	HtmlURL     string `json:"html_url,omitempty" yaml:"html_url"`
