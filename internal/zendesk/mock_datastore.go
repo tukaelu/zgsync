@@ -2,7 +2,6 @@ package zendesk
 
 import (
 	"fmt"
-	"time"
 )
 
 // initializeDefaultData populates the data store with initial test data
@@ -143,23 +142,6 @@ func (ds *MockDataStore) createArticle(locale string, sectionID int) *Article {
 	return &articleCopy
 }
 
-func (ds *MockDataStore) updateArticle(id int) *Article {
-	ds.mutex.Lock()
-	defer ds.mutex.Unlock()
-
-	article, exists := ds.articles[id]
-	if !exists {
-		return nil
-	}
-
-	// Simulate update by modifying title
-	article.Title = fmt.Sprintf("Updated Article %d", id)
-
-	// Return a copy
-	articleCopy := *article
-	return &articleCopy
-}
-
 func (ds *MockDataStore) deleteArticle(id int) bool {
 	ds.mutex.Lock()
 	defer ds.mutex.Unlock()
@@ -217,24 +199,6 @@ func (ds *MockDataStore) createTranslation(articleID int, locale string) *Transl
 	return &translationCopy
 }
 
-func (ds *MockDataStore) updateTranslation(articleID int, locale string) *Translation {
-	ds.mutex.Lock()
-	defer ds.mutex.Unlock()
-
-	key := fmt.Sprintf("%d-%s", articleID, locale)
-	translation, exists := ds.translations[key]
-	if !exists {
-		return nil
-	}
-
-	// Simulate update by modifying title
-	translation.Title = fmt.Sprintf("Updated Translation %d (%s)", translation.ID, locale)
-
-	// Return a copy
-	translationCopy := *translation
-	return &translationCopy
-}
-
 // Section operations
 
 func (ds *MockDataStore) sectionExists(id int) bool {
@@ -245,140 +209,3 @@ func (ds *MockDataStore) sectionExists(id int) bool {
 }
 
 // User operations
-
-// Utility methods
-
-// Reset clears all data and reinitializes with defaults
-func (ds *MockDataStore) Reset() {
-	ds.mutex.Lock()
-	defer ds.mutex.Unlock()
-
-	// Clear all maps
-	ds.articles = make(map[int]*Article)
-	ds.translations = make(map[string]*Translation)
-	ds.sections = make(map[int]*MockSection)
-	ds.users = make(map[int]*MockUser)
-
-	// Reinitialize with defaults (without taking lock again)
-	ds.initializeDefaultDataUnsafe()
-}
-
-// GetStats returns statistics about the current data store
-func (ds *MockDataStore) GetStats() map[string]int {
-	ds.mutex.RLock()
-	defer ds.mutex.RUnlock()
-
-	return map[string]int{
-		"articles":     len(ds.articles),
-		"translations": len(ds.translations),
-		"sections":     len(ds.sections),
-		"users":        len(ds.users),
-	}
-}
-
-// ValidateRelationships checks data integrity
-func (ds *MockDataStore) ValidateRelationships() []string {
-	ds.mutex.RLock()
-	defer ds.mutex.RUnlock()
-
-	var issues []string
-
-	// Check that all articles reference valid sections
-	for _, article := range ds.articles {
-		if _, exists := ds.sections[article.SectionID]; !exists {
-			issues = append(issues, fmt.Sprintf("Article %d references non-existent section %d", article.ID, article.SectionID))
-		}
-
-		if _, exists := ds.users[article.AuthorID]; !exists {
-			issues = append(issues, fmt.Sprintf("Article %d references non-existent author %d", article.ID, article.AuthorID))
-		}
-	}
-
-	// Check that all translations reference valid articles
-	for key, translation := range ds.translations {
-		if _, exists := ds.articles[translation.SourceID]; !exists {
-			issues = append(issues, fmt.Sprintf("Translation %s references non-existent article %d", key, translation.SourceID))
-		}
-	}
-
-	return issues
-}
-
-// Backup creates a snapshot of the current data
-func (ds *MockDataStore) Backup() *MockDataStoreSnapshot {
-	ds.mutex.RLock()
-	defer ds.mutex.RUnlock()
-
-	snapshot := &MockDataStoreSnapshot{
-		Timestamp:    time.Now(),
-		Articles:     make(map[int]*Article),
-		Translations: make(map[string]*Translation),
-		Sections:     make(map[int]*MockSection),
-		Users:        make(map[int]*MockUser),
-	}
-
-	// Deep copy all data
-	for id, article := range ds.articles {
-		articleCopy := *article
-		snapshot.Articles[id] = &articleCopy
-	}
-
-	for key, translation := range ds.translations {
-		translationCopy := *translation
-		snapshot.Translations[key] = &translationCopy
-	}
-
-	for id, section := range ds.sections {
-		sectionCopy := *section
-		snapshot.Sections[id] = &sectionCopy
-	}
-
-	for id, user := range ds.users {
-		userCopy := *user
-		snapshot.Users[id] = &userCopy
-	}
-
-	return snapshot
-}
-
-// MockDataStoreSnapshot represents a point-in-time snapshot of the data store
-type MockDataStoreSnapshot struct {
-	Timestamp    time.Time
-	Articles     map[int]*Article
-	Translations map[string]*Translation
-	Sections     map[int]*MockSection
-	Users        map[int]*MockUser
-}
-
-// Restore loads data from a snapshot
-func (ds *MockDataStore) Restore(snapshot *MockDataStoreSnapshot) {
-	ds.mutex.Lock()
-	defer ds.mutex.Unlock()
-
-	// Clear current data
-	ds.articles = make(map[int]*Article)
-	ds.translations = make(map[string]*Translation)
-	ds.sections = make(map[int]*MockSection)
-	ds.users = make(map[int]*MockUser)
-
-	// Load from snapshot
-	for id, article := range snapshot.Articles {
-		articleCopy := *article
-		ds.articles[id] = &articleCopy
-	}
-
-	for key, translation := range snapshot.Translations {
-		translationCopy := *translation
-		ds.translations[key] = &translationCopy
-	}
-
-	for id, section := range snapshot.Sections {
-		sectionCopy := *section
-		ds.sections[id] = &sectionCopy
-	}
-
-	for id, user := range snapshot.Users {
-		userCopy := *user
-		ds.users[id] = &userCopy
-	}
-}

@@ -2,8 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -28,12 +26,7 @@ func TestAuthentication_ErrorHandling(t *testing.T) {
 			},
 			command: func(mock *testhelper.MockZendeskClient) error {
 				tempDir := t.TempDir()
-				testFile := createTestFile(t, tempDir, "test.md", `---
-locale: ja
-title: "Test Translation"
-source_id: 123
----
-# Test Content`)
+				testFile := testhelper.CreateTestFile(t, tempDir, "test.md", testhelper.TestTranslationContent)
 
 				cmd := CommandPush{
 					Article: false,
@@ -122,12 +115,7 @@ source_id: 123
 			},
 			command: func(mock *testhelper.MockZendeskClient) error {
 				tempDir := t.TempDir()
-				testFile := createTestFile(t, tempDir, "test.md", `---
-locale: ja
-title: "Test Translation"
-source_id: 123
----
-# Test Content`)
+				testFile := testhelper.CreateTestFile(t, tempDir, "test.md", testhelper.TestTranslationContent)
 
 				cmd := CommandPush{
 					Article: false,
@@ -166,7 +154,7 @@ source_id: 123
 				t.Errorf("Expected no error for %s but got: %v", tt.name, err)
 			}
 
-			// Additional validation: check that error message contains authentication-related keywords
+			// Validate error message contains authentication-related keywords
 			if tt.expectError && err != nil {
 				errorMsg := err.Error()
 				hasAuthKeyword := strings.Contains(errorMsg, "Unauthorized") ||
@@ -176,77 +164,9 @@ source_id: 123
 					strings.Contains(errorMsg, "401")
 
 				if !hasAuthKeyword {
-					t.Logf("Authentication error message: %s", errorMsg)
+					t.Errorf("Authentication error message missing auth keywords: %s", errorMsg)
 				}
 			}
 		})
 	}
-}
-
-func TestAuthentication_TokenValidation(t *testing.T) {
-	tests := []struct {
-		name        string
-		config      Config
-		expectError bool
-		description string
-	}{
-		{
-			name: "empty token in config",
-			config: Config{
-				Subdomain:                "test",
-				Email:                    "test@example.com/token",
-				Token:                    "", // Empty token
-				DefaultLocale:            "en",
-				DefaultPermissionGroupID: 123,
-			},
-			expectError: true,
-			description: "Should fail validation with empty token",
-		},
-		{
-			name: "valid token in config",
-			config: Config{
-				Subdomain:                "test",
-				Email:                    "test@example.com/token",
-				Token:                    "valid_token_123",
-				DefaultLocale:            "en",
-				DefaultPermissionGroupID: 123,
-			},
-			expectError: false,
-			description: "Should pass validation with valid token",
-		},
-		{
-			name: "missing email token suffix",
-			config: Config{
-				Subdomain:                "test",
-				Email:                    "test@example.com", // Missing /token suffix
-				Token:                    "valid_token_123",
-				DefaultLocale:            "en",
-				DefaultPermissionGroupID: 123,
-			},
-			expectError: false, // Email format validation is not currently enforced
-			description: "Email without /token suffix (currently allowed)",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := tt.config.Validation()
-
-			if tt.expectError && err == nil {
-				t.Errorf("Expected error for %s but got none", tt.name)
-			}
-			if !tt.expectError && err != nil {
-				t.Errorf("Expected no error for %s but got: %v", tt.name, err)
-			}
-		})
-	}
-}
-
-// Helper function to create test files
-func createTestFile(t *testing.T, dir, filename, content string) string {
-	filePath := filepath.Join(dir, filename)
-	if err := os.WriteFile(filePath, []byte(content), 0644); err != nil {
-		t.Fatalf("Failed to create test file %s: %v", filePath, err)
-	}
-	return filePath
 }

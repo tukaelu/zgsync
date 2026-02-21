@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
 	"testing"
 
 	"github.com/tukaelu/zgsync/internal/cli/testhelper"
@@ -172,6 +171,28 @@ func TestCommandEmpty_Run(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "ShowTranslation fails after successful CreateArticle",
+			cmd: CommandEmpty{
+				SectionID:         testhelper.TestSectionID,
+				Title:             "New Article",
+				Locale:            testhelper.TestLocales.Japanese,
+				PermissionGroupID: testhelper.TestPermissionGroupID,
+				UserSegmentID:     nil,
+				SaveArticle:       false,
+				WithSectionDir:    false,
+			},
+			expectError: true,
+			mockSetup: func(mock *testhelper.MockZendeskClient) {
+				mock.CreateArticleFunc = func(locale string, sectionID int, payload string) (string, error) {
+					return testhelper.CreateDefaultArticleResponse(789, sectionID), nil
+				}
+				mock.ShowTranslationFunc = func(articleID int, locale string) (string, error) {
+					return "", fmt.Errorf("ShowTranslation API error")
+				}
+			},
+			validateFiles: func(t *testing.T, dir string) {},
+		},
 	}
 
 	for _, tt := range tests {
@@ -205,7 +226,7 @@ func TestCommandEmpty_Run(t *testing.T) {
 				t.Errorf("Expected no error but got: %v", err)
 			}
 
-			if !tt.expectError {
+			if tt.validateFiles != nil {
 				tt.validateFiles(t, testDir)
 			}
 		})

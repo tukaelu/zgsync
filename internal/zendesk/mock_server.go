@@ -415,153 +415,6 @@ func (s *AdvancedMockServer) setErrorHeaders(w http.ResponseWriter, statusCode i
 	}
 }
 
-// Error simulation configuration methods
-
-// EnableErrorSimulation enables realistic error simulation
-func (s *AdvancedMockServer) EnableErrorSimulation(scenarios []string) {
-	s.config.EnableErrorSim = true
-	s.config.ErrorScenarios = scenarios
-}
-
-// DisableErrorSimulation disables error simulation
-func (s *AdvancedMockServer) DisableErrorSimulation() {
-	s.config.EnableErrorSim = false
-	s.config.ErrorScenarios = nil
-}
-
-// GetErrorDistributions returns error occurrence statistics
-func (s *AdvancedMockServer) GetErrorDistributions() map[string]*ErrorDistribution {
-	return s.errorTracker.GetDistributions()
-}
-
-// ResetErrorTracking clears all error statistics
-func (s *AdvancedMockServer) ResetErrorTracking() {
-	s.errorTracker.Reset()
-}
-
-// AddCustomErrorScenario adds a custom error scenario to the simulator
-func (s *AdvancedMockServer) AddCustomErrorScenario(name string, scenario *ErrorScenario) {
-	s.errorSim.AddCustomScenario(name, scenario)
-}
-
-// GetAvailableErrorScenarios returns all available error scenarios
-func (s *AdvancedMockServer) GetAvailableErrorScenarios() []string {
-	return s.errorSim.GetAvailableScenarios()
-}
-
-// CreateCompositeErrorScenario creates a scenario combining multiple error types
-func (s *AdvancedMockServer) CreateCompositeErrorScenario(name string, scenarios []string, probability float64) {
-	s.errorSim.CreateCompositeScenario(name, scenarios, probability)
-}
-
-// Latency simulation control methods
-
-// EnableLatencySimulation enables realistic latency simulation
-func (s *AdvancedMockServer) EnableLatencySimulation(config *LatencyConfig) {
-	s.config.EnableLatencySim = true
-	s.config.LatencyConfig = config
-	if s.latencySim == nil {
-		s.latencySim = NewLatencySimulator(config)
-	}
-}
-
-// DisableLatencySimulation disables latency simulation
-func (s *AdvancedMockServer) DisableLatencySimulation() {
-	s.config.EnableLatencySim = false
-	s.latencySim = nil
-}
-
-// GetLatencyStatistics returns latency simulation statistics
-func (s *AdvancedMockServer) GetLatencyStatistics() *NetworkStatistics {
-	if s.latencySim != nil {
-		return s.latencySim.GetNetworkStatistics()
-	}
-	return nil
-}
-
-// ResetLatencyStatistics clears latency statistics
-func (s *AdvancedMockServer) ResetLatencyStatistics() {
-	if s.latencySim != nil {
-		s.latencySim.ResetStatistics()
-	}
-}
-
-// SetNetworkProfile updates the network profile for latency simulation
-func (s *AdvancedMockServer) SetNetworkProfile(profile NetworkProfile) {
-	if s.latencySim != nil {
-		s.latencySim.SetNetworkProfile(profile)
-	}
-}
-
-// AddLatencyPattern adds a custom latency pattern
-func (s *AdvancedMockServer) AddLatencyPattern(name string, pattern *LatencyPattern) {
-	if s.latencySim != nil {
-		s.latencySim.AddCustomPattern(name, pattern)
-	}
-}
-
-// GetLatencyReport generates a detailed latency report
-func (s *AdvancedMockServer) GetLatencyReport() string {
-	if s.latencySim != nil {
-		return s.latencySim.GetLatencyReport()
-	}
-	return "Latency simulation not enabled"
-}
-
-// Rate limiting control methods
-
-// EnableRateLimiting enables API rate limiting
-func (s *AdvancedMockServer) EnableRateLimiting(config *RateLimitConfig) {
-	s.config.EnableRateLimiting = true
-	s.config.RateLimitConfig = config
-	if s.rateLimiter == nil {
-		s.rateLimiter = NewRateLimiter(config)
-	}
-}
-
-// DisableRateLimiting disables rate limiting
-func (s *AdvancedMockServer) DisableRateLimiting() {
-	s.config.EnableRateLimiting = false
-	s.rateLimiter = nil
-}
-
-// GetRateLimitStatistics returns rate limiting statistics
-func (s *AdvancedMockServer) GetRateLimitStatistics() *RateLimitStatistics {
-	if s.rateLimiter != nil {
-		return s.rateLimiter.GetStatistics()
-	}
-	return nil
-}
-
-// ResetRateLimitStatistics clears rate limiting statistics
-func (s *AdvancedMockServer) ResetRateLimitStatistics() {
-	if s.rateLimiter != nil {
-		s.rateLimiter.ResetStatistics()
-	}
-}
-
-// UpdateGlobalRateLimit updates the global rate limit
-func (s *AdvancedMockServer) UpdateGlobalRateLimit(limit int) {
-	if s.rateLimiter != nil {
-		s.rateLimiter.UpdateGlobalLimit(limit)
-	}
-}
-
-// UpdateEndpointRateLimit updates the rate limit for a specific endpoint
-func (s *AdvancedMockServer) UpdateEndpointRateLimit(endpoint string, limit int) {
-	if s.rateLimiter != nil {
-		s.rateLimiter.UpdateEndpointLimit(endpoint, limit)
-	}
-}
-
-// GetRateLimitReport generates a detailed rate limiting report
-func (s *AdvancedMockServer) GetRateLimitReport() string {
-	if s.rateLimiter != nil {
-		return s.rateLimiter.GetRateLimitReport()
-	}
-	return "Rate limiting not enabled"
-}
-
 // registerRoutes sets up all API endpoints
 func (s *AdvancedMockServer) registerRoutes(mux *http.ServeMux) {
 	// Article endpoints
@@ -576,16 +429,12 @@ func (s *AdvancedMockServer) handleHelpCenterRequest(w http.ResponseWriter, r *h
 	switch {
 	case strings.HasSuffix(path, "/articles.json") && r.Method == "POST":
 		s.handleCreateArticle(w, r)
-	case strings.Contains(path, "/articles/") && strings.HasSuffix(path, ".json") && r.Method == "GET":
+	case strings.Contains(path, "/articles/") && !strings.Contains(path, "/translations") && r.Method == "GET":
 		s.handleShowArticle(w, r)
-	case strings.Contains(path, "/articles/") && r.Method == "PUT":
-		s.handleUpdateArticle(w, r)
 	case strings.HasPrefix(path, "articles/") && !strings.Contains(path, "/translations") && r.Method == "DELETE":
 		s.handleArchiveArticle(w, r)
-	case strings.Contains(path, "/translations.json") && r.Method == "POST":
+	case strings.HasSuffix(path, "/translations") && r.Method == "POST":
 		s.handleCreateTranslation(w, r)
-	case strings.Contains(path, "/translations/") && r.Method == "PUT":
-		s.handleUpdateTranslation(w, r)
 	case strings.Contains(path, "/translations/") && r.Method == "GET":
 		s.handleShowTranslation(w, r)
 	default:
@@ -628,7 +477,7 @@ func (s *AdvancedMockServer) handleCreateArticle(w http.ResponseWriter, r *http.
 	_ = json.NewEncoder(w).Encode(response)
 }
 
-// handleShowArticle handles GET /api/v2/help_center/{locale}/articles/{id}.json
+// handleShowArticle handles GET /api/v2/help_center/{locale}/articles/{id}
 func (s *AdvancedMockServer) handleShowArticle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -639,8 +488,7 @@ func (s *AdvancedMockServer) handleShowArticle(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	articleIDStr := strings.TrimSuffix(pathParts[2], ".json")
-	articleID, err := strconv.Atoi(articleIDStr)
+	articleID, err := strconv.Atoi(pathParts[2])
 	if err != nil {
 		http.Error(w, `{"error": "Invalid article ID"}`, http.StatusBadRequest)
 		return
@@ -658,37 +506,7 @@ func (s *AdvancedMockServer) handleShowArticle(w http.ResponseWriter, r *http.Re
 	_ = json.NewEncoder(w).Encode(response)
 }
 
-// handleUpdateArticle handles PUT /api/v2/help_center/{locale}/articles/{id}
-func (s *AdvancedMockServer) handleUpdateArticle(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	// Extract article ID from path
-	pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v2/help_center/"), "/")
-	if len(pathParts) < 3 {
-		http.Error(w, `{"error": "Invalid URL format"}`, http.StatusBadRequest)
-		return
-	}
-
-	articleIDStr := pathParts[2]
-	articleID, err := strconv.Atoi(articleIDStr)
-	if err != nil {
-		http.Error(w, `{"error": "Invalid article ID"}`, http.StatusBadRequest)
-		return
-	}
-
-	// Update article
-	article := s.dataStore.updateArticle(articleID)
-	if article == nil {
-		http.Error(w, `{"error": "Article not found"}`, http.StatusNotFound)
-		return
-	}
-
-	// Return updated article
-	response := map[string]*Article{"article": article}
-	_ = json.NewEncoder(w).Encode(response)
-}
-
-// handleCreateTranslation handles POST /api/v2/help_center/articles/{article_id}/translations.json
+// handleCreateTranslation handles POST /api/v2/help_center/articles/{article_id}/translations
 func (s *AdvancedMockServer) handleCreateTranslation(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -718,38 +536,6 @@ func (s *AdvancedMockServer) handleCreateTranslation(w http.ResponseWriter, r *h
 	// Return created translation
 	response := map[string]*Translation{"translation": translation}
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(response)
-}
-
-// handleUpdateTranslation handles PUT /api/v2/help_center/articles/{article_id}/translations/{locale}
-func (s *AdvancedMockServer) handleUpdateTranslation(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	// Extract article ID and locale from path
-	pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v2/help_center/articles/"), "/")
-	if len(pathParts) < 3 {
-		http.Error(w, `{"error": "Invalid URL format"}`, http.StatusBadRequest)
-		return
-	}
-
-	articleIDStr := pathParts[0]
-	locale := pathParts[2]
-
-	articleID, err := strconv.Atoi(articleIDStr)
-	if err != nil {
-		http.Error(w, `{"error": "Invalid article ID"}`, http.StatusBadRequest)
-		return
-	}
-
-	// Update translation
-	translation := s.dataStore.updateTranslation(articleID, locale)
-	if translation == nil {
-		http.Error(w, `{"error": "Translation not found"}`, http.StatusNotFound)
-		return
-	}
-
-	// Return updated translation
-	response := map[string]*Translation{"translation": translation}
 	_ = json.NewEncoder(w).Encode(response)
 }
 

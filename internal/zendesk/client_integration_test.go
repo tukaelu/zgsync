@@ -448,14 +448,5 @@ func TestClient_AdvancedFeatures(t *testing.T) {
 func createAdvancedTestClient(t *testing.T, serverURL string) Client {
 	t.Helper()
 
-	// Use the existing createTestClient but with the mock server URL
-	// We need to replace the URL in the existing test client
-	client := createTestClient(t, serverURL)
-
-	// Cast to get the underlying implementation and update the test base URL
-	if impl, ok := client.(*testClientImpl); ok {
-		impl.testBaseURL = serverURL
-	}
-
-	return client
+	return newTestClientImpl(serverURL)
 }

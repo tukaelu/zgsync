@@ -2,9 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/tukaelu/zgsync/internal/cli/testhelper"
@@ -13,19 +10,7 @@ import (
 
 func TestAPIResponseErrors_Push(t *testing.T) {
 	tempDir := t.TempDir()
-
-	// Create test translation file
-	testFile := filepath.Join(tempDir, "test.md")
-	testContent := `---
-locale: ja
-title: "Test Translation"
-source_id: 123
----
-# Test Content`
-
-	if err := os.WriteFile(testFile, []byte(testContent), 0644); err != nil {
-		t.Fatalf("Failed to create test file: %v", err)
-	}
+	testFile := testhelper.CreateTestFile(t, tempDir, "test.md", testhelper.TestTranslationContent)
 
 	tests := []struct {
 		name          string
@@ -174,20 +159,8 @@ source_id: 123
 				t.Errorf("Expected no error for %s but got: %v", tt.name, err)
 			}
 
-			// Additional validation: check that error message contains expected keywords
-			if tt.expectError && err != nil && len(tt.errorKeywords) > 0 {
-				errorMsg := err.Error()
-				foundKeyword := false
-				for _, keyword := range tt.errorKeywords {
-					if strings.Contains(errorMsg, keyword) {
-						foundKeyword = true
-						break
-					}
-				}
-				if !foundKeyword {
-					t.Logf("API error message for %s: %s", tt.name, errorMsg)
-					t.Logf("Expected one of keywords: %v", tt.errorKeywords)
-				}
+			if tt.expectError && err != nil {
+				testhelper.AssertErrorContainsKeyword(t, err, tt.errorKeywords)
 			}
 		})
 	}
@@ -313,20 +286,8 @@ func TestAPIResponseErrors_Pull(t *testing.T) {
 				t.Errorf("Expected no error for %s but got: %v", tt.name, err)
 			}
 
-			// Additional validation: check that error message contains expected keywords
-			if tt.expectError && err != nil && len(tt.errorKeywords) > 0 {
-				errorMsg := err.Error()
-				foundKeyword := false
-				for _, keyword := range tt.errorKeywords {
-					if strings.Contains(errorMsg, keyword) {
-						foundKeyword = true
-						break
-					}
-				}
-				if !foundKeyword {
-					t.Logf("API error message for %s: %s", tt.name, errorMsg)
-					t.Logf("Expected one of keywords: %v", tt.errorKeywords)
-				}
+			if tt.expectError && err != nil {
+				testhelper.AssertErrorContainsKeyword(t, err, tt.errorKeywords)
 			}
 		})
 	}
@@ -438,20 +399,8 @@ func TestAPIResponseErrors_Empty(t *testing.T) {
 				t.Errorf("Expected no error for %s but got: %v", tt.name, err)
 			}
 
-			// Additional validation: check that error message contains expected keywords
-			if tt.expectError && err != nil && len(tt.errorKeywords) > 0 {
-				errorMsg := err.Error()
-				foundKeyword := false
-				for _, keyword := range tt.errorKeywords {
-					if strings.Contains(errorMsg, keyword) {
-						foundKeyword = true
-						break
-					}
-				}
-				if !foundKeyword {
-					t.Logf("API error message for %s: %s", tt.name, errorMsg)
-					t.Logf("Expected one of keywords: %v", tt.errorKeywords)
-				}
+			if tt.expectError && err != nil {
+				testhelper.AssertErrorContainsKeyword(t, err, tt.errorKeywords)
 			}
 		})
 	}

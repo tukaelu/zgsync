@@ -114,6 +114,28 @@ func (m *MockZendeskClient) ShowTranslation(articleID int, locale string) (strin
 	return CreateDefaultTranslationResponse(1, articleID, locale), nil
 }
 
+// MockConverter is a mock implementation of converter.Converter
+type MockConverter struct {
+	ConvertToHTMLFunc     func(markdown string) (string, error)
+	ConvertToMarkdownFunc func(html string) (string, error)
+}
+
+// ConvertToHTML implements converter.Converter
+func (m *MockConverter) ConvertToHTML(markdown string) (string, error) {
+	if m.ConvertToHTMLFunc != nil {
+		return m.ConvertToHTMLFunc(markdown)
+	}
+	return "<p>" + markdown + "</p>", nil
+}
+
+// ConvertToMarkdown implements converter.Converter
+func (m *MockConverter) ConvertToMarkdown(html string) (string, error) {
+	if m.ConvertToMarkdownFunc != nil {
+		return m.ConvertToMarkdownFunc(html)
+	}
+	return html, nil
+}
+
 // IntPtr is a helper function to create int pointers
 func IntPtr(i int) *int {
 	return &i

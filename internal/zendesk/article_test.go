@@ -319,8 +319,6 @@ func TestArticleSave(t *testing.T) {
 			appendFileName: true,
 			expectFileName: "123.md",
 		},
-		// NOTE: appendFileName=false case is handled differently by the Save method
-		// It uses the provided path as a directory and creates the file with ID as name
 	}
 
 	for _, tt := range tests {
@@ -365,6 +363,44 @@ func TestArticleSave(t *testing.T) {
 				t.Errorf("File should contain locale: %s", tt.article.Locale)
 			}
 		})
+	}
+}
+
+func TestArticleSave_WithoutAppendFileName(t *testing.T) {
+	t.Parallel()
+
+	article := Article{
+		ID:                123,
+		Title:             "Overwrite Article",
+		Locale:            "en_us",
+		PermissionGroupID: 456,
+		Draft:             true,
+	}
+
+	tempDir := t.TempDir()
+	filePath := filepath.Join(tempDir, "123.md")
+
+	// Pre-create the file so that Save can overwrite it
+	if err := os.WriteFile(filePath, []byte("old content"), 0o644); err != nil {
+		t.Fatalf("Failed to pre-create file: %v", err)
+	}
+
+	err := article.Save(filePath, false)
+	if err != nil {
+		t.Fatalf("Save(appendFileName=false) failed: %v", err)
+	}
+
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatalf("Failed to read saved file: %v", err)
+	}
+
+	contentStr := string(content)
+	if !strings.HasPrefix(contentStr, "---\n") {
+		t.Errorf("File should start with YAML frontmatter delimiter")
+	}
+	if !strings.Contains(contentStr, "title: "+article.Title) {
+		t.Errorf("File should contain title: %s", article.Title)
 	}
 }
 

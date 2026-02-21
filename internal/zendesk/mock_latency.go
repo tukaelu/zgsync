@@ -1,7 +1,6 @@
 package zendesk
 
 import (
-	"fmt"
 	"math/rand"
 	"net/http"
 	"strings"
@@ -408,94 +407,4 @@ func (ls *LatencySimulator) updateNetworkStats(actualLatency time.Duration, patt
 		newAvg := oldAvg + (float64(actualLatency)-oldAvg)/float64(ls.networkStats.TotalRequests)
 		ls.networkStats.AverageLatency = time.Duration(newAvg)
 	}
-}
-
-// AddCustomPattern adds a custom latency pattern
-func (ls *LatencySimulator) AddCustomPattern(name string, pattern *LatencyPattern) {
-	ls.mutex.Lock()
-	defer ls.mutex.Unlock()
-	ls.patterns[name] = pattern
-}
-
-// GetNetworkStatistics returns current network statistics
-func (ls *LatencySimulator) GetNetworkStatistics() *NetworkStatistics {
-	ls.networkStats.mutex.RLock()
-	defer ls.networkStats.mutex.RUnlock()
-
-	// Return a copy to prevent external modification
-	stats := &NetworkStatistics{
-		TotalRequests:     ls.networkStats.TotalRequests,
-		AverageLatency:    ls.networkStats.AverageLatency,
-		MinLatency:        ls.networkStats.MinLatency,
-		MaxLatency:        ls.networkStats.MaxLatency,
-		LatencyHistogram:  make(map[time.Duration]int64),
-		RequestsByPattern: make(map[string]int64),
-	}
-
-	// Deep copy maps
-	for k, v := range ls.networkStats.LatencyHistogram {
-		stats.LatencyHistogram[k] = v
-	}
-	for k, v := range ls.networkStats.RequestsByPattern {
-		stats.RequestsByPattern[k] = v
-	}
-
-	return stats
-}
-
-// ResetStatistics clears all collected statistics
-func (ls *LatencySimulator) ResetStatistics() {
-	ls.networkStats.mutex.Lock()
-	defer ls.networkStats.mutex.Unlock()
-
-	ls.networkStats.TotalRequests = 0
-	ls.networkStats.AverageLatency = 0
-	ls.networkStats.MinLatency = 0
-	ls.networkStats.MaxLatency = 0
-	ls.networkStats.LatencyHistogram = make(map[time.Duration]int64)
-	ls.networkStats.RequestsByPattern = make(map[string]int64)
-}
-
-// SetNetworkProfile updates the network profile
-func (ls *LatencySimulator) SetNetworkProfile(profile NetworkProfile) {
-	ls.mutex.Lock()
-	defer ls.mutex.Unlock()
-	ls.config.NetworkProfile = profile
-}
-
-// SetJitterEnabled enables or disables jitter
-func (ls *LatencySimulator) SetJitterEnabled(enabled bool) {
-	ls.mutex.Lock()
-	defer ls.mutex.Unlock()
-	ls.config.EnableJitter = enabled
-}
-
-// GetLatencyReport generates a detailed latency report
-func (ls *LatencySimulator) GetLatencyReport() string {
-	stats := ls.GetNetworkStatistics()
-
-	if stats.TotalRequests == 0 {
-		return "No requests processed yet"
-	}
-
-	report := "Latency Simulation Report\n"
-	report += "========================\n"
-	report += fmt.Sprintf("Total Requests: %d\n", stats.TotalRequests)
-	report += fmt.Sprintf("Average Latency: %v\n", stats.AverageLatency)
-	report += fmt.Sprintf("Min Latency: %v\n", stats.MinLatency)
-	report += fmt.Sprintf("Max Latency: %v\n", stats.MaxLatency)
-	report += "\nRequests by Pattern:\n"
-
-	for pattern, count := range stats.RequestsByPattern {
-		report += fmt.Sprintf("  %s: %d requests\n", pattern, count)
-	}
-
-	report += "\nLatency Distribution (5ms buckets):\n"
-	for bucket, count := range stats.LatencyHistogram {
-		if count > 0 {
-			report += fmt.Sprintf("  %v: %d requests\n", bucket, count)
-		}
-	}
-
-	return report
 }

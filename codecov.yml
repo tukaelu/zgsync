@@ -1,0 +1,3 @@
+ignore:
+  - "internal/cli/testhelper/**"
+  - "internal/testutil/**"
