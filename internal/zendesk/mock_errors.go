@@ -362,29 +362,6 @@ func (es *ErrorSimulator) AddCustomScenario(name string, scenario *ErrorScenario
 	es.scenarios[name] = scenario
 }
 
-// GetScenarioDetails returns details about a specific scenario
-func (es *ErrorSimulator) GetScenarioDetails(name string) *ErrorScenario {
-	return es.scenarios[name]
-}
-
-// CreateCompositeScenario creates a scenario that combines multiple error types
-func (es *ErrorSimulator) CreateCompositeScenario(name string, scenarios []string, probability float64) {
-	composite := &ErrorScenario{
-		Name:        name,
-		Probability: probability,
-		Errors:      make([]ErrorDefinition, 0),
-	}
-
-	// Combine errors from multiple scenarios
-	for _, scenarioName := range scenarios {
-		if scenario, exists := es.scenarios[scenarioName]; exists {
-			composite.Errors = append(composite.Errors, scenario.Errors...)
-		}
-	}
-
-	es.scenarios[name] = composite
-}
-
 // ErrorDistribution represents error occurrence statistics
 type ErrorDistribution struct {
 	ScenarioName string
@@ -425,25 +402,4 @@ func (et *ErrorTracker) RecordCheck(scenarioName string, errorOccurred bool) {
 	if dist.TotalChecks > 0 {
 		dist.ErrorRate = float64(dist.ErrorCount) / float64(dist.TotalChecks)
 	}
-}
-
-// GetDistributions returns all error distribution statistics
-func (et *ErrorTracker) GetDistributions() map[string]*ErrorDistribution {
-	result := make(map[string]*ErrorDistribution)
-	for name, dist := range et.distributions {
-		// Return a copy to prevent external modification
-		result[name] = &ErrorDistribution{
-			ScenarioName: dist.ScenarioName,
-			TotalChecks:  dist.TotalChecks,
-			ErrorCount:   dist.ErrorCount,
-			ErrorRate:    dist.ErrorRate,
-			LastError:    dist.LastError,
-		}
-	}
-	return result
-}
-
-// Reset clears all error statistics
-func (et *ErrorTracker) Reset() {
-	et.distributions = make(map[string]*ErrorDistribution)
 }
