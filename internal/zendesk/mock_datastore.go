@@ -142,23 +142,6 @@ func (ds *MockDataStore) createArticle(locale string, sectionID int) *Article {
 	return &articleCopy
 }
 
-func (ds *MockDataStore) updateArticle(id int) *Article {
-	ds.mutex.Lock()
-	defer ds.mutex.Unlock()
-
-	article, exists := ds.articles[id]
-	if !exists {
-		return nil
-	}
-
-	// Simulate update by modifying title
-	article.Title = fmt.Sprintf("Updated Article %d", id)
-
-	// Return a copy
-	articleCopy := *article
-	return &articleCopy
-}
-
 func (ds *MockDataStore) deleteArticle(id int) bool {
 	ds.mutex.Lock()
 	defer ds.mutex.Unlock()
@@ -210,24 +193,6 @@ func (ds *MockDataStore) createTranslation(articleID int, locale string) *Transl
 
 	key := fmt.Sprintf("%d-%s", articleID, locale)
 	ds.translations[key] = translation
-
-	// Return a copy
-	translationCopy := *translation
-	return &translationCopy
-}
-
-func (ds *MockDataStore) updateTranslation(articleID int, locale string) *Translation {
-	ds.mutex.Lock()
-	defer ds.mutex.Unlock()
-
-	key := fmt.Sprintf("%d-%s", articleID, locale)
-	translation, exists := ds.translations[key]
-	if !exists {
-		return nil
-	}
-
-	// Simulate update by modifying title
-	translation.Title = fmt.Sprintf("Updated Translation %d (%s)", translation.ID, locale)
 
 	// Return a copy
 	translationCopy := *translation

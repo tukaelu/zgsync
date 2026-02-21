@@ -431,14 +431,10 @@ func (s *AdvancedMockServer) handleHelpCenterRequest(w http.ResponseWriter, r *h
 		s.handleCreateArticle(w, r)
 	case strings.Contains(path, "/articles/") && !strings.Contains(path, "/translations") && r.Method == "GET":
 		s.handleShowArticle(w, r)
-	case strings.Contains(path, "/articles/") && !strings.Contains(path, "/translations") && r.Method == "PUT":
-		s.handleUpdateArticle(w, r)
 	case strings.HasPrefix(path, "articles/") && !strings.Contains(path, "/translations") && r.Method == "DELETE":
 		s.handleArchiveArticle(w, r)
 	case strings.HasSuffix(path, "/translations") && r.Method == "POST":
 		s.handleCreateTranslation(w, r)
-	case strings.Contains(path, "/translations/") && r.Method == "PUT":
-		s.handleUpdateTranslation(w, r)
 	case strings.Contains(path, "/translations/") && r.Method == "GET":
 		s.handleShowTranslation(w, r)
 	default:
@@ -510,36 +506,6 @@ func (s *AdvancedMockServer) handleShowArticle(w http.ResponseWriter, r *http.Re
 	_ = json.NewEncoder(w).Encode(response)
 }
 
-// handleUpdateArticle handles PUT /api/v2/help_center/{locale}/articles/{id}
-func (s *AdvancedMockServer) handleUpdateArticle(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	// Extract article ID from path
-	pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v2/help_center/"), "/")
-	if len(pathParts) < 3 {
-		http.Error(w, `{"error": "Invalid URL format"}`, http.StatusBadRequest)
-		return
-	}
-
-	articleIDStr := pathParts[2]
-	articleID, err := strconv.Atoi(articleIDStr)
-	if err != nil {
-		http.Error(w, `{"error": "Invalid article ID"}`, http.StatusBadRequest)
-		return
-	}
-
-	// Update article
-	article := s.dataStore.updateArticle(articleID)
-	if article == nil {
-		http.Error(w, `{"error": "Article not found"}`, http.StatusNotFound)
-		return
-	}
-
-	// Return updated article
-	response := map[string]*Article{"article": article}
-	_ = json.NewEncoder(w).Encode(response)
-}
-
 // handleCreateTranslation handles POST /api/v2/help_center/articles/{article_id}/translations
 func (s *AdvancedMockServer) handleCreateTranslation(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -570,38 +536,6 @@ func (s *AdvancedMockServer) handleCreateTranslation(w http.ResponseWriter, r *h
 	// Return created translation
 	response := map[string]*Translation{"translation": translation}
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(response)
-}
-
-// handleUpdateTranslation handles PUT /api/v2/help_center/articles/{article_id}/translations/{locale}
-func (s *AdvancedMockServer) handleUpdateTranslation(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	// Extract article ID and locale from path
-	pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v2/help_center/articles/"), "/")
-	if len(pathParts) < 3 {
-		http.Error(w, `{"error": "Invalid URL format"}`, http.StatusBadRequest)
-		return
-	}
-
-	articleIDStr := pathParts[0]
-	locale := pathParts[2]
-
-	articleID, err := strconv.Atoi(articleIDStr)
-	if err != nil {
-		http.Error(w, `{"error": "Invalid article ID"}`, http.StatusBadRequest)
-		return
-	}
-
-	// Update translation
-	translation := s.dataStore.updateTranslation(articleID, locale)
-	if translation == nil {
-		http.Error(w, `{"error": "Translation not found"}`, http.StatusNotFound)
-		return
-	}
-
-	// Return updated translation
-	response := map[string]*Translation{"translation": translation}
 	_ = json.NewEncoder(w).Encode(response)
 }
 

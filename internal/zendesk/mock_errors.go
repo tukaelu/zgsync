@@ -357,11 +357,6 @@ func (es *ErrorSimulator) GetAvailableScenarios() []string {
 	return scenarios
 }
 
-// AddCustomScenario allows adding custom error scenarios
-func (es *ErrorSimulator) AddCustomScenario(name string, scenario *ErrorScenario) {
-	es.scenarios[name] = scenario
-}
-
 // ErrorDistribution represents error occurrence statistics
 type ErrorDistribution struct {
 	ScenarioName string
