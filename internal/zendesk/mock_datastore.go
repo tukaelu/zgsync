@@ -160,6 +160,17 @@ func (ds *MockDataStore) updateArticle(id int) *Article {
 	return &articleCopy
 }
 
+func (ds *MockDataStore) deleteArticle(id int) bool {
+	ds.mutex.Lock()
+	defer ds.mutex.Unlock()
+
+	if _, exists := ds.articles[id]; !exists {
+		return false
+	}
+	delete(ds.articles, id)
+	return true
+}
+
 // Translation operations
 
 func (ds *MockDataStore) getTranslation(articleID int, locale string) *Translation {

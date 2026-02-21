@@ -12,6 +12,7 @@ type cli struct {
 	Push    CommandPush    `cmd:"push" help:"Push translations or articles to the remote."`
 	Pull    CommandPull    `cmd:"pull" help:"Pull translations or articles from the remote."`
 	Empty   CommandEmpty   `cmd:"empty" help:"Creates an empty draft article remotely and saves it locally."`
+	Archive CommandArchive `cmd:"archive" help:"Archive an article on the remote."`
 	Version CommandVersion `cmd:"version" help:"Show version."`
 }
 

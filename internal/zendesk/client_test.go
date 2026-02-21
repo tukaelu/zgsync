@@ -1267,6 +1267,32 @@ func (tc *testClientImpl) ShowTranslation(articleID int, locale string) (string,
 	return tc.doRequest(http.MethodGet, endpoint, nil)
 }
 
+func (tc *testClientImpl) ArchiveArticle(articleID int) error {
+	endpoint := fmt.Sprintf(
+		"/api/v2/help_center/articles/%d",
+		articleID,
+	)
+	reqURL := tc.baseURL() + endpoint
+	req, err := http.NewRequest(http.MethodDelete, reqURL, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Basic "+tc.authorizationToken())
+	client := tc.client
+	if client == nil {
+		client = &http.Client{}
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = res.Body.Close() }()
+	if res.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+	return nil
+}
+
 func (tc *testClientImpl) doRequest(method string, endpoint string, payload io.Reader) (string, error) {
 	if endpoint == "" {
 		return "", fmt.Errorf("endpoint is required")
