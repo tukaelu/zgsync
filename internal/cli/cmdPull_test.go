@@ -20,6 +20,7 @@ func TestCommandPull_Run(t *testing.T) {
 		cmd           CommandPull
 		expectError   bool
 		mockSetup     func(*testhelper.MockZendeskClient)
+		mockConverter *testhelper.MockConverter
 		validateFiles func(*testing.T, string)
 	}{
 		{
@@ -180,6 +181,31 @@ func TestCommandPull_Run(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "ConvertToMarkdown fails",
+			cmd: CommandPull{
+				Locale:         testhelper.TestLocales.Japanese,
+				Raw:            false,
+				SaveArticle:    false,
+				WithSectionDir: false,
+				ArticleIDs:     []int{testhelper.TestArticleID},
+			},
+			expectError: true,
+			mockSetup: func(mock *testhelper.MockZendeskClient) {
+				mock.ShowArticleFunc = func(locale string, articleID int) (string, error) {
+					return testhelper.CreateDefaultArticleResponse(articleID, testhelper.TestSectionID), nil
+				}
+				mock.ShowTranslationFunc = func(articleID int, locale string) (string, error) {
+					return testhelper.CreateDefaultTranslationResponse(1, articleID, locale), nil
+				}
+			},
+			mockConverter: &testhelper.MockConverter{
+				ConvertToMarkdownFunc: func(html string) (string, error) {
+					return "", fmt.Errorf("conversion error")
+				},
+			},
+			validateFiles: func(t *testing.T, dir string) {},
+		},
 	}
 
 	for _, tt := range tests {
@@ -194,7 +220,11 @@ func TestCommandPull_Run(t *testing.T) {
 
 			cmd := tt.cmd
 			cmd.client = mockClient
-			cmd.converter = converter.NewConverter(false)
+			if tt.mockConverter != nil {
+				cmd.converter = tt.mockConverter
+			} else {
+				cmd.converter = converter.NewConverter(false)
+			}
 
 			global := &Global{
 				Config: Config{
@@ -211,7 +241,7 @@ func TestCommandPull_Run(t *testing.T) {
 				t.Errorf("Expected no error but got: %v", err)
 			}
 
-			if !tt.expectError {
+			if tt.validateFiles != nil {
 				tt.validateFiles(t, testDir)
 			}
 		})

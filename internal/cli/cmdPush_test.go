@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -415,11 +416,12 @@ This is test content.
 	}
 
 	tests := []struct {
-		name        string
-		dryRun      bool
-		raw         bool
-		expectError bool
-		mockSetup   func(*testhelper.MockZendeskClient)
+		name          string
+		dryRun        bool
+		raw           bool
+		expectError   bool
+		mockSetup     func(*testhelper.MockZendeskClient)
+		mockConverter *testhelper.MockConverter
 	}{
 		{
 			name:        "successful translation push",
@@ -456,6 +458,18 @@ This is test content.
 			expectError: false,
 			mockSetup:   func(mock *testhelper.MockZendeskClient) {},
 		},
+		{
+			name:        "ConvertToHTML fails",
+			dryRun:      false,
+			raw:         false,
+			expectError: true,
+			mockSetup:   func(mock *testhelper.MockZendeskClient) {},
+			mockConverter: &testhelper.MockConverter{
+				ConvertToHTMLFunc: func(markdown string) (string, error) {
+					return "", fmt.Errorf("conversion error")
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -463,11 +477,18 @@ This is test content.
 			mockClient := &testhelper.MockZendeskClient{}
 			tt.mockSetup(mockClient)
 
+			var conv converter.Converter
+			if tt.mockConverter != nil {
+				conv = tt.mockConverter
+			} else {
+				conv = converter.NewConverter(false)
+			}
+
 			cmd := &CommandPush{
 				DryRun:    tt.dryRun,
 				Raw:       tt.raw,
 				client:    mockClient,
-				converter: converter.NewConverter(false),
+				converter: conv,
 			}
 
 			global := &Global{
