@@ -221,24 +221,3 @@ func (fc *FieldComparer) CompareIntSlice(fieldName string, expected, actual []in
 		}
 	}
 }
-
-// TableTestRunner provides utilities for running table-driven tests
-type TableTestRunner[T any] struct {
-	t *testing.T
-}
-
-// NewTableTestRunner creates a new TableTestRunner instance
-func NewTableTestRunner[T any](t *testing.T) *TableTestRunner[T] {
-	return &TableTestRunner[T]{t: t}
-}
-
-// Run runs a table test with the provided test cases
-func (ttr *TableTestRunner[T]) Run(testCases []T, nameFunc func(T) string, testFunc func(*testing.T, T)) {
-	ttr.t.Helper()
-	for _, tc := range testCases {
-		name := nameFunc(tc)
-		ttr.t.Run(name, func(t *testing.T) {
-			testFunc(t, tc)
-		})
-	}
-}
