@@ -1,0 +1,7 @@
+{
+  "translation": {
+    "body": "<h1>HTML Title</h1>\n<p>Paragraph with <strong>bold</strong> and <a href=\"https://example.com\">link</a>.</p>",
+    "locale": "en_us",
+    "title": "HTML Body Translation"
+  }
+}

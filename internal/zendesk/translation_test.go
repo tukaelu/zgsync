@@ -22,6 +22,15 @@ func TestTranslationFromFile(t *testing.T) {
 				Body:     "# zgsyncの使い方\n",
 			},
 		},
+		{
+			"testdata/translation-en.md",
+			Translation{
+				Locale:   "en_us",
+				Title:    "How to use zgsync",
+				SourceID: 12345,
+				Body:     "# How to use zgsync\n",
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -59,12 +68,40 @@ func TestTranslationFromJson(t *testing.T) {
 				Title:  "zgsyncの使い方",
 			},
 		},
+		{
+			"testdata/translation-draft.json",
+			Translation{
+				Body:   "<h1>Draft Article</h1>",
+				Locale: "en_us",
+				Title:  "Draft Translation",
+				Draft:  true,
+			},
+		},
+		{
+			"testdata/translation-empty-body.json",
+			Translation{
+				Body:   "",
+				Locale: "ja",
+				Title:  "Empty Body Translation",
+			},
+		},
+		{
+			"testdata/translation-html-body.json",
+			Translation{
+				Body:   "<h1>HTML Title</h1>\n<p>Paragraph with <strong>bold</strong> and <a href=\"https://example.com\">link</a>.</p>",
+				Locale: "en_us",
+				Title:  "HTML Body Translation",
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.filepath, func(t *testing.T) {
 			translation := &Translation{}
-			jsonContent, _ := os.ReadFile(tt.filepath)
+			jsonContent, err := os.ReadFile(tt.filepath)
+			if err != nil {
+				t.Fatalf("Failed to read test file: %v", err)
+			}
 			if err := translation.FromJson(string(jsonContent)); err != nil {
 				t.Errorf("TranslationFromJson() failed: %v", err)
 			}
@@ -76,6 +113,9 @@ func TestTranslationFromJson(t *testing.T) {
 			}
 			if translation.Body != tt.expected.Body {
 				t.Errorf("translation.Body failed: got %v, want %v", translation.Body, tt.expected.Body)
+			}
+			if translation.Draft != tt.expected.Draft {
+				t.Errorf("translation.Draft failed: got %v, want %v", translation.Draft, tt.expected.Draft)
 			}
 		})
 	}
@@ -250,8 +290,6 @@ func TestTranslationSave(t *testing.T) {
 			appendFileName: true,
 			expectFileName: "456-ja.md",
 		},
-		// NOTE: appendFileName=false case is handled differently by the Save method
-		// It uses the provided path as a directory and creates the file with source_id-locale format
 	}
 
 	for _, tt := range tests {
@@ -300,6 +338,47 @@ func TestTranslationSave(t *testing.T) {
 				t.Errorf("File should contain body content: %s", tt.translation.Body)
 			}
 		})
+	}
+}
+
+func TestTranslationSave_WithoutAppendFileName(t *testing.T) {
+	t.Parallel()
+
+	translation := Translation{
+		ID:       123,
+		SourceID: 456,
+		Title:    "Overwrite Translation",
+		Locale:   "ja",
+		Body:     "# Overwritten Content\n",
+	}
+
+	tempDir := t.TempDir()
+	filePath := filepath.Join(tempDir, "456-ja.md")
+
+	// Pre-create the file so that Save can overwrite it
+	if err := os.WriteFile(filePath, []byte("old content"), 0o644); err != nil {
+		t.Fatalf("Failed to pre-create file: %v", err)
+	}
+
+	err := translation.Save(filePath, false)
+	if err != nil {
+		t.Fatalf("Save(appendFileName=false) failed: %v", err)
+	}
+
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatalf("Failed to read saved file: %v", err)
+	}
+
+	contentStr := string(content)
+	if !strings.HasPrefix(contentStr, "---\n") {
+		t.Errorf("File should start with YAML frontmatter delimiter")
+	}
+	if !strings.Contains(contentStr, "title: "+translation.Title) {
+		t.Errorf("File should contain title: %s", translation.Title)
+	}
+	if !strings.Contains(contentStr, translation.Body) {
+		t.Errorf("File should contain body content")
 	}
 }
 
