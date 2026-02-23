@@ -1,5 +1,23 @@
 # Changelog
 
+## [v0.0.19](https://github.com/tukaelu/zgsync/compare/v0.0.18...v0.0.19) - 2026-02-23
+### Other Changes
+- chore: set up Claude Code dev tooling and improve CLAUDE.md by @tukaelu in https://github.com/tukaelu/zgsync/pull/64
+- feat(cli): add archive command to archive articles on Zendesk by @tukaelu in https://github.com/tukaelu/zgsync/pull/66
+- docs(readme): add archive subcommand documentation by @tukaelu in https://github.com/tukaelu/zgsync/pull/67
+- chore(deps): update actions/checkout action to v6 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/60
+- chore(deps): update actions/cache action to v5 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/62
+- chore(deps): update dependency go to v1.26.0 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/55
+- fix(deps): update module golang.org/x/net to v0.50.0 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/57
+- chore(deps): update golangci/golangci-lint-action action to v9 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/56
+- fix(deps): update module github.com/johanneskaufmann/html-to-markdown to v2 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/51
+- fix(deps): update module github.com/alecthomas/kong to v1.14.0 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/58
+- fix(deps): update module github.com/puerkitobio/goquery to v1.11.0 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/59
+- fix(deps): update module github.com/yuin/goldmark to v1.7.16 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/63
+- fix(zendesk): remove omitempty from bool fields to fix false value not sent in payload by @tukaelu in https://github.com/tukaelu/zgsync/pull/69
+- test: improve test coverage and remove unused test infrastructure by @tukaelu in https://github.com/tukaelu/zgsync/pull/71
+- fix(zendesk): add Content-Type header to DELETE requests by @tukaelu in https://github.com/tukaelu/zgsync/pull/72
+
 ## [v0.0.18](https://github.com/tukaelu/zgsync/compare/v0.0.17...v0.0.18) - 2025-10-13
 ### Other Changes
 - chore(deps): update actions/checkout action to v5 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/48
