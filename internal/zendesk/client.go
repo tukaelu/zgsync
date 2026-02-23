@@ -152,6 +152,7 @@ func (c *clientImpl) doDeleteRequest(endpoint string) error {
 		return err
 	}
 
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Basic "+c.authorizationToken())
 
 	client := &http.Client{}
