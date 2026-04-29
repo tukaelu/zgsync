@@ -90,7 +90,7 @@ func TestConvertToHTML_Div(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			actualHTMLContent, _ := c.ConvertToHTML(tc.markdown)
-			if strings.Compare(tc.expected, actualHTMLContent) != 0 {
+			if tc.expected != actualHTMLContent {
 				t.Errorf("expected %s, got %s", tc.expected, actualHTMLContent)
 			}
 		})
@@ -144,7 +144,7 @@ func TestConvertToHTML_Headings(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			actualHTMLContent, _ := c.ConvertToHTML(tc.markdown)
-			if strings.Compare(tc.expected, actualHTMLContent) != 0 {
+			if tc.expected != actualHTMLContent {
 				t.Errorf("expected %s, got %s", tc.expected, actualHTMLContent)
 			}
 		})
@@ -173,7 +173,7 @@ func TestConvertToHTML_Anchor(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			actualHTMLContent, _ := c.ConvertToHTML(tc.markdown)
-			if strings.Compare(tc.expected, actualHTMLContent) != 0 {
+			if tc.expected != actualHTMLContent {
 				t.Errorf("expected %s, got %s", tc.expected, actualHTMLContent)
 			}
 		})
@@ -202,7 +202,7 @@ func TestConvertToHTML_AnchorWithTargetBlank(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			actualHTMLContent, _ := c.ConvertToHTML(tc.markdown)
-			if strings.Compare(tc.expected, actualHTMLContent) != 0 {
+			if tc.expected != actualHTMLContent {
 				t.Errorf("expected %s, got %s", tc.expected, actualHTMLContent)
 			}
 		})
@@ -231,7 +231,7 @@ func TestConvertToHTML_AnchorWithNoTargetBlank(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			actualHTMLContent, _ := c.ConvertToHTML(tc.markdown)
-			if strings.Compare(tc.expected, actualHTMLContent) != 0 {
+			if tc.expected != actualHTMLContent {
 				t.Errorf("expected %s, got %s", tc.expected, actualHTMLContent)
 			}
 		})
@@ -301,16 +301,19 @@ func TestConvertToMarkdown_ErrorHandling(t *testing.T) {
 
 	// Test with invalid HTML that might cause issues
 	tests := []struct {
-		name string
-		html string
+		name     string
+		html     string
+		expected string
 	}{
 		{
-			name: "malformed HTML",
-			html: "<p>Unclosed paragraph",
+			name:     "malformed HTML",
+			html:     "<p>Unclosed paragraph",
+			expected: "Unclosed paragraph",
 		},
 		{
-			name: "nested unclosed tags",
-			html: "<div><p>Nested <strong>content",
+			name:     "nested unclosed tags",
+			html:     "<div><p>Nested <strong>content",
+			expected: ":::\nNested **content**\n:::",
 		},
 	}
 
@@ -321,9 +324,8 @@ func TestConvertToMarkdown_ErrorHandling(t *testing.T) {
 			if err != nil {
 				t.Errorf("ConvertToMarkdown() should handle malformed HTML gracefully, but got error: %v", err)
 			}
-			// Result should be a string (even if not perfectly formatted)
-			if len(result) == 0 {
-				t.Errorf("ConvertToMarkdown() should return some result, got empty string")
+			if result != tt.expected {
+				t.Errorf("ConvertToMarkdown() = %q, want %q", result, tt.expected)
 			}
 		})
 	}
@@ -345,6 +347,35 @@ func TestConvertToMarkdown_PluckAttributes(t *testing.T) {
 		if attr != expected[i] {
 			t.Errorf("expected %s, got %s", expected[i], attr)
 		}
+	}
+}
+
+func TestConvertToMarkdown_PluckAttributes_DataFence(t *testing.T) {
+	// data-fence must be silently skipped — it is an internal goldmark-fences artifact
+	// that would produce incorrect output if preserved in the Markdown round-trip.
+	node := &html.Node{
+		Attr: []html.Attribute{
+			{Key: "data-fence", Val: "0"},
+			{Key: "id", Val: "section"},
+		},
+	}
+
+	attrs := pluckAttributes(node)
+	if len(attrs) != 1 || attrs[0] != "#section" {
+		t.Errorf("expected [\"#section\"] (data-fence skipped), got %v", attrs)
+	}
+}
+
+func TestConvertToMarkdown_PluckAttributes_MultipleClasses(t *testing.T) {
+	node := &html.Node{
+		Attr: []html.Attribute{
+			{Key: "class", Val: "foo bar baz"},
+		},
+	}
+
+	attrs := pluckAttributes(node)
+	if len(attrs) != 1 || attrs[0] != ".foo .bar .baz" {
+		t.Errorf("expected [\".foo .bar .baz\"], got %v", attrs)
 	}
 }
 
@@ -410,6 +441,67 @@ func TestConvertToMarkdown_ReplacementHeadings(t *testing.T) {
 	}
 }
 
+func TestConvertToHTML_Table(t *testing.T) {
+	testCases := []struct {
+		name     string
+		markdown string
+		expected string
+	}{
+		{
+			name:     "basic table",
+			markdown: "| Name | Age |\n| --- | --- |\n| Alice | 30 |\n| Bob | 25 |\n",
+			expected: "<table>\n<thead>\n<tr>\n<th>Name</th>\n<th>Age</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Alice</td>\n<td>30</td>\n</tr>\n<tr>\n<td>Bob</td>\n<td>25</td>\n</tr>\n</tbody>\n</table>\n",
+		},
+		{
+			name:     "aligned table",
+			markdown: "| Left | Center | Right |\n| :--- | :---: | ---: |\n| a | b | c |\n",
+			expected: "<table>\n<thead>\n<tr>\n<th style=\"text-align:left\">Left</th>\n<th style=\"text-align:center\">Center</th>\n<th style=\"text-align:right\">Right</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td style=\"text-align:left\">a</td>\n<td style=\"text-align:center\">b</td>\n<td style=\"text-align:right\">c</td>\n</tr>\n</tbody>\n</table>\n",
+		},
+	}
+
+	c := NewConverter(false)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actualHTMLContent, _ := c.ConvertToHTML(tc.markdown)
+			if tc.expected != actualHTMLContent {
+				t.Errorf("expected %s, got %s", tc.expected, actualHTMLContent)
+			}
+		})
+	}
+}
+
+func TestConvertToMarkdown_Table(t *testing.T) {
+	testCases := []struct {
+		name     string
+		html     string
+		expected string
+	}{
+		{
+			name:     "basic table",
+			html:     "<table><thead><tr><th>Name</th><th>Age</th></tr></thead><tbody><tr><td>Alice</td><td>30</td></tr><tr><td>Bob</td><td>25</td></tr></tbody></table>",
+			expected: "| Name | Age |\n| --- | --- |\n| Alice | 30 |\n| Bob | 25 |",
+		},
+		{
+			name:     "aligned table",
+			html:     "<table><thead><tr><th align=\"left\">Left</th><th align=\"center\">Center</th><th align=\"right\">Right</th></tr></thead><tbody><tr><td align=\"left\">a</td><td align=\"center\">b</td><td align=\"right\">c</td></tr></tbody></table>",
+			expected: "| Left | Center | Right |\n| :-- | :-: | --: |\n| a | b | c |",
+		},
+	}
+
+	c := NewConverter(false)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := c.ConvertToMarkdown(tc.html)
+			if err != nil {
+				t.Errorf("ConvertToMarkdown() failed: %v", err)
+			}
+			if result != tc.expected {
+				t.Errorf("ConvertToMarkdown() = %q, want %q", result, tc.expected)
+			}
+		})
+	}
+}
+
 func TestConvertToMarkdown_ReplacementHeadingsWithAttributes(t *testing.T) {
 	content := "heading test"
 	headings := []string{"h1", "h2", "h3", "h4", "h5", "h6"}
@@ -435,5 +527,45 @@ func TestConvertToMarkdown_ReplacementHeadingsWithAttributes(t *testing.T) {
 		if *replaced != expextedContent {
 			t.Errorf("expected %s, got %s", expextedContent, *replaced)
 		}
+	}
+}
+
+func TestConvertToMarkdown_ReplacementDivNilNode(t *testing.T) {
+	content := "this is a test content"
+	selection := &goquery.Selection{Nodes: []*html.Node{nil}}
+	opt := &md.Options{}
+
+	replaced := replacementDiv(content, selection, opt)
+
+	if *replaced != content {
+		t.Errorf("expected %q, got %q", content, *replaced)
+	}
+}
+
+func TestConvertToMarkdown_ReplacementHeadingsNilNode(t *testing.T) {
+	content := "heading test"
+	selection := &goquery.Selection{Nodes: []*html.Node{nil}}
+	opt := &md.Options{}
+
+	replaced := replacementHeadings(content, selection, opt)
+
+	if *replaced != content {
+		t.Errorf("expected %q, got %q", content, *replaced)
+	}
+}
+
+func TestConvertToMarkdown_ReplacementHeadingsInvalidLevel(t *testing.T) {
+	content := "heading test"
+	node := &html.Node{
+		Data: "hx",
+		Attr: []html.Attribute{},
+	}
+	selection := &goquery.Selection{Nodes: []*html.Node{node}}
+	opt := &md.Options{}
+
+	replaced := replacementHeadings(content, selection, opt)
+
+	if *replaced != content {
+		t.Errorf("expected %q, got %q", content, *replaced)
 	}
 }
