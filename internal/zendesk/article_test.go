@@ -417,7 +417,7 @@ func TestArticleSave_ErrorCases(t *testing.T) {
 	if err := os.Chmod(noPermDir, 0o000); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { os.Chmod(noPermDir, 0o755) })
+	t.Cleanup(func() { _ = os.Chmod(noPermDir, 0o755) })
 
 	article := Article{
 		ID:     123,
