@@ -39,6 +39,12 @@ func NewClient(subdomain, email, token string) Client {
 	}
 }
 
+// ClientBaseURL returns the effective base URL of the given Client.
+// It panics if c is not a *clientImpl.
+func ClientBaseURL(c Client) string {
+	return c.(*clientImpl).baseURL()
+}
+
 // refs: https://developer.zendesk.com/api-reference/help_center/help-center-api/articles/#create-article
 func (c *clientImpl) CreateArticle(locale string, sectionID int, payload string) (string, error) {
 	endpoint := fmt.Sprintf(
