@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/tukaelu/zgsync/internal/cli/testhelper"
 	"github.com/tukaelu/zgsync/internal/converter"
+	"github.com/tukaelu/zgsync/internal/zendesk"
 )
 
 func TestCommandPush_Run(t *testing.T) {
@@ -158,7 +160,7 @@ This is test content.
 func TestCommandPush_AfterApply(t *testing.T) {
 	global := &Global{
 		Config: Config{
-			Subdomain:             "test",
+			Subdomain:             "mycompany",
 			Email:                 "test@example.com",
 			Token:                 "token",
 			EnableLinkTargetBlank: true,
@@ -166,18 +168,22 @@ func TestCommandPush_AfterApply(t *testing.T) {
 	}
 
 	cmd := &CommandPush{}
-	err := cmd.AfterApply(global)
+	if err := cmd.AfterApply(global); err != nil {
+		t.Fatalf("AfterApply() failed: %v", err)
+	}
 
+	baseURL := zendesk.ClientBaseURL(cmd.client)
+	if !strings.Contains(baseURL, "mycompany") {
+		t.Errorf("client baseURL %q does not contain subdomain %q", baseURL, "mycompany")
+	}
+
+	// Verify EnableLinkTargetBlank was propagated: links should include target="_blank".
+	html, err := cmd.converter.ConvertToHTML("[text](https://example.com)")
 	if err != nil {
-		t.Errorf("AfterApply() failed: %v", err)
+		t.Errorf("converter.ConvertToHTML failed: %v", err)
 	}
-
-	if cmd.client == nil {
-		t.Error("client should be initialized")
-	}
-
-	if cmd.converter == nil {
-		t.Error("converter should be initialized")
+	if !strings.Contains(html, `target="_blank"`) {
+		t.Errorf("converter did not apply target=_blank; EnableLinkTargetBlank may not have propagated. Got: %q", html)
 	}
 }
 
