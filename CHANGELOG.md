@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.0.20](https://github.com/tukaelu/zgsync/compare/v0.0.19...v0.0.20) - 2026-04-30
+### Other Changes
+- fix(deps): update module golang.org/x/net to v0.53.0 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/73
+- chore(deps): update go toolchain directive to v1.26.2 - autoclosed by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/74
+- chore(deps): update goreleaser/goreleaser-action action to v7 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/70
+- chore(deps): update actions/create-github-app-token action to v3 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/75
+- fix(deps): update module github.com/puerkitobio/goquery to v1.12.0 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/76
+- fix(deps): update module github.com/yuin/goldmark to v1.8.2 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/77
+- chore(deps): update codecov/codecov-action action to v6 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/78
+- fix(deps): update module github.com/alecthomas/kong to v1.15.0 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/79
+
 ## [v0.0.19](https://github.com/tukaelu/zgsync/compare/v0.0.18...v0.0.19) - 2026-02-23
 ### Other Changes
 - chore: set up Claude Code dev tooling and improve CLAUDE.md by @tukaelu in https://github.com/tukaelu/zgsync/pull/64
