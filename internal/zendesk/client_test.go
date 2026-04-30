@@ -24,6 +24,11 @@ func TestClientImpl_BaseURL(t *testing.T) {
 	if actual != expected {
 		t.Errorf("baseURL() = %s, want %s", actual, expected)
 	}
+
+	// ClientBaseURL is the exported wrapper used by CLI tests to verify subdomain propagation.
+	if got := ClientBaseURL(client); got != expected {
+		t.Errorf("ClientBaseURL() = %s, want %s", got, expected)
+	}
 }
 
 func TestClientImpl_AuthorizationToken(t *testing.T) {
