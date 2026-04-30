@@ -6,7 +6,6 @@ toolchain go1.26.2
 
 require (
 	github.com/JohannesKaufmann/html-to-markdown v1.6.0
-	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.0
 	github.com/PuerkitoBio/goquery v1.12.0
 	github.com/adrg/frontmatter v0.2.0
 	github.com/alecthomas/kong v1.15.0
@@ -19,5 +18,7 @@ require (
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
+	github.com/sebdah/goldie/v2 v2.8.0 // indirect
+	github.com/sergi/go-diff v1.4.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

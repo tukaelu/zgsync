@@ -405,40 +405,27 @@ func TestArticleSave_WithoutAppendFileName(t *testing.T) {
 }
 
 func TestArticleSave_ErrorCases(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name           string
-		article        Article
-		path           string
-		appendFileName bool
-		expectError    bool
-	}{
-		{
-			name: "invalid path permissions",
-			article: Article{
-				ID:     123,
-				Title:  "Test",
-				Locale: "en_us",
-			},
-			path:           "/root/no-permission", // Assuming this would fail
-			appendFileName: true,
-			expectError:    true,
-		},
+	if os.Getuid() == 0 {
+		t.Skip("skipping permission test when running as root")
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+	dir := t.TempDir()
+	noPermDir := filepath.Join(dir, "no-perm")
+	if err := os.MkdirAll(noPermDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(noPermDir, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(noPermDir, 0o755) })
 
-			err := tt.article.Save(tt.path, tt.appendFileName)
+	article := Article{
+		ID:     123,
+		Title:  "Test",
+		Locale: "en_us",
+	}
 
-			if tt.expectError && err == nil {
-				t.Errorf("Expected error but got none")
-			}
-			if !tt.expectError && err != nil {
-				t.Errorf("Expected no error but got: %v", err)
-			}
-		})
+	if err := article.Save(noPermDir, true); err == nil {
+		t.Error("expected error saving to directory without write permission, but got none")
 	}
 }

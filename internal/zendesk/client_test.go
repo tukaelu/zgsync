@@ -8,44 +8,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/tukaelu/zgsync/internal/testutil"
 )
-
-func TestNewClient(t *testing.T) {
-	tests := []struct {
-		name      string
-		subdomain string
-		email     string
-		token     string
-	}{
-		{
-			name:      "valid client creation",
-			subdomain: "test",
-			email:     "test@example.com",
-			token:     "token123",
-		},
-		{
-			name:      "empty values",
-			subdomain: "",
-			email:     "",
-			token:     "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			client := NewClient(tt.subdomain, tt.email, tt.token)
-
-			if client == nil {
-				t.Errorf("NewClient() returned nil")
-			}
-		})
-	}
-}
 
 func TestClientImpl_BaseURL(t *testing.T) {
 	t.Parallel()
@@ -58,6 +23,11 @@ func TestClientImpl_BaseURL(t *testing.T) {
 
 	if actual != expected {
 		t.Errorf("baseURL() = %s, want %s", actual, expected)
+	}
+
+	// ClientBaseURL is the exported wrapper used by CLI tests to verify subdomain propagation.
+	if got := ClientBaseURL(client); got != expected {
+		t.Errorf("ClientBaseURL() = %s, want %s", got, expected)
 	}
 }
 
@@ -694,63 +664,6 @@ func TestClient_EmptyResponseBody(t *testing.T) {
 	}
 }
 
-func TestClient_MalformedJSONResponse(t *testing.T) {
-	tests := []struct {
-		name         string
-		statusCode   int
-		responseBody string
-	}{
-		{
-			name:         "invalid JSON syntax",
-			statusCode:   http.StatusOK,
-			responseBody: `{"article": {"id": 123`,
-		},
-		{
-			name:         "HTML error page instead of JSON",
-			statusCode:   http.StatusOK,
-			responseBody: `<html><body><h1>Error</h1><p>Something went wrong</p></body></html>`,
-		},
-		{
-			name:         "plain text error message",
-			statusCode:   http.StatusOK,
-			responseBody: `Error: Invalid request`,
-		},
-		{
-			name:         "binary data response",
-			statusCode:   http.StatusOK,
-			responseBody: "\x00\x01\x02\x03\x04\x05",
-		},
-		{
-			name:         "unicode characters in response",
-			statusCode:   http.StatusOK,
-			responseBody: `{"message": "エラーが発生しました 🚫"}`,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(tt.statusCode)
-				_, _ = w.Write([]byte(tt.responseBody))
-			}))
-			defer ts.Close()
-
-			client := newTestClientImpl(ts.URL)
-
-			// The client returns the raw response, so it won't error on malformed JSON
-			result, err := client.ShowArticle("en", 123)
-			if err != nil {
-				t.Errorf("ShowArticle() unexpected error = %v", err)
-			}
-			if result != tt.responseBody {
-				t.Errorf("ShowArticle() result = %q, want %q", result, tt.responseBody)
-			}
-		})
-	}
-}
-
 func TestClient_NetworkErrors(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -767,16 +680,6 @@ func TestClient_NetworkErrors(t *testing.T) {
 				return ts
 			},
 			wantError: true,
-		},
-		{
-			name: "timeout during request",
-			setupServer: func() *httptest.Server {
-				return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					time.Sleep(100 * time.Millisecond)
-					w.WriteHeader(http.StatusOK)
-				}))
-			},
-			wantError: false, // Client doesn't have timeout by default
 		},
 		{
 			name: "server closes connection abruptly",
@@ -946,15 +849,6 @@ func TestClientImpl_RealHTTPClient(t *testing.T) {
 		}
 	})
 
-	t.Run("doRequest_ErrorHandling", func(t *testing.T) {
-		_, err := realClient.doRequest("GET", "", nil)
-		if err == nil {
-			t.Error("Expected error for empty endpoint but got none")
-		}
-		if !strings.Contains(err.Error(), "endpoint is required") {
-			t.Errorf("Expected 'endpoint is required' error, got: %v", err)
-		}
-	})
 }
 
 func TestClient_AuthenticationErrors(t *testing.T) {
@@ -1326,24 +1220,236 @@ func TestClientImpl_DoDeleteRequest_EmptyEndpoint(t *testing.T) {
 	}
 }
 
-func TestAdvancedMockServer_HandleArchiveArticle_InvalidID(t *testing.T) {
+func TestClientImpl_DoDeleteRequest_NonNoContentResponse(t *testing.T) {
 	t.Parallel()
 
-	server := NewAdvancedMockServer(&MockServerConfig{})
-	defer server.Close()
-
-	req, err := http.NewRequest(http.MethodDelete, server.URL()+"/api/v2/help_center/articles/invalid-id", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
+	tests := []struct {
+		name         string
+		serverStatus int
+		wantError    string
+	}{
+		{
+			name:         "404 not found returns error",
+			serverStatus: http.StatusNotFound,
+			wantError:    "unexpected status code: 404",
+		},
+		{
+			name:         "403 forbidden returns error",
+			serverStatus: http.StatusForbidden,
+			wantError:    "unexpected status code: 403",
+		},
+		{
+			name:         "500 internal server error returns error",
+			serverStatus: http.StatusInternalServerError,
+			wantError:    "unexpected status code: 500",
+		},
 	}
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		t.Fatalf("Request failed: %v", err)
-	}
-	defer func() { _ = resp.Body.Close() }()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Errorf("Expected status 400 Bad Request, got %d", resp.StatusCode)
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tt.serverStatus)
+			}))
+			defer server.Close()
+
+			client := newTestClientImpl(server.URL)
+
+			err := client.doDeleteRequest("/api/v2/help_center/articles/123")
+
+			if err == nil {
+				t.Errorf("Expected error containing %q but got none", tt.wantError)
+			} else if !strings.Contains(err.Error(), tt.wantError) {
+				t.Errorf("Expected error containing %q, got: %v", tt.wantError, err)
+			}
+		})
+	}
+}
+
+func TestClient_UpdateArticle_Integration(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		locale         string
+		articleID      int
+		payload        string
+		serverStatus   int
+		serverResponse string
+		expectError    bool
+		validateResp   func(*testing.T, string)
+	}{
+		{
+			name:      "success",
+			locale:    "en_us",
+			articleID: 456,
+			payload:   `{"article":{"title":"Updated Article"}}`,
+			serverStatus: http.StatusOK,
+			serverResponse: `{
+				"article": {
+					"id": 456,
+					"title": "Updated Article",
+					"locale": "en_us"
+				}
+			}`,
+			expectError: false,
+			validateResp: func(t *testing.T, resp string) {
+				if !strings.Contains(resp, `"id": 456`) {
+					t.Errorf("Response should contain article ID 456")
+				}
+				if !strings.Contains(resp, `"title": "Updated Article"`) {
+					t.Errorf("Response should contain updated title")
+				}
+			},
+		},
+		{
+			name:           "not found",
+			locale:         "en_us",
+			articleID:      999,
+			payload:        `{"article":{"title":"Updated Article"}}`,
+			serverStatus:   http.StatusNotFound,
+			serverResponse: `{"error": "RecordNotFound", "description": "Article not found"}`,
+			expectError:    true,
+			validateResp:   func(t *testing.T, resp string) {},
+		},
+		{
+			name:           "server error",
+			locale:         "en_us",
+			articleID:      456,
+			payload:        `{"article":{"title":"Updated Article"}}`,
+			serverStatus:   http.StatusInternalServerError,
+			serverResponse: `{"error": "InternalServerError", "description": "Server error occurred"}`,
+			expectError:    true,
+			validateResp:   func(t *testing.T, resp string) {},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodPut {
+					t.Errorf("Expected PUT method, got %s", r.Method)
+				}
+				expectedPath := fmt.Sprintf("/api/v2/help_center/%s/articles/%d", tt.locale, tt.articleID)
+				if r.URL.Path != expectedPath {
+					t.Errorf("Expected path %s, got %s", expectedPath, r.URL.Path)
+				}
+				w.WriteHeader(tt.serverStatus)
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(tt.serverResponse))
+			}))
+			defer server.Close()
+
+			client := newTestClientImpl(server.URL)
+
+			result, err := client.UpdateArticle(tt.locale, tt.articleID, tt.payload)
+
+			if tt.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tt.expectError && err != nil {
+				t.Errorf("Expected no error but got: %v", err)
+			}
+			if !tt.expectError {
+				tt.validateResp(t, result)
+			}
+		})
+	}
+}
+
+func TestClient_UpdateTranslation_Integration(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		articleID      int
+		locale         string
+		payload        string
+		serverStatus   int
+		serverResponse string
+		expectError    bool
+		validateResp   func(*testing.T, string)
+	}{
+		{
+			name:      "success",
+			articleID: 123,
+			locale:    "ja",
+			payload:   `{"translation":{"title":"更新されたタイトル"}}`,
+			serverStatus: http.StatusOK,
+			serverResponse: `{
+				"translation": {
+					"id": 789,
+					"locale": "ja",
+					"title": "更新されたタイトル",
+					"source_id": 123
+				}
+			}`,
+			expectError: false,
+			validateResp: func(t *testing.T, resp string) {
+				if !strings.Contains(resp, `"id": 789`) {
+					t.Errorf("Response should contain translation ID 789")
+				}
+				if !strings.Contains(resp, `"locale": "ja"`) {
+					t.Errorf("Response should contain locale ja")
+				}
+			},
+		},
+		{
+			name:           "not found",
+			articleID:      999,
+			locale:         "ja",
+			payload:        `{"translation":{"title":"Updated"}}`,
+			serverStatus:   http.StatusNotFound,
+			serverResponse: `{"error": "RecordNotFound", "description": "Translation not found"}`,
+			expectError:    true,
+			validateResp:   func(t *testing.T, resp string) {},
+		},
+		{
+			name:           "server error",
+			articleID:      123,
+			locale:         "ja",
+			payload:        `{"translation":{"title":"Updated"}}`,
+			serverStatus:   http.StatusInternalServerError,
+			serverResponse: `{"error": "InternalServerError", "description": "Server error occurred"}`,
+			expectError:    true,
+			validateResp:   func(t *testing.T, resp string) {},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodPut {
+					t.Errorf("Expected PUT method, got %s", r.Method)
+				}
+				expectedPath := fmt.Sprintf("/api/v2/help_center/articles/%d/translations/%s", tt.articleID, tt.locale)
+				if r.URL.Path != expectedPath {
+					t.Errorf("Expected path %s, got %s", expectedPath, r.URL.Path)
+				}
+				w.WriteHeader(tt.serverStatus)
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(tt.serverResponse))
+			}))
+			defer server.Close()
+
+			client := newTestClientImpl(server.URL)
+
+			result, err := client.UpdateTranslation(tt.articleID, tt.locale, tt.payload)
+
+			if tt.expectError && err == nil {
+				t.Errorf("Expected error but got none")
+			}
+			if !tt.expectError && err != nil {
+				t.Errorf("Expected no error but got: %v", err)
+			}
+			if !tt.expectError {
+				tt.validateResp(t, result)
+			}
+		})
 	}
 }

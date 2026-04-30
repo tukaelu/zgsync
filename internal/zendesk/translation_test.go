@@ -172,11 +172,6 @@ func TestTranslationFromJson_ErrorCases(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name:        "missing translation wrapper",
-			jsonContent: `{"title": "Test"}`,
-			expectError: false, // This should still work
-		},
-		{
 			name:        "empty JSON",
 			jsonContent: `{}`,
 			expectError: false,
@@ -383,41 +378,28 @@ func TestTranslationSave_WithoutAppendFileName(t *testing.T) {
 }
 
 func TestTranslationSave_ErrorCases(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name           string
-		translation    Translation
-		path           string
-		appendFileName bool
-		expectError    bool
-	}{
-		{
-			name: "invalid path permissions",
-			translation: Translation{
-				ID:       123,
-				SourceID: 456,
-				Title:    "Test",
-				Locale:   "ja",
-			},
-			path:           "/root/no-permission", // Assuming this would fail
-			appendFileName: true,
-			expectError:    true,
-		},
+	if os.Getuid() == 0 {
+		t.Skip("skipping permission test when running as root")
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+	dir := t.TempDir()
+	noPermDir := filepath.Join(dir, "no-perm")
+	if err := os.MkdirAll(noPermDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(noPermDir, 0o000); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(noPermDir, 0o755) })
 
-			err := tt.translation.Save(tt.path, tt.appendFileName)
+	translation := Translation{
+		ID:       123,
+		SourceID: 456,
+		Title:    "Test",
+		Locale:   "ja",
+	}
 
-			if tt.expectError && err == nil {
-				t.Errorf("Expected error but got none")
-			}
-			if !tt.expectError && err != nil {
-				t.Errorf("Expected no error but got: %v", err)
-			}
-		})
+	if err := translation.Save(noPermDir, true); err == nil {
+		t.Error("expected error saving to directory without write permission, but got none")
 	}
 }

@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/tukaelu/zgsync/internal/cli/testhelper"
+	"github.com/tukaelu/zgsync/internal/zendesk"
 )
 
 func TestCommandArchive_Run(t *testing.T) {
@@ -130,20 +132,20 @@ title: Test Article Without ID
 func TestCommandArchive_AfterApply(t *testing.T) {
 	global := &Global{
 		Config: Config{
-			Subdomain: "test",
+			Subdomain: "mycompany",
 			Email:     "test@example.com",
 			Token:     "token",
 		},
 	}
 
 	cmd := &CommandArchive{}
-	err := cmd.AfterApply(global)
-
-	if err != nil {
-		t.Errorf("AfterApply() failed: %v", err)
+	if err := cmd.AfterApply(global); err != nil {
+		t.Fatalf("AfterApply() failed: %v", err)
 	}
-	if cmd.client == nil {
-		t.Error("client should be initialized")
+
+	baseURL := zendesk.ClientBaseURL(cmd.client)
+	if !strings.Contains(baseURL, "mycompany") {
+		t.Errorf("client baseURL %q does not contain subdomain %q", baseURL, "mycompany")
 	}
 }
 

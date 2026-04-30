@@ -109,7 +109,10 @@ func TestLoadConfig_ErrorCases(t *testing.T) {
 		errMsg     string
 	}{
 		{
-			name:       "non-existent config file",
+			// Note: Although this test is in TestLoadConfig_ErrorCases, this case does NOT
+			// produce an error. LoadConfig intentionally returns nil when os.ReadFile() fails
+			// (e.g. file not found), treating a missing config file as a no-op.
+			name:       "non-existent config file is silently ignored",
 			configPath: "testdata/non-existent.yaml",
 			expectErr:  false, // LoadConfig returns nil for missing files
 		},
@@ -290,7 +293,7 @@ func TestConfig_CLIIntegrationErrors(t *testing.T) {
 		description string
 	}{
 		{
-			name: "config file permission denied",
+			name: "config file with permission denied is silently ignored",
 			setupConfig: func() string {
 				configFile := filepath.Join(tempDir, "restricted-config.yaml")
 				configContent := `subdomain: test
@@ -351,7 +354,7 @@ default_permission_group_id: "not_a_number"
 
 			// Restore permissions for cleanup if needed
 			defer func() {
-				if tt.name == "config file permission denied" {
+				if tt.name == "config file with permission denied is silently ignored" {
 					_ = os.Chmod(configPath, 0644)
 				}
 			}()
