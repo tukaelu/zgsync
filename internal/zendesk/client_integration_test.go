@@ -3,6 +3,8 @@ package zendesk
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -240,22 +242,16 @@ func TestClient_ErrorScenarios(t *testing.T) {
 	})
 
 	t.Run("ServerUnavailable", func(t *testing.T) {
-		// Create mock server with server error simulation
-		config := &MockServerConfig{
-			EnableLogging:  true,
-			EnableErrorSim: true,
-			ErrorScenarios: []string{"server_error"},
-		}
-
-		server := NewAdvancedMockServer(config)
+		// Simulate a server that always returns 503 Service Unavailable.
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, `{"error":"Service Unavailable"}`, http.StatusServiceUnavailable)
+		}))
 		defer server.Close()
 
-		client := createAdvancedTestClient(t, server.URL())
+		client := newTestClientImpl(server.URL)
 
-		// Some requests should fail with server errors
-		// Note: This tests probabilistic error simulation, so we make multiple requests
 		errorCount := 0
-		totalRequests := 10
+		totalRequests := 5
 
 		for i := 0; i < totalRequests; i++ {
 			_, err := client.ShowArticle("en_us", 456)
@@ -264,8 +260,9 @@ func TestClient_ErrorScenarios(t *testing.T) {
 			}
 		}
 
-		// We expect some errors to occur (error simulation is probabilistic)
-		t.Logf("Got %d errors out of %d requests", errorCount, totalRequests)
+		if errorCount != totalRequests {
+			t.Errorf("expected all %d requests to fail, but only %d failed", totalRequests, errorCount)
+		}
 	})
 }
 
@@ -350,7 +347,7 @@ func TestClient_PerformanceScenarios(t *testing.T) {
 
 		// Should have some rate limited requests with such a low limit
 		if rateLimitedCount == 0 {
-			t.Log("No requests were rate limited (this may be expected depending on timing)")
+			t.Errorf("expected some requests to be rate limited, but none were")
 		}
 	})
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/tukaelu/zgsync/internal/cli/testhelper"
 	"github.com/tukaelu/zgsync/internal/converter"
+	"github.com/tukaelu/zgsync/internal/zendesk"
 )
 
 func TestCommandPull_Run(t *testing.T) {
@@ -251,26 +252,29 @@ func TestCommandPull_Run(t *testing.T) {
 func TestCommandPull_AfterApply(t *testing.T) {
 	global := &Global{
 		Config: Config{
-			Subdomain:             "test",
-			Email:                 "test@example.com",
-			Token:                 "token",
-			EnableLinkTargetBlank: true,
+			Subdomain: "mycompany",
+			Email:     "test@example.com",
+			Token:     "token",
 		},
 	}
 
 	cmd := &CommandPull{}
-	err := cmd.AfterApply(global)
+	if err := cmd.AfterApply(global); err != nil {
+		t.Fatalf("AfterApply() failed: %v", err)
+	}
 
+	baseURL := zendesk.ClientBaseURL(cmd.client)
+	if !strings.Contains(baseURL, "mycompany") {
+		t.Errorf("client baseURL %q does not contain subdomain %q", baseURL, "mycompany")
+	}
+
+	// Verify the converter is functional (ConvertToMarkdown is used in non-raw pull).
+	md, err := cmd.converter.ConvertToMarkdown("<h1>Test</h1>")
 	if err != nil {
-		t.Errorf("AfterApply() failed: %v", err)
+		t.Errorf("converter.ConvertToMarkdown failed: %v", err)
 	}
-
-	if cmd.client == nil {
-		t.Error("client should be initialized")
-	}
-
-	if cmd.converter == nil {
-		t.Error("converter should be initialized")
+	if !strings.Contains(md, "Test") {
+		t.Errorf("converter.ConvertToMarkdown output %q does not contain expected content", md)
 	}
 }
 

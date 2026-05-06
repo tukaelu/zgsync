@@ -86,25 +86,24 @@ func TestAPIResponseErrors_Push(t *testing.T) {
 			description:   "Should handle connection refused errors",
 		},
 		{
-			name: "Malformed JSON response",
+			name: "Malformed JSON response body is ignored on push",
 			setupMock: func(mock *testhelper.MockZendeskClient) {
 				mock.UpdateTranslationFunc = func(articleID int, locale, payload string) (string, error) {
-					// Return malformed JSON that might cause parsing issues downstream
 					return "invalid json response", nil
 				}
 			},
-			expectError: false, // The command might succeed but with invalid JSON
-			description: "Should handle malformed JSON responses",
+			expectError: false, // Push discards the response body; only the error return matters
+			description: "Push ignores the response body, so malformed JSON does not cause an error",
 		},
 		{
-			name: "Empty response body",
+			name: "Empty response body is ignored on push",
 			setupMock: func(mock *testhelper.MockZendeskClient) {
 				mock.UpdateTranslationFunc = func(articleID int, locale, payload string) (string, error) {
-					return "", nil // Empty response
+					return "", nil
 				}
 			},
-			expectError: false, // Empty response might be valid for some operations
-			description: "Should handle empty response bodies",
+			expectError: false, // Push discards the response body; only the error return matters
+			description: "Push ignores the response body, so an empty response does not cause an error",
 		},
 		{
 			name: "HTTP 400 Bad Request with details",
@@ -429,7 +428,7 @@ func TestAPIResponseErrors_JSONParsing(t *testing.T) {
 			description: "Should handle JSON parsing errors in pull command",
 		},
 		{
-			name:    "Pull command with unexpected JSON structure",
+			name:    "unexpected JSON structure is silently ignored on pull",
 			command: "pull",
 			setupMock: func(mock *testhelper.MockZendeskClient) {
 				mock.ShowArticleFunc = func(locale string, articleID int) (string, error) {
@@ -441,7 +440,7 @@ func TestAPIResponseErrors_JSONParsing(t *testing.T) {
 			description: "Should handle unexpected JSON structure gracefully",
 		},
 		{
-			name:    "Pull command with null response fields",
+			name:    "null response fields are silently ignored on pull",
 			command: "pull",
 			setupMock: func(mock *testhelper.MockZendeskClient) {
 				mock.ShowArticleFunc = func(locale string, articleID int) (string, error) {

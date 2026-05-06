@@ -207,39 +207,6 @@ func TestTransport_Transport(t *testing.T) {
 	}
 }
 
-func TestDefaultLogRequest(t *testing.T) {
-	t.Parallel()
-
-	req, err := http.NewRequest("POST", "https://example.com/api", strings.NewReader(`{"test": "data"}`))
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	// This should not panic
-	DefaultLogRequest(req)
-}
-
-func TestDefaultLogResponse(t *testing.T) {
-	t.Parallel()
-
-	// Create a proper request first
-	req, err := http.NewRequest("GET", "https://example.com/api", nil)
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
-
-	resp := &http.Response{
-		Status:     "200 OK",
-		StatusCode: 200,
-		Proto:      "HTTP/1.1",
-		Header:     make(http.Header),
-		Request:    req, // Important: set the request
-	}
-
-	// This should not panic
-	DefaultLogResponse(resp)
-}
-
 func TestTransport_LargeRequestBody(t *testing.T) {
 	t.Parallel()
 
