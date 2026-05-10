@@ -619,3 +619,76 @@ func TestClient_ListGuideMedias_PropagatesError(t *testing.T) {
 		t.Errorf("expected 500 *HTTPError after page 2 failure, got %v", err)
 	}
 }
+
+func TestClient_ListGuideMedias_MalformedJSON(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{not json`))
+	}))
+	defer server.Close()
+
+	c := newTestClientImpl(server.URL)
+	if _, err := c.ListGuideMedias(); err == nil {
+		t.Fatal("expected error for malformed JSON, got nil")
+	}
+}
+
+func TestClient_CreateGuideMedia_MalformedJSON(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{not json`))
+	}))
+	defer server.Close()
+
+	c := newTestClientImpl(server.URL)
+	if _, err := c.CreateGuideMedia("asset", "foo.png"); err == nil {
+		t.Fatal("expected error for malformed JSON, got nil")
+	}
+}
+
+func TestClient_ReplaceGuideMedia_MalformedJSON(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{not json`))
+	}))
+	defer server.Close()
+
+	c := newTestClientImpl(server.URL)
+	if _, err := c.ReplaceGuideMedia("01HM", "asset", "foo.png"); err == nil {
+		t.Fatal("expected error for malformed JSON, got nil")
+	}
+}
+
+func TestClient_ReplaceGuideMedia_HTTPError(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	c := newTestClientImpl(server.URL)
+	_, err := c.ReplaceGuideMedia("01HM", "asset", "foo.png")
+
+	var httpErr *HTTPError
+	if !errors.As(err, &httpErr) || httpErr.StatusCode != http.StatusNotFound {
+		t.Errorf("expected 404 *HTTPError, got %v", err)
+	}
+}
+
+func TestClient_UploadFileBinary_TransportError(t *testing.T) {
+	t.Parallel()
+
+	// Start and immediately close the server so Do() fails on connect.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	server.Close()
+
+	c := newTestClientImpl("")
+	err := c.UploadFileBinary(server.URL, nil, bytes.NewReader([]byte("x")))
+	if err == nil {
+		t.Fatal("expected transport error, got nil")
+	}
+}
