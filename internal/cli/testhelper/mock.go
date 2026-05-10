@@ -2,6 +2,9 @@ package testhelper
 
 import (
 	"encoding/json"
+	"io"
+
+	"github.com/tukaelu/zgsync/internal/zendesk"
 )
 
 // MockZendeskClient is a centralized mock implementation of zendesk.Client
@@ -13,6 +16,12 @@ type MockZendeskClient struct {
 	CreateTranslationFunc func(articleID int, payload string) (string, error)
 	UpdateTranslationFunc func(articleID int, locale string, payload string) (string, error)
 	ShowTranslationFunc   func(articleID int, locale string) (string, error)
+	CreateUploadURLFunc   func(contentType string, fileSize int64) (*zendesk.UploadURLResponse, error)
+	UploadFileBinaryFunc  func(uploadURL string, headers map[string]string, body io.Reader) error
+	CreateGuideMediaFunc  func(assetUploadID, filename string) (*zendesk.GuideMedia, error)
+	ReplaceGuideMediaFunc func(id, assetUploadID, filename string) (*zendesk.GuideMedia, error)
+	DeleteGuideMediaFunc  func(id string) error
+	ListGuideMediasFunc   func() ([]*zendesk.GuideMedia, error)
 }
 
 // Article represents a Zendesk article for mock responses
@@ -112,6 +121,54 @@ func (m *MockZendeskClient) ShowTranslation(articleID int, locale string) (strin
 		return m.ShowTranslationFunc(articleID, locale)
 	}
 	return CreateDefaultTranslationResponse(1, articleID, locale), nil
+}
+
+// CreateUploadURL implements zendesk.Client
+func (m *MockZendeskClient) CreateUploadURL(contentType string, fileSize int64) (*zendesk.UploadURLResponse, error) {
+	if m.CreateUploadURLFunc != nil {
+		return m.CreateUploadURLFunc(contentType, fileSize)
+	}
+	return &zendesk.UploadURLResponse{}, nil
+}
+
+// UploadFileBinary implements zendesk.Client
+func (m *MockZendeskClient) UploadFileBinary(uploadURL string, headers map[string]string, body io.Reader) error {
+	if m.UploadFileBinaryFunc != nil {
+		return m.UploadFileBinaryFunc(uploadURL, headers, body)
+	}
+	return nil
+}
+
+// CreateGuideMedia implements zendesk.Client
+func (m *MockZendeskClient) CreateGuideMedia(assetUploadID, filename string) (*zendesk.GuideMedia, error) {
+	if m.CreateGuideMediaFunc != nil {
+		return m.CreateGuideMediaFunc(assetUploadID, filename)
+	}
+	return &zendesk.GuideMedia{}, nil
+}
+
+// ReplaceGuideMedia implements zendesk.Client
+func (m *MockZendeskClient) ReplaceGuideMedia(id, assetUploadID, filename string) (*zendesk.GuideMedia, error) {
+	if m.ReplaceGuideMediaFunc != nil {
+		return m.ReplaceGuideMediaFunc(id, assetUploadID, filename)
+	}
+	return &zendesk.GuideMedia{}, nil
+}
+
+// DeleteGuideMedia implements zendesk.Client
+func (m *MockZendeskClient) DeleteGuideMedia(id string) error {
+	if m.DeleteGuideMediaFunc != nil {
+		return m.DeleteGuideMediaFunc(id)
+	}
+	return nil
+}
+
+// ListGuideMedias implements zendesk.Client
+func (m *MockZendeskClient) ListGuideMedias() ([]*zendesk.GuideMedia, error) {
+	if m.ListGuideMediasFunc != nil {
+		return m.ListGuideMediasFunc()
+	}
+	return nil, nil
 }
 
 // MockConverter is a mock implementation of converter.Converter

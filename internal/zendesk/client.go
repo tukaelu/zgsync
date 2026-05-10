@@ -14,6 +14,17 @@ const (
 	BaseURL = "https://%s.zendesk.com"
 )
 
+// HTTPError represents an HTTP response with an unexpected status code.
+// Its Error() string is identical to the legacy formatted error so that
+// existing callers and tests that match the error string keep working.
+type HTTPError struct {
+	StatusCode int
+}
+
+func (e *HTTPError) Error() string {
+	return fmt.Sprintf("unexpected status code: %d", e.StatusCode)
+}
+
 type Client interface {
 	CreateArticle(locale string, sectionID int, payload string) (string, error)
 	UpdateArticle(locale string, articleID int, payload string) (string, error)
@@ -22,6 +33,12 @@ type Client interface {
 	CreateTranslation(articleID int, payload string) (string, error)
 	UpdateTranslation(articleID int, locale string, payload string) (string, error)
 	ShowTranslation(articleID int, locale string) (string, error)
+	CreateUploadURL(contentType string, fileSize int64) (*UploadURLResponse, error)
+	UploadFileBinary(uploadURL string, headers map[string]string, body io.Reader) error
+	CreateGuideMedia(assetUploadID, filename string) (*GuideMedia, error)
+	ReplaceGuideMedia(id, assetUploadID, filename string) (*GuideMedia, error)
+	DeleteGuideMedia(id string) error
+	ListGuideMedias() ([]*GuideMedia, error)
 }
 
 type clientImpl struct {
@@ -138,7 +155,7 @@ func (c *clientImpl) doRequest(method string, endpoint string, payload io.Reader
 	defer func() { _ = res.Body.Close() }()
 
 	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-		return "", fmt.Errorf("unexpected status code: %d", res.StatusCode)
+		return "", &HTTPError{StatusCode: res.StatusCode}
 	}
 
 	resPayload, err := io.ReadAll(res.Body)
@@ -169,7 +186,7 @@ func (c *clientImpl) doDeleteRequest(endpoint string) error {
 	defer func() { _ = res.Body.Close() }()
 
 	if res.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+		return &HTTPError{StatusCode: res.StatusCode}
 	}
 	return nil
 }
