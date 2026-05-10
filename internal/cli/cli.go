@@ -13,6 +13,7 @@ type cli struct {
 	Pull    CommandPull    `cmd:"pull" help:"Pull translations or articles from the remote."`
 	Empty   CommandEmpty   `cmd:"empty" help:"Creates an empty draft article remotely and saves it locally."`
 	Archive CommandArchive `cmd:"archive" help:"Archive an article on the remote."`
+	Media   CommandMedia   `cmd:"media" help:"Manage Guide Media images."`
 	Version CommandVersion `cmd:"version" help:"Show version."`
 }
 
