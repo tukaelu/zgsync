@@ -178,6 +178,9 @@ func TestDetectMediaMIMEType(t *testing.T) {
 		// Fallback paths: bytes don't match any image format, but the extension does.
 		{"webp fallback by extension", ".webp", []byte("not really a webp file"), "image/webp"},
 		{"png fallback by extension", ".png", []byte("plain text"), "image/png"},
+		{"jpeg fallback by .jpg ext", ".jpg", []byte("not a jpeg"), "image/jpeg"},
+		{"jpeg fallback by .jpeg ext", ".jpeg", []byte("not a jpeg"), "image/jpeg"},
+		{"gif fallback by extension", ".gif", []byte("not a gif"), "image/gif"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -875,4 +878,97 @@ func TestMediaDeleteCmd_Run_PropagatesError(t *testing.T) {
 	if !errors.As(err, &httpErr) || httpErr.StatusCode != 404 {
 		t.Errorf("err = %v, want 404 *HTTPError", err)
 	}
+}
+
+// ------------------- AfterApply -------------------
+
+// All four media subcommands wire up the Zendesk client identically — verify
+// that each AfterApply produces a client whose baseURL reflects the configured
+// subdomain.
+func TestMediaCmds_AfterApply(t *testing.T) {
+	tests := []struct {
+		name string
+		run  func(g *Global) (zendesk.Client, error)
+	}{
+		{
+			"create",
+			func(g *Global) (zendesk.Client, error) {
+				c := &MediaCreateCmd{}
+				err := c.AfterApply(g)
+				return c.client, err
+			},
+		},
+		{
+			"update",
+			func(g *Global) (zendesk.Client, error) {
+				c := &MediaUpdateCmd{}
+				err := c.AfterApply(g)
+				return c.client, err
+			},
+		},
+		{
+			"list",
+			func(g *Global) (zendesk.Client, error) {
+				c := &MediaListCmd{}
+				err := c.AfterApply(g)
+				return c.client, err
+			},
+		},
+		{
+			"delete",
+			func(g *Global) (zendesk.Client, error) {
+				c := &MediaDeleteCmd{}
+				err := c.AfterApply(g)
+				return c.client, err
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			global := &Global{
+				Config: Config{
+					Subdomain: "mycompany",
+					Email:     "test@example.com",
+					Token:     "token",
+				},
+			}
+			client, err := tt.run(global)
+			if err != nil {
+				t.Fatalf("AfterApply: %v", err)
+			}
+			if client == nil {
+				t.Fatal("client was not initialized")
+			}
+			if baseURL := zendesk.ClientBaseURL(client); !strings.Contains(baseURL, "mycompany") {
+				t.Errorf("baseURL %q does not contain subdomain %q", baseURL, "mycompany")
+			}
+		})
+	}
+}
+
+// ------------------- printMediaListMarkdown writer-error paths -------------------
+
+// Drive each of the three Fprintln/Fprintf error returns by failing on the
+// 1st (header), 2nd (separator), and 3rd (row) write respectively.
+func TestPrintMediaListMarkdown_WriterError(t *testing.T) {
+	t.Parallel()
+	for n := 0; n < 3; n++ {
+		w := &failAfterNWriter{n: n}
+		if err := printMediaListMarkdown(w, sampleMedias()); err == nil {
+			t.Errorf("n=%d: expected error, got nil", n)
+		}
+	}
+}
+
+type failAfterNWriter struct {
+	n     int
+	calls int
+}
+
+func (f *failAfterNWriter) Write(p []byte) (int, error) {
+	f.calls++
+	if f.calls > f.n {
+		return 0, io.ErrShortWrite
+	}
+	return len(p), nil
 }
