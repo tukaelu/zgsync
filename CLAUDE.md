@@ -129,8 +129,12 @@ Expects `~/.config/zgsync/config.yaml` with the fields listed below.
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `subdomain` | string | Yes | Zendesk subdomain |
-| `email` | string | Yes | Zendesk email (`user@example.com/token` format) |
-| `token` | string | Yes | Zendesk API token |
+| `auth_type` | string | No | `token` (default), `oauth`, or `client_credentials` |
+| `email` | string | token auth | Zendesk email (`user@example.com/token` format) |
+| `token` | string | token auth | Zendesk API token |
+| `oauth_client_id` | string | oauth / client_credentials | OAuth client ID (env: `ZGSYNC_OAUTH_CLIENT_ID`) |
+| `oauth_client_secret` | — | client_credentials | Env-only (`ZGSYNC_OAUTH_CLIENT_SECRET`); not read from the config file |
+| `oauth_scope` | string | No | OAuth scope (default: `hc:read hc:write`) |
 | `default_locale` | string | Yes | Default locale for articles |
 | `default_permission_group_id` | int | Yes | Default permission group ID |
 | `contents_dir` | string | No | Path to contents directory (default: `.`) |
@@ -144,7 +148,9 @@ Expects `~/.config/zgsync/config.yaml` with the fields listed below.
 1. **push**: Update Translations or Articles to Zendesk
 2. **pull**: Retrieve Translations or Articles from Zendesk
 3. **empty**: Create empty draft articles
-4. **version**: Show version information
+4. **archive**: Archive articles on the remote
+5. **auth login**: Log in via OAuth (authorization code grant with PKCE) and save tokens to `~/.config/zgsync/credentials.json`
+6. **version**: Show version information
 
 ## CI/CD & Release Flow
 

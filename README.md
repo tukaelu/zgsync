@@ -44,8 +44,11 @@ enable_link_target_blank: false
 | Key                         | Required | Description                                              |
 | --------------------------- | -------- | -------------------------------------------------------- |
 | subdomain                   | true     | Specify a brand-specific subdomain                       |
-| email                       | true     | Specify the email address with "/token" added to the end |
-| token                       | true     | Specify your API token                                   |
+| auth_type                   | false    | Authentication type: `token` (default), `oauth`, or `client_credentials` |
+| email                       | (1)      | Specify the email address with "/token" added to the end |
+| token                       | (1)      | Specify your API token                                   |
+| oauth_client_id             | (2)      | OAuth client ID (identifier)                             |
+| oauth_scope                 | false    | OAuth scope (default: `hc:read hc:write`)                |
 | default_comments_disabled   | true     | Specify the default comments disabled                    |
 | default_locale              | true     | Specify the default locale for translations              |
 | default_permission_group_id | true     | Specify the default permission group ID                  |
@@ -54,9 +57,70 @@ enable_link_target_blank: false
 | contents_dir                | false    | Specify the local directory path to manage articles      |
 | enable_link_target_blank    | false    | Specify if links open in a new tab (affected only push)  |
 
+- (1) Required when `auth_type` is `token`.
+- (2) Required when `auth_type` is `oauth` or `client_credentials`.
+
+The OAuth client secret (required for `auth_type: client_credentials`) is only accepted via the `ZGSYNC_OAUTH_CLIENT_SECRET` environment variable so that it never has to be written to a file.
+
+## Authentication
+
+> [!WARNING]
+> Zendesk is [deprecating API tokens](https://support.zendesk.com/hc/en-us/articles/10851263566234): new token creation will be blocked on October 27, 2026, and all tokens will stop working on April 30, 2027. Migrate to OAuth before then. The `token` auth type remains supported until the deprecation for backward compatibility.
+
+### OAuth for local use (`auth_type: oauth`)
+
+Create an OAuth client in the Zendesk Admin Center (Apps and integrations > APIs > OAuth clients) with:
+
+- **Client kind**: Public
+- **Redirect URLs**: `http://localhost:8976/callback`
+
+Then configure zgsync and log in:
+
+```yaml:~/.config/zgsync/config.yaml
+subdomain: <your zendesk subdomain>
+auth_type: oauth
+oauth_client_id: <your oauth client identifier>
+# ... other settings
+```
+
+```
+zgsync auth login
+```
+
+This opens your browser to authorize zgsync (authorization code grant with PKCE; no client secret is needed).
+Tokens are saved to `~/.config/zgsync/credentials.json` and refreshed automatically.
+When the refresh token expires, run `zgsync auth login` again.
+
+### OAuth for CI (`auth_type: client_credentials`)
+
+Create a separate OAuth client with **Client kind: Confidential** and save its secret in your CI secrets.
+The client credentials grant obtains a short-lived access token at runtime, so no token needs to be stored.
+
+```yaml:config.yaml
+subdomain: <your zendesk subdomain>
+auth_type: client_credentials
+oauth_client_id: <your oauth client identifier>
+# ... other settings
+```
+
+The client secret is passed via the `ZGSYNC_OAUTH_CLIENT_SECRET` environment variable (it is not read from the config file). The client ID can also be overridden with `ZGSYNC_OAUTH_CLIENT_ID`.
+
+Example GitHub Actions workflow:
+
+```yaml
+- name: Push articles to Zendesk
+  env:
+    ZGSYNC_OAUTH_CLIENT_ID: ${{ secrets.ZENDESK_OAUTH_CLIENT_ID }}
+    ZGSYNC_OAUTH_CLIENT_SECRET: ${{ secrets.ZENDESK_OAUTH_CLIENT_SECRET }}
+  run: zgsync push --config ./zgsync.yaml docs/**/*.md
+```
+
+> [!NOTE]
+> With the client credentials grant, API requests are performed as the owner of the OAuth client. Articles created or updated from CI are attributed to that user.
+
 ## Usage
 
-zgsync consists of the subcommands pull, push, empty, and archive.
+zgsync consists of the subcommands pull, push, empty, archive, and auth.
 By default, it handles Translations among the data models of the Zendesk Help Center, but it can also handle Articles by specifying a specific option.
 
 zgsync saves Translations in files named `{Article ID}-{Locale}.md`. When using the pull or empty commands, specifying the `--save-article` option saves Articles in files named `{Article ID}.md`.  
@@ -134,6 +198,20 @@ Archives an article on the remote.
 
 Arguments:
   <target>    Specify the article ID or file path of the article to archive.
+```
+
+### auth login
+
+The auth login subcommand logs in to Zendesk via OAuth and saves the tokens to `~/.config/zgsync/credentials.json`. See [Authentication](#authentication) for the setup.
+
+```
+Usage: zgsync auth login [flags]
+
+Log in to Zendesk via OAuth (authorization code grant with PKCE) and save the tokens locally.
+
+Flags:
+      --port=8976                                Port of the local callback server. The OAuth client must register
+                                                 http://localhost:<port>/callback as a redirect URL.
 ```
 
 ## Markdown file format
