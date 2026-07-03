@@ -13,20 +13,24 @@ type cli struct {
 	Pull    CommandPull    `cmd:"pull" help:"Pull translations or articles from the remote."`
 	Empty   CommandEmpty   `cmd:"empty" help:"Creates an empty draft article remotely and saves it locally."`
 	Archive CommandArchive `cmd:"archive" help:"Archive an article on the remote."`
+	Auth    CommandAuth    `cmd:"auth" help:"Manage OAuth authentication."`
 	Version CommandVersion `cmd:"version" help:"Show version."`
 }
 
 func (c *cli) AfterApply(kCtx *kong.Context) error {
-	if kCtx.Command() == "version" {
+	switch kCtx.Command() {
+	case "version":
 		return nil
+	case "auth login":
+		if err := c.ConfigExists(); err != nil {
+			return err
+		}
+		return c.LoadConfigForAuthLogin()
 	}
 	if err := c.ConfigExists(); err != nil {
 		return err
 	}
-	if err := c.LoadConfig(); err != nil {
-		return err
-	}
-	return nil
+	return c.LoadConfig()
 }
 
 func Bind() {
