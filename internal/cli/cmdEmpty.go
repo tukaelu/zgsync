@@ -20,7 +20,11 @@ type CommandEmpty struct {
 }
 
 func (c *CommandEmpty) AfterApply(g *Global) error {
-	c.client = zendesk.NewClient(g.Config.Subdomain, g.Config.Email, g.Config.Token)
+	client, err := g.NewZendeskClient()
+	if err != nil {
+		return err
+	}
+	c.client = client
 	return nil
 }
 

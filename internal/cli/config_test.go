@@ -109,12 +109,10 @@ func TestLoadConfig_ErrorCases(t *testing.T) {
 		errMsg     string
 	}{
 		{
-			// Note: Although this test is in TestLoadConfig_ErrorCases, this case does NOT
-			// produce an error. LoadConfig intentionally returns nil when os.ReadFile() fails
-			// (e.g. file not found), treating a missing config file as a no-op.
-			name:       "non-existent config file is silently ignored",
+			name:       "non-existent config file",
 			configPath: "testdata/non-existent.yaml",
-			expectErr:  false, // LoadConfig returns nil for missing files
+			expectErr:  true,
+			errMsg:     "failed to read config file",
 		},
 		{
 			name:       "invalid yaml format",
@@ -293,7 +291,7 @@ func TestConfig_CLIIntegrationErrors(t *testing.T) {
 		description string
 	}{
 		{
-			name: "config file with permission denied is silently ignored",
+			name: "config file with permission denied",
 			setupConfig: func() string {
 				configFile := filepath.Join(tempDir, "restricted-config.yaml")
 				configContent := `subdomain: test
@@ -314,16 +312,16 @@ default_permission_group_id: 123`
 
 				return configFile
 			},
-			expectError: false, // LoadConfig is lenient about missing/inaccessible files
-			description: "LoadConfig should handle permission errors gracefully",
+			expectError: true,
+			description: "An unreadable config must fail instead of running with a zero-value config",
 		},
 		{
 			name: "config file in non-existent directory",
 			setupConfig: func() string {
 				return "/non/existent/directory/config.yaml"
 			},
-			expectError: false, // LoadConfig returns nil for missing files
-			description: "Should handle non-existent config file gracefully",
+			expectError: true,
+			description: "A missing config must fail instead of running with a zero-value config",
 		},
 		{
 			name: "corrupted config file",
@@ -354,7 +352,7 @@ default_permission_group_id: "not_a_number"
 
 			// Restore permissions for cleanup if needed
 			defer func() {
-				if tt.name == "config file with permission denied is silently ignored" {
+				if tt.name == "config file with permission denied" {
 					_ = os.Chmod(configPath, 0644)
 				}
 			}()
