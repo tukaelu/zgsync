@@ -301,6 +301,93 @@ func TestClient_401WithoutInvalidatorFailsImmediately(t *testing.T) {
 	}
 }
 
+// TestClient_401RefreshesOAuthTokenAndRetries exercises the whole self-healing
+// flow with a real OAuthCredentials: a token that is valid locally but revoked
+// server-side gets a 401, is invalidated, refreshed, and the request is retried.
+func TestClient_401RefreshesOAuthTokenAndRetries(t *testing.T) {
+	t.Parallel()
+
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"access_token": "fresh",
+			"refresh_token": "newrefresh",
+			"token_type": "bearer",
+			"expires_in": 1800
+		}`))
+	}))
+	defer tokenServer.Close()
+
+	var apiRequests atomic.Int32
+	apiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if apiRequests.Add(1) == 1 {
+			if got := r.Header.Get("Authorization"); got != "Bearer stale" {
+				t.Errorf("first request Authorization = %s, want Bearer stale", got)
+			}
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		if got := r.Header.Get("Authorization"); got != "Bearer fresh" {
+			t.Errorf("retry Authorization = %s, want Bearer fresh", got)
+		}
+		_, _ = w.Write([]byte(`{"article": {}}`))
+	}))
+	defer apiServer.Close()
+
+	creds := &OAuthCredentials{
+		AccessToken:  "stale",
+		RefreshToken: "refreshtoken",
+		Expiry:       time.Now().Add(1 * time.Hour), // locally valid, revoked server-side
+		ClientID:     "myclient",
+		OAuth:        &OAuthClient{subdomain: "test", baseURLOverride: tokenServer.URL},
+	}
+	client := &clientImpl{subdomain: "test", creds: creds, baseURLOverride: apiServer.URL}
+
+	if _, err := client.ShowArticle("en_us", 123); err != nil {
+		t.Fatalf("ShowArticle() error = %v", err)
+	}
+	if got := apiRequests.Load(); got != 2 {
+		t.Errorf("Expected 2 API requests (401 then retry), got %d", got)
+	}
+	if creds.AccessToken != "fresh" || creds.RefreshToken != "newrefresh" {
+		t.Errorf("credentials after retry = (%s, %s), want (fresh, newrefresh)", creds.AccessToken, creds.RefreshToken)
+	}
+}
+
+func TestClientCredentialsProvider_InvalidateForcesRefetch(t *testing.T) {
+	t.Parallel()
+
+	var requests atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{
+			"access_token": "citoken",
+			"token_type": "bearer",
+			"expires_in": 1800
+		}`))
+	}))
+	defer server.Close()
+
+	provider := &ClientCredentialsProvider{
+		ClientID:     "ciclient",
+		ClientSecret: "cisecret",
+		OAuth:        &OAuthClient{subdomain: "test", baseURLOverride: server.URL},
+	}
+
+	if _, err := provider.AuthorizationHeader(); err != nil {
+		t.Fatalf("AuthorizationHeader() error = %v", err)
+	}
+	provider.Invalidate()
+	if _, err := provider.AuthorizationHeader(); err != nil {
+		t.Fatalf("AuthorizationHeader() error = %v", err)
+	}
+
+	if got := requests.Load(); got != 2 {
+		t.Errorf("Expected 2 token requests after Invalidate, got %d", got)
+	}
+}
+
 func TestClientCredentialsProvider_TokenRequestFailure(t *testing.T) {
 	t.Parallel()
 

@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 func newOAuthTestServer(t *testing.T, wantParams map[string]string, response string, status int) *httptest.Server {
@@ -185,6 +186,50 @@ func TestOAuthClient_TokenRequestErrors(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestOAuthTokenResponse_ExpiryTime(t *testing.T) {
+	t.Parallel()
+
+	// within asserts got is in [want-tolerance, want+tolerance].
+	within := func(t *testing.T, got, want time.Time, tolerance time.Duration) {
+		t.Helper()
+		if got.Before(want.Add(-tolerance)) || got.After(want.Add(tolerance)) {
+			t.Errorf("ExpiryTime() = %v, want %v +/- %v", got, want, tolerance)
+		}
+	}
+
+	t.Run("zero expires_in means no expiry", func(t *testing.T) {
+		t.Parallel()
+
+		res := &OAuthTokenResponse{ExpiresIn: 0}
+		if got := res.ExpiryTime(); !got.IsZero() {
+			t.Errorf("ExpiryTime() = %v, want zero time", got)
+		}
+	})
+
+	t.Run("negative expires_in means no expiry", func(t *testing.T) {
+		t.Parallel()
+
+		res := &OAuthTokenResponse{ExpiresIn: -1}
+		if got := res.ExpiryTime(); !got.IsZero() {
+			t.Errorf("ExpiryTime() = %v, want zero time", got)
+		}
+	})
+
+	t.Run("margin is subtracted from the lifetime", func(t *testing.T) {
+		t.Parallel()
+
+		res := &OAuthTokenResponse{ExpiresIn: 1800}
+		within(t, res.ExpiryTime(), time.Now().Add(1800*time.Second-tokenExpiryMargin), 2*time.Second)
+	})
+
+	t.Run("margin is clamped to half the lifetime for short-lived tokens", func(t *testing.T) {
+		t.Parallel()
+
+		res := &OAuthTokenResponse{ExpiresIn: 10}
+		within(t, res.ExpiryTime(), time.Now().Add(5*time.Second), 2*time.Second)
+	})
 }
 
 func TestOAuthClient_BaseURL(t *testing.T) {

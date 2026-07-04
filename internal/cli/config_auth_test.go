@@ -136,6 +136,61 @@ func TestConfig_ApplyDefaultsAndEnv(t *testing.T) {
 	})
 }
 
+func TestLoadConfigForAuthLogin(t *testing.T) {
+	t.Parallel()
+
+	t.Run("subdomain-only config is sufficient", func(t *testing.T) {
+		t.Parallel()
+
+		g := &Global{ConfigPath: "testdata/config_subdomain_only.yaml"}
+		if err := g.LoadConfigForAuthLogin(); err != nil {
+			t.Fatalf("LoadConfigForAuthLogin() error = %v", err)
+		}
+		if g.Config.Subdomain != "example" {
+			t.Errorf("Subdomain = %s, want example", g.Config.Subdomain)
+		}
+	})
+
+	t.Run("the same subdomain-only config is rejected by LoadConfig", func(t *testing.T) {
+		t.Parallel()
+
+		// This contrast is the reason LoadConfigForAuthLogin exists: a user
+		// migrating to OAuth has no API token yet, so `auth login` must not
+		// go through the full validation. If this case starts passing,
+		// the lenient loader can be removed.
+		g := &Global{ConfigPath: "testdata/config_subdomain_only.yaml"}
+		if err := g.LoadConfig(); err == nil {
+			t.Error("LoadConfig() = nil, want validation error for a subdomain-only config")
+		}
+	})
+
+	t.Run("missing subdomain is rejected", func(t *testing.T) {
+		t.Parallel()
+
+		g := &Global{ConfigPath: "testdata/config_no_subdomain.yaml"}
+		err := g.LoadConfigForAuthLogin()
+		if err == nil {
+			t.Fatal("Expected error but got none")
+		}
+		if !strings.Contains(err.Error(), "subdomain") {
+			t.Errorf("Expected subdomain error, got: %v", err)
+		}
+	})
+
+	t.Run("missing config file is rejected", func(t *testing.T) {
+		t.Parallel()
+
+		g := &Global{ConfigPath: "testdata/non-existent.yaml"}
+		err := g.LoadConfigForAuthLogin()
+		if err == nil {
+			t.Fatal("Expected error but got none")
+		}
+		if !strings.Contains(err.Error(), "failed to read config file") {
+			t.Errorf("Expected read error, got: %v", err)
+		}
+	})
+}
+
 func TestConfig_OAuthClientSecretIgnoredInYAML(t *testing.T) {
 	t.Parallel()
 
