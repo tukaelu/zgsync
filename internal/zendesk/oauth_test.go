@@ -166,6 +166,14 @@ func TestOAuthClient_TokenRequestErrors(t *testing.T) {
 			response:      `{"token_type": "bearer"}`,
 			errorContains: "does not contain an access token",
 		},
+		{
+			// Defensive path for a Zendesk-side bug; unlikely in practice
+			// but the branch must not panic.
+			name:          "malformed JSON in 200 response",
+			status:        http.StatusOK,
+			response:      `{not valid json`,
+			errorContains: "invalid",
+		},
 	}
 
 	for _, tt := range tests {
@@ -230,6 +238,21 @@ func TestOAuthTokenResponse_ExpiryTime(t *testing.T) {
 		res := &OAuthTokenResponse{ExpiresIn: 10}
 		within(t, res.ExpiryTime(), time.Now().Add(5*time.Second), 2*time.Second)
 	})
+}
+
+// TestNewOAuthClientWithBaseURL exists to keep the function covered in the
+// zendesk package's own test binary. The function is only called from cli
+// package tests, which do not instrument zendesk package code.
+func TestNewOAuthClientWithBaseURL(t *testing.T) {
+	t.Parallel()
+
+	client := NewOAuthClientWithBaseURL("mycompany", "http://example.com")
+	if client.subdomain != "mycompany" || client.baseURLOverride != "http://example.com" {
+		t.Errorf("NewOAuthClientWithBaseURL() = %+v", client)
+	}
+	if got := client.baseURL(); got != "http://example.com" {
+		t.Errorf("baseURL() = %s, want http://example.com", got)
+	}
 }
 
 func TestOAuthClient_BaseURL(t *testing.T) {

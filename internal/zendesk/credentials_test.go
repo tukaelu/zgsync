@@ -9,6 +9,16 @@ import (
 	"time"
 )
 
+// closedServerURL returns the URL of a server that is immediately closed,
+// so any HTTP request to it will fail with a connection error.
+func closedServerURL(t *testing.T) string {
+	t.Helper()
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	u := s.URL
+	s.Close()
+	return u
+}
+
 func TestOAuthCredentials_AuthorizationHeader_ValidToken(t *testing.T) {
 	t.Parallel()
 
@@ -385,6 +395,21 @@ func TestClientCredentialsProvider_InvalidateForcesRefetch(t *testing.T) {
 
 	if got := requests.Load(); got != 2 {
 		t.Errorf("Expected 2 token requests after Invalidate, got %d", got)
+	}
+}
+
+func TestClient_AttemptNetworkError(t *testing.T) {
+	t.Parallel()
+
+	client := &clientImpl{
+		subdomain:       "test",
+		creds:           &TokenCredentials{Email: "user@example.com/token", Token: "t"},
+		baseURLOverride: closedServerURL(t),
+	}
+
+	_, err := client.ShowArticle("en_us", 123)
+	if err == nil {
+		t.Fatal("Expected network error but got none")
 	}
 }
 

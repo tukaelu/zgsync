@@ -2,6 +2,8 @@ package cli
 
 import (
 	"encoding/json"
+	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -232,6 +234,84 @@ func TestCommandAuthLogin_Timeout(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "timed out") {
 		t.Errorf("Expected timeout error, got: %v", err)
+	}
+}
+
+// TestCommandAuthLogin_AfterApply verifies that AfterApply wires up the oauth
+// client, credential store, browser opener, and timeout correctly.
+func TestCommandAuthLogin_AfterApply(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+
+	cmd := &CommandAuthLogin{}
+	if err := cmd.AfterApply(authLoginGlobal()); err != nil {
+		t.Fatalf("AfterApply() error = %v", err)
+	}
+	if cmd.oauthClient == nil || cmd.credStore == nil || cmd.openBrowser == nil {
+		t.Error("AfterApply() did not wire up all fields")
+	}
+	if cmd.timeout != 5*time.Minute {
+		t.Errorf("timeout = %v, want 5m", cmd.timeout)
+	}
+}
+
+func TestCommandAuthLogin_BrowserOpenFailureIsNonFatal(t *testing.T) {
+	t.Parallel()
+
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"access123","token_type":"bearer","expires_in":1800}`))
+	}))
+	defer tokenServer.Close()
+
+	// Returns an error, but still fires the callback so the login can succeed.
+	browser := func(authorizeURL string) error {
+		u, err := url.Parse(authorizeURL)
+		if err != nil {
+			return err
+		}
+		q := u.Query()
+		cb := q.Get("redirect_uri") + "?" + url.Values{
+			"code": {"authcode123"}, "state": {q.Get("state")},
+		}.Encode()
+		go func() {
+			if res, err := http.Get(cb); err == nil {
+				_ = res.Body.Close()
+			}
+		}()
+		return fmt.Errorf("browser not found")
+	}
+
+	cmd, store := newAuthLoginCommand(t, tokenServer.URL, browser)
+	if err := cmd.Run(authLoginGlobal()); err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+	if _, err := store.Load("test"); err != nil {
+		t.Errorf("credentials were not saved: %v", err)
+	}
+}
+
+func TestCommandAuthLogin_ListenPortInUse(t *testing.T) {
+	t.Parallel()
+
+	// Keep a listener alive on a known port so Run cannot bind to it.
+	blocker, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = blocker.Close() }()
+	port := blocker.Addr().(*net.TCPAddr).Port
+
+	cmd, _ := newAuthLoginCommand(t, "http://invalid.example.com", func(string) error { return nil })
+	cmd.Port = port
+
+	err = cmd.Run(authLoginGlobal())
+	if err == nil {
+		t.Fatal("Expected error but got none")
+	}
+	if !strings.Contains(err.Error(), "callback server") {
+		t.Errorf("Expected callback server error, got: %v", err)
 	}
 }
 

@@ -9,6 +9,24 @@ import (
 	"time"
 )
 
+func TestCredentialStore_SaveWithBrokenFile(t *testing.T) {
+	t.Parallel()
+
+	path := filepath.Join(t.TempDir(), "credentials.json")
+	if err := os.WriteFile(path, []byte("{broken json"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	store := NewCredentialStoreWithPath(path)
+
+	err := store.Save("test", &StoredCredential{AccessToken: "a"})
+	if err == nil {
+		t.Fatal("Expected error but got none")
+	}
+	if !strings.Contains(err.Error(), "failed to parse") {
+		t.Errorf("Expected parse error, got: %v", err)
+	}
+}
+
 func TestCredentialStore_SaveAndLoad(t *testing.T) {
 	t.Parallel()
 
