@@ -49,7 +49,7 @@ enable_link_target_blank: false
 | token                       | (1)      | Specify your API token                                   |
 | oauth_client_id             | (2)      | OAuth client ID (identifier) (env: `ZGSYNC_OAUTH_CLIENT_ID`) |
 | oauth_scope                 | false    | OAuth scope (default: `hc:read hc:write`)                |
-| default_comments_disabled   | true     | Specify the default comments disabled                    |
+| default_comments_disabled   | false    | Specify the default comments disabled                    |
 | default_locale              | true     | Specify the default locale for translations              |
 | default_permission_group_id | true     | Specify the default permission group ID                  |
 | default_user_segment_id     | false    | Specify the default user segment ID                      |
@@ -160,7 +160,7 @@ Flags:
   -l, --locale=STRING                            Specify the locale to pull. If not specified, the default locale will be used.
       --raw                                      It pulls raw data without converting it from HTML to Markdown.
   -a, --save-article                             It pulls and saves the article in addition to the translation.
-      --with-section-dir                         A .md file will be created in the section ID directory.
+  -S, --with-section-dir                         A .md file will be created in the section ID directory.
 ```
 
 By default, the pull subcommand saves under `{contents_dir}`. You can also specify an option to output directly under `{contents_dir}/{section_id}`.
@@ -182,7 +182,7 @@ Flags:
   -p, --permission-group-id=INT                  Specify the permission group ID. If not specified, the default value will be used.
   -u, --user-segment-id=INT                      Specify the user segment ID. If not specified, the default value will be used.
       --save-article                             It saves the article in addition to the translation.
-      --with-section-dir                         A .md file will be created in the section ID directory.
+  -S, --with-section-dir                         A .md file will be created in the section ID directory.
 ```
 
 The empty subcommand should not be used when adding a new Translation to an existing Article.
@@ -304,7 +304,7 @@ warning messages
 
 ### Prerequisites
 
-- Go 1.23.0 or later
+- Go 1.25.0 or later
 - GNU Make
 - golangci-lint (for linting)
 
