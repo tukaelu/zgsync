@@ -47,7 +47,7 @@ enable_link_target_blank: false
 | auth_type                   | false    | Authentication type: `token` (default), `oauth`, or `client_credentials` |
 | email                       | (1)      | Specify the email address with "/token" added to the end |
 | token                       | (1)      | Specify your API token                                   |
-| oauth_client_id             | (2)      | OAuth client ID (identifier)                             |
+| oauth_client_id             | (2)      | OAuth client ID (identifier) (env: `ZGSYNC_OAUTH_CLIENT_ID`) |
 | oauth_scope                 | false    | OAuth scope (default: `hc:read hc:write`)                |
 | default_comments_disabled   | true     | Specify the default comments disabled                    |
 | default_locale              | true     | Specify the default locale for translations              |
