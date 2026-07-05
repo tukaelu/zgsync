@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 zgsync is a command-line tool that posts help center content written in Markdown to Zendesk via the Zendesk Help Center REST API. It converts Markdown to HTML for API compatibility and manages both Articles and Translations.
 
 ### Tech Stack
-- **Language**: Go 1.24.0+ (toolchain go1.25.2)
+- **Language**: Go 1.25.0+
 - **Build System**: GNU Make
 - **Package Manager**: Go modules
 - **CI/CD**: GitHub Actions
@@ -23,7 +23,7 @@ zgsync is a command-line tool that posts help center content written in Markdown
 ## Environment Setup
 
 ### Prerequisites
-- Go 1.24.0 or later
+- Go 1.25.0 or later
 - `golangci-lint` (required for `make lint`)
 
 ### Install golangci-lint
@@ -79,9 +79,6 @@ go test -v ./internal/zendesk/...
 ### Test Utilities
 `internal/testutil/` provides shared helpers used across packages:
 - `assertions.go`: Custom assertion helpers
-- `comparator.go`: Value comparison utilities
-- `filehelper.go`: File-based test helpers
-- `httphelper.go`: HTTP mock/helper utilities
 
 ## Architecture
 
@@ -169,7 +166,7 @@ zgsync/
 │   ├── cli/           # CLI commands and configuration
 │   ├── converter/     # Markdown/HTML conversion logic
 │   ├── zendesk/       # Zendesk API client and models
-│   └── testutil/      # Shared test utilities (assertions, comparator, filehelper, httphelper)
+│   └── testutil/      # Shared test utilities (assertions)
 ├── .github/workflows/ # GitHub Actions CI configuration
 ├── .goreleaser.yaml   # GoReleaser configuration for multi-platform builds
 ├── Makefile          # Build and development commands
