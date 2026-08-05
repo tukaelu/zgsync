@@ -31,17 +31,19 @@ func TestClientImpl_BaseURL(t *testing.T) {
 	}
 }
 
-func TestClientImpl_AuthorizationToken(t *testing.T) {
+func TestTokenCredentials_AuthorizationHeader(t *testing.T) {
 	t.Parallel()
 
-	client := NewClient("test", "user@example.com/token", "secrettoken")
-	impl := client.(*clientImpl)
+	creds := &TokenCredentials{Email: "user@example.com/token", Token: "secrettoken"}
 
-	expected := "dXNlckBleGFtcGxlLmNvbS90b2tlbjpzZWNyZXR0b2tlbg=="
-	actual := impl.authorizationToken()
+	expected := "Basic dXNlckBleGFtcGxlLmNvbS90b2tlbjpzZWNyZXR0b2tlbg=="
+	actual, err := creds.AuthorizationHeader()
+	if err != nil {
+		t.Fatalf("AuthorizationHeader() error = %v", err)
+	}
 
 	if actual != expected {
-		t.Errorf("authorizationToken() = %s, want %s", actual, expected)
+		t.Errorf("AuthorizationHeader() = %s, want %s", actual, expected)
 	}
 }
 
@@ -50,8 +52,7 @@ func TestClientImpl_DoRequest_EmptyEndpoint(t *testing.T) {
 
 	client := &clientImpl{
 		subdomain: "test",
-		email:     "test@example.com/token",
-		token:     "testtoken",
+		creds:     &TokenCredentials{Email: "test@example.com/token", Token: "testtoken"},
 	}
 
 	_, err := client.doRequest("GET", "", nil)
@@ -64,8 +65,7 @@ func TestClientImpl_DoRequest_EmptyEndpoint(t *testing.T) {
 func newTestClientImpl(serverURL string) *clientImpl {
 	return &clientImpl{
 		subdomain:       "test",
-		email:           "test@example.com/token",
-		token:           "testtoken",
+		creds:           &TokenCredentials{Email: "test@example.com/token", Token: "testtoken"},
 		baseURLOverride: serverURL,
 	}
 }
@@ -842,10 +842,13 @@ func TestClientImpl_RealHTTPClient(t *testing.T) {
 			t.Errorf("Expected baseURL %s, got %s", expectedBaseURL, baseURL)
 		}
 
-		authToken := realClient.authorizationToken()
-		expectedToken := base64.StdEncoding.EncodeToString([]byte("test@example.com/token:testtoken"))
-		if authToken != expectedToken {
-			t.Errorf("Expected authToken %s, got %s", expectedToken, authToken)
+		authz, err := realClient.creds.AuthorizationHeader()
+		if err != nil {
+			t.Fatalf("AuthorizationHeader() error = %v", err)
+		}
+		expectedAuthz := "Basic " + base64.StdEncoding.EncodeToString([]byte("test@example.com/token:testtoken"))
+		if authz != expectedAuthz {
+			t.Errorf("Expected authorization header %s, got %s", expectedAuthz, authz)
 		}
 	})
 
@@ -931,8 +934,7 @@ func TestClient_AuthenticationErrors(t *testing.T) {
 
 			client := &clientImpl{
 				subdomain:       "test",
-				email:           tt.email,
-				token:           tt.token,
+				creds:           &TokenCredentials{Email: tt.email, Token: tt.token},
 				baseURLOverride: server.URL,
 			}
 
@@ -1007,9 +1009,12 @@ func TestClient_AuthorizationHeaderGeneration(t *testing.T) {
 			client := NewClient("test", tt.email, tt.token)
 			impl := client.(*clientImpl)
 
-			actualHeader := impl.authorizationToken()
+			actualHeader, err := impl.creds.AuthorizationHeader()
+			if err != nil {
+				t.Fatalf("AuthorizationHeader() error = %v", err)
+			}
 
-			if actualHeader != tt.expectedHeader {
+			if actualHeader != "Basic "+tt.expectedHeader {
 				t.Errorf("Authorization header mismatch for %s", tt.name)
 				t.Errorf("Expected: %s", tt.expectedHeader)
 				t.Errorf("Actual:   %s", actualHeader)
@@ -1030,8 +1035,7 @@ func TestClient_AllMethods_AuthenticationFailure(t *testing.T) {
 
 	client := &clientImpl{
 		subdomain:       "test",
-		email:           "invalid@example.com/token",
-		token:           "invalidtoken",
+		creds:           &TokenCredentials{Email: "invalid@example.com/token", Token: "invalidtoken"},
 		baseURLOverride: server.URL,
 	}
 
@@ -1184,8 +1188,7 @@ func TestClientImpl_ArchiveArticle(t *testing.T) {
 
 			client := &clientImpl{
 				subdomain:       "test",
-				email:           "test@example.com/token",
-				token:           "testtoken",
+				creds:           &TokenCredentials{Email: "test@example.com/token", Token: "testtoken"},
 				baseURLOverride: server.URL,
 			}
 
@@ -1206,8 +1209,7 @@ func TestClientImpl_DoDeleteRequest_EmptyEndpoint(t *testing.T) {
 
 	client := &clientImpl{
 		subdomain: "test",
-		email:     "test@example.com/token",
-		token:     "testtoken",
+		creds:     &TokenCredentials{Email: "test@example.com/token", Token: "testtoken"},
 	}
 
 	err := client.doDeleteRequest("")

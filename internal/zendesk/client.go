@@ -1,11 +1,12 @@
 package zendesk
 
 import (
-	"encoding/base64"
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	_ "github.com/tukaelu/zgsync/internal/zendesk/httplog"
 )
@@ -13,6 +14,17 @@ import (
 const (
 	BaseURL = "https://%s.zendesk.com"
 )
+
+// httpClient is shared by API and OAuth token requests so a black-holed
+// endpoint fails instead of blocking the CLI forever.
+var httpClient = &http.Client{Timeout: 30 * time.Second}
+
+func resolveBaseURL(subdomain, override string) string {
+	if override != "" {
+		return override
+	}
+	return fmt.Sprintf(BaseURL, subdomain)
+}
 
 type Client interface {
 	CreateArticle(locale string, sectionID int, payload string) (string, error)
@@ -26,16 +38,18 @@ type Client interface {
 
 type clientImpl struct {
 	subdomain       string
-	email           string
-	token           string
+	creds           Credentials
 	baseURLOverride string
 }
 
 func NewClient(subdomain, email, token string) Client {
+	return NewClientWithCredentials(subdomain, &TokenCredentials{Email: email, Token: token})
+}
+
+func NewClientWithCredentials(subdomain string, creds Credentials) Client {
 	return &clientImpl{
 		subdomain: subdomain,
-		email:     email,
-		token:     token,
+		creds:     creds,
 	}
 }
 
@@ -118,69 +132,77 @@ func (c *clientImpl) ShowTranslation(articleID int, locale string) (string, erro
 }
 
 func (c *clientImpl) doRequest(method string, endpoint string, payload io.Reader) (string, error) {
-	if endpoint == "" {
-		return "", fmt.Errorf("endpoint is required")
-	}
-	reqURL := c.baseURL() + endpoint
-	req, err := http.NewRequest(method, reqURL, payload)
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Basic "+c.authorizationToken())
-
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer func() { _ = res.Body.Close() }()
-
-	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
-		return "", fmt.Errorf("unexpected status code: %d", res.StatusCode)
-	}
-
-	resPayload, err := io.ReadAll(res.Body)
-	if err != nil {
-		return "", err
-	}
-	return string(resPayload), nil
+	return c.do(method, endpoint, payload, http.StatusOK, http.StatusCreated)
 }
 
 func (c *clientImpl) doDeleteRequest(endpoint string) error {
+	_, err := c.do(http.MethodDelete, endpoint, nil, http.StatusNoContent)
+	return err
+}
+
+func (c *clientImpl) do(method, endpoint string, payload io.Reader, okStatuses ...int) (string, error) {
 	if endpoint == "" {
-		return fmt.Errorf("endpoint is required")
+		return "", fmt.Errorf("endpoint is required")
 	}
-	reqURL := c.baseURL() + endpoint
-	req, err := http.NewRequest(http.MethodDelete, reqURL, nil)
-	if err != nil {
-		return err
+	var body []byte
+	if payload != nil {
+		var err error
+		if body, err = io.ReadAll(payload); err != nil {
+			return "", err
+		}
 	}
 
+	status, resBody, err := c.attempt(method, endpoint, body)
+	if err != nil {
+		return "", err
+	}
+	// A 401 despite a locally valid token means it was revoked or expired
+	// server-side; discard the cached token and retry once so the OAuth
+	// refresh/token flow can recover.
+	if status == http.StatusUnauthorized {
+		if inv, ok := c.creds.(interface{ Invalidate() }); ok {
+			inv.Invalidate()
+			if status, resBody, err = c.attempt(method, endpoint, body); err != nil {
+				return "", err
+			}
+		}
+	}
+
+	for _, ok := range okStatuses {
+		if status == ok {
+			return string(resBody), nil
+		}
+	}
+	return "", fmt.Errorf("unexpected status code: %d", status)
+}
+
+func (c *clientImpl) attempt(method, endpoint string, body []byte) (int, []byte, error) {
+	req, err := http.NewRequest(method, c.baseURL()+endpoint, bytes.NewReader(body))
+	if err != nil {
+		return 0, nil, err
+	}
+
+	authz, err := c.creds.AuthorizationHeader()
+	if err != nil {
+		return 0, nil, err
+	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Basic "+c.authorizationToken())
+	req.Header.Set("Authorization", authz)
 
-	client := &http.Client{}
-	res, err := client.Do(req)
+	res, err := httpClient.Do(req)
 	if err != nil {
-		return err
+		return 0, nil, err
 	}
 	defer func() { _ = res.Body.Close() }()
 
-	if res.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	resBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return 0, nil, err
 	}
-	return nil
+	return res.StatusCode, resBody, nil
 }
 
 func (c *clientImpl) baseURL() string {
-	if c.baseURLOverride != "" {
-		return c.baseURLOverride
-	}
-	return fmt.Sprintf(BaseURL, c.subdomain)
+	return resolveBaseURL(c.subdomain, c.baseURLOverride)
 }
 
-func (c *clientImpl) authorizationToken() string {
-	return base64.StdEncoding.EncodeToString([]byte(c.email + ":" + c.token))
-}
