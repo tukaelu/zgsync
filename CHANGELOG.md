@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.1.0](https://github.com/tukaelu/zgsync/compare/v0.0.20...v0.1.0) - 2026-08-05
+
+### Other Changes
+- chore(deps): update github-actions (major) by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/88
+- chore(deps): update github-actions by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/87
+- fix(deps): update module golang.org/x/net to v0.55.0 [security] by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/90
+- chore(deps): update go toolchain directive to v1.26.5 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/82
+- chore(deps): update github-actions by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/94
+- chore(deps): update actions/setup-go action to v7 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/96
+- fix(deps): update module github.com/yuin/goldmark to v1.8.5 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/93
+- fix(deps): update module github.com/alecthomas/kong to v1.16.0 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/95
+- feat: add OAuth authentication support by @tukaelu in https://github.com/tukaelu/zgsync/pull/91
+
 ## [v0.0.20](https://github.com/tukaelu/zgsync/compare/v0.0.19...v0.0.20) - 2026-05-10
 ### Other Changes
 - fix(deps): update module golang.org/x/net to v0.53.0 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/73
