@@ -57,6 +57,7 @@ func newAuthLoginCommand(t *testing.T, tokenServerURL string, browser func(strin
 	store := NewCredentialStoreWithPath(filepath.Join(t.TempDir(), "credentials.json"))
 	cmd := &CommandAuthLogin{
 		Port:        0,
+		Bind:        "localhost",
 		oauthClient: zendesk.NewOAuthClientWithBaseURL("test", tokenServerURL),
 		credStore:   store,
 		openBrowser: browser,
