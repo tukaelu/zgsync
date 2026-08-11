@@ -22,11 +22,7 @@ func (g *Global) newCredentials() (zendesk.Credentials, error) {
 	case "", AuthTypeToken:
 		return &zendesk.TokenCredentials{Email: g.Config.Email, Token: g.Config.Token}, nil
 	case AuthTypeOAuth:
-		store, err := NewCredentialStore()
-		if err != nil {
-			return nil, err
-		}
-		return newOAuthCredentials(g.Config, store)
+		return newOAuthCredentials(g.Config, NewCredentialStore(g.AbsConfig()))
 	case AuthTypeClientCredentials:
 		return &zendesk.ClientCredentialsProvider{
 			ClientID:     g.Config.OAuthClientID,

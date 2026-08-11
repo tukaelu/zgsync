@@ -24,14 +24,10 @@ type CredentialStore struct {
 	path string
 }
 
-func NewCredentialStore() (*CredentialStore, error) {
-	dir, err := zgsyncConfigDir()
-	if err != nil {
-		return nil, err
-	}
+func NewCredentialStore(configPath string) *CredentialStore {
 	return &CredentialStore{
-		path: filepath.Join(dir, "credentials.json"),
-	}, nil
+		path: filepath.Join(filepath.Dir(configPath), "credentials.json"),
+	}
 }
 
 func NewCredentialStoreWithPath(path string) *CredentialStore {
