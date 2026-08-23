@@ -212,6 +212,7 @@ Log in to Zendesk via OAuth (authorization code grant with PKCE) and save the to
 Flags:
       --port=8976                                Port of the local callback server. The OAuth client must register
                                                  http://localhost:<port>/callback as a redirect URL.
+      --bind="localhost"                         Bind address of the local callback server (e.g. 0.0.0.0 for Docker).
 ```
 
 ## Markdown file format
