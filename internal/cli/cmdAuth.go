@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"time"
 
 	"github.com/tukaelu/zgsync/internal/zendesk"
