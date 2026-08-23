@@ -316,6 +316,66 @@ func TestCommandAuthLogin_ListenPortInUse(t *testing.T) {
 	}
 }
 
+func TestCommandAuthLogin_BindAllInterfaces(t *testing.T) {
+	t.Parallel()
+
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"access123","token_type":"bearer","expires_in":1800}`))
+	}))
+	defer tokenServer.Close()
+
+	var capturedAuthorizeURL string
+	browser := func(authorizeURL string) error {
+		capturedAuthorizeURL = authorizeURL
+		return browserStub(t, nil)(authorizeURL)
+	}
+
+	cmd, store := newAuthLoginCommand(t, tokenServer.URL, browser)
+	cmd.Bind = "0.0.0.0"
+
+	if err := cmd.Run(authLoginGlobal()); err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+
+	// redirect_uri must still use localhost regardless of bind address
+	u, err := url.Parse(capturedAuthorizeURL)
+	if err != nil {
+		t.Fatalf("failed to parse authorize URL: %v", err)
+	}
+	redirectURI := u.Query().Get("redirect_uri")
+	if !strings.HasPrefix(redirectURI, "http://localhost:") {
+		t.Errorf("redirect_uri = %s, want http://localhost:... prefix", redirectURI)
+	}
+
+	if _, err := store.Load("test"); err != nil {
+		t.Errorf("credentials were not saved: %v", err)
+	}
+}
+
+func TestCommandAuthLogin_BindAllInterfacesPortInUse(t *testing.T) {
+	t.Parallel()
+
+	blocker, err := net.Listen("tcp", "0.0.0.0:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = blocker.Close() }()
+	port := blocker.Addr().(*net.TCPAddr).Port
+
+	cmd, _ := newAuthLoginCommand(t, "http://invalid.example.com", func(string) error { return nil })
+	cmd.Bind = "0.0.0.0"
+	cmd.Port = port
+
+	err = cmd.Run(authLoginGlobal())
+	if err == nil {
+		t.Fatal("Expected error but got none")
+	}
+	if !strings.Contains(err.Error(), "callback server") {
+		t.Errorf("Expected callback server error, got: %v", err)
+	}
+}
+
 func TestCodeChallengeS256(t *testing.T) {
 	t.Parallel()
 
