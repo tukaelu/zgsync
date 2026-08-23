@@ -61,7 +61,7 @@ func (c *CommandAuthLogin) Run(g *Global) error {
 		return err
 	}
 
-	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", c.Bind, c.Port))
+	listener, err := net.Listen("tcp", net.JoinHostPort(c.Bind, strconv.Itoa(c.Port)))
 	if err != nil {
 		return fmt.Errorf("failed to start the callback server: %w", err)
 	}
