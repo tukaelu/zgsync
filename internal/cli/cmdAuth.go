@@ -30,11 +30,7 @@ type CommandAuthLogin struct {
 
 func (c *CommandAuthLogin) AfterApply(g *Global) error {
 	c.oauthClient = zendesk.NewOAuthClient(g.Config.Subdomain)
-	store, err := NewCredentialStore()
-	if err != nil {
-		return err
-	}
-	c.credStore = store
+	c.credStore = NewCredentialStore(g.AbsConfig())
 	c.openBrowser = openBrowser
 	c.timeout = 5 * time.Minute
 	return nil

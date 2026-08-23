@@ -64,23 +64,15 @@ func TestGlobal_NewZendeskClient_AuthTypes(t *testing.T) {
 	}
 }
 
-// setTempHome points the credential store at a temporary home directory and
-// returns a store bound to the credentials.json inside it.
-func setTempHome(t *testing.T) *CredentialStore {
-	t.Helper()
-	home := t.TempDir()
-	t.Setenv("HOME", home)        // unix
-	t.Setenv("USERPROFILE", home) // windows
-	return NewCredentialStoreWithPath(filepath.Join(home, ".config", "zgsync", "credentials.json"))
-}
-
 func TestGlobal_NewZendeskClient_OAuth(t *testing.T) {
-	store := setTempHome(t)
+	configDir := t.TempDir()
+	configPath := filepath.Join(configDir, "config.yaml")
+	store := NewCredentialStoreWithPath(filepath.Join(configDir, "credentials.json"))
 	if err := store.Save("test", &StoredCredential{ClientID: "myclient", AccessToken: "access123"}); err != nil {
 		t.Fatal(err)
 	}
 
-	g := &Global{Config: Config{Subdomain: "test", AuthType: AuthTypeOAuth, OAuthClientID: "myclient"}}
+	g := &Global{ConfigPath: configPath, Config: Config{Subdomain: "test", AuthType: AuthTypeOAuth, OAuthClientID: "myclient"}}
 	client, err := g.NewZendeskClient()
 	if err != nil {
 		t.Fatalf("NewZendeskClient() error = %v", err)
@@ -91,9 +83,10 @@ func TestGlobal_NewZendeskClient_OAuth(t *testing.T) {
 }
 
 func TestGlobal_NewZendeskClient_OAuthWithoutLogin(t *testing.T) {
-	setTempHome(t)
+	configDir := t.TempDir()
+	configPath := filepath.Join(configDir, "config.yaml")
 
-	g := &Global{Config: Config{Subdomain: "test", AuthType: AuthTypeOAuth, OAuthClientID: "myclient"}}
+	g := &Global{ConfigPath: configPath, Config: Config{Subdomain: "test", AuthType: AuthTypeOAuth, OAuthClientID: "myclient"}}
 	_, err := g.NewZendeskClient()
 	if err == nil {
 		t.Fatal("Expected error but got none")
