@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"os/exec"
 	"runtime"
+	"strconv"
 	"time"
 
 	"github.com/tukaelu/zgsync/internal/zendesk"
@@ -20,7 +21,8 @@ type CommandAuth struct {
 }
 
 type CommandAuthLogin struct {
-	Port int `name:"port" help:"Port of the local callback server. The OAuth client must register http://localhost:<port>/callback as a redirect URL." default:"8976"`
+	Port int    `name:"port" help:"Port of the local callback server. The OAuth client must register http://localhost:<port>/callback as a redirect URL." default:"8976"`
+	Bind string `name:"bind" help:"Bind address of the local callback server (e.g. 0.0.0.0 for Docker)." default:"localhost"`
 
 	oauthClient *zendesk.OAuthClient
 	credStore   *CredentialStore
@@ -56,7 +58,7 @@ func (c *CommandAuthLogin) Run(g *Global) error {
 		return err
 	}
 
-	listener, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", c.Port))
+	listener, err := net.Listen("tcp", net.JoinHostPort(c.Bind, strconv.Itoa(c.Port)))
 	if err != nil {
 		return fmt.Errorf("failed to start the callback server: %w", err)
 	}
