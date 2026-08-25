@@ -1,12 +1,9 @@
 package converter
 
 import (
-	"strconv"
 	"strings"
 	"testing"
 
-	md "github.com/JohannesKaufmann/html-to-markdown"
-	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/net/html"
 
 	"github.com/tukaelu/zgsync/internal/testutil"
@@ -380,63 +377,46 @@ func TestConvertToMarkdown_PluckAttributes_MultipleClasses(t *testing.T) {
 }
 
 func TestConvertToMarkdown_ReplacementDiv(t *testing.T) {
-	content := "this is a test content"
-	div := &html.Node{
-		Data: "div",
-		Attr: []html.Attribute{},
+	converter := NewConverter(false)
+
+	result, err := converter.ConvertToMarkdown("<div>this is a test content</div>")
+	if err != nil {
+		t.Fatalf("ConvertToMarkdown() failed: %v", err)
 	}
-	selection := &goquery.Selection{Nodes: []*html.Node{div}}
-	opt := &md.Options{}
-
-	expextedContent := ":::\n" + content + "\n:::\n\n"
-	replaced := replacementDiv(content, selection, opt)
-
-	if *replaced != expextedContent {
-		t.Errorf("expected %s, got %s", expextedContent, *replaced)
+	expected := ":::\nthis is a test content\n:::"
+	if result != expected {
+		t.Errorf("expected %q, got %q", expected, result)
 	}
 }
 
 func TestConvertToMarkdown_ReplacementDivWithAttributes(t *testing.T) {
-	content := "this is a test content"
-	div := &html.Node{
-		Data: "div",
-		Attr: []html.Attribute{
-			{Key: "id", Val: "header"},
-			{Key: "class", Val: "header"},
-			{Key: "data", Val: "header"},
-		},
+	converter := NewConverter(false)
+
+	result, err := converter.ConvertToMarkdown("<div id=\"header\" class=\"header\" data=\"header\">this is a test content</div>")
+	if err != nil {
+		t.Fatalf("ConvertToMarkdown() failed: %v", err)
 	}
-	selection := &goquery.Selection{Nodes: []*html.Node{div}}
-	opt := &md.Options{}
-
-	expextedContent := ":::{#header .header data=header}\n" + content + "\n:::\n\n"
-	replaced := replacementDiv(content, selection, opt)
-
-	if *replaced != expextedContent {
-		t.Errorf("expected %s, got %s", expextedContent, *replaced)
+	expected := ":::{#header .header data=header}\nthis is a test content\n:::"
+	if result != expected {
+		t.Errorf("expected %q, got %q", expected, result)
 	}
 }
 
 func TestConvertToMarkdown_ReplacementHeadings(t *testing.T) {
-	content := "heading test"
+	converter := NewConverter(false)
 	headings := []string{"h1", "h2", "h3", "h4", "h5", "h6"}
 
 	for _, heading := range headings {
-		node := &html.Node{
-			Data: heading,
-			Attr: []html.Attribute{},
+		level := heading[1:]
+		prefix := strings.Repeat("#", int(level[0]-'0'))
+
+		result, err := converter.ConvertToMarkdown("<" + heading + ">heading test</" + heading + ">")
+		if err != nil {
+			t.Fatalf("ConvertToMarkdown() failed: %v", err)
 		}
-		selection := &goquery.Selection{Nodes: []*html.Node{node}}
-		opt := &md.Options{}
-
-		level, _ := strconv.Atoi(node.Data[1:])
-		prefix := strings.Repeat("#", level)
-
-		expextedContent := prefix + " " + content + "\n"
-		replaced := replacementHeadings(content, selection, opt)
-
-		if *replaced != expextedContent {
-			t.Errorf("expected %s, got %s", expextedContent, *replaced)
+		expected := prefix + " heading test"
+		if result != expected {
+			t.Errorf("expected %q, got %q", expected, result)
 		}
 	}
 }
@@ -479,12 +459,12 @@ func TestConvertToMarkdown_Table(t *testing.T) {
 		{
 			name:     "basic table",
 			html:     "<table><thead><tr><th>Name</th><th>Age</th></tr></thead><tbody><tr><td>Alice</td><td>30</td></tr><tr><td>Bob</td><td>25</td></tr></tbody></table>",
-			expected: "| Name | Age |\n| --- | --- |\n| Alice | 30 |\n| Bob | 25 |",
+			expected: "| Name | Age |\n|---|---|\n| Alice | 30 |\n| Bob | 25 |",
 		},
 		{
 			name:     "aligned table",
 			html:     "<table><thead><tr><th align=\"left\">Left</th><th align=\"center\">Center</th><th align=\"right\">Right</th></tr></thead><tbody><tr><td align=\"left\">a</td><td align=\"center\">b</td><td align=\"right\">c</td></tr></tbody></table>",
-			expected: "| Left | Center | Right |\n| :-- | :-: | --: |\n| a | b | c |",
+			expected: "| Left | Center | Right |\n|:--|:-:|--:|\n| a | b | c |",
 		},
 	}
 
@@ -503,69 +483,21 @@ func TestConvertToMarkdown_Table(t *testing.T) {
 }
 
 func TestConvertToMarkdown_ReplacementHeadingsWithAttributes(t *testing.T) {
-	content := "heading test"
+	converter := NewConverter(false)
 	headings := []string{"h1", "h2", "h3", "h4", "h5", "h6"}
 
 	for _, heading := range headings {
-		node := &html.Node{
-			Data: heading,
-			Attr: []html.Attribute{
-				{Key: "id", Val: heading},
-				{Key: "class", Val: heading},
-				{Key: "data", Val: heading},
-			},
+		level := heading[1:]
+		prefix := strings.Repeat("#", int(level[0]-'0'))
+
+		input := "<" + heading + " id=\"" + heading + "\" class=\"" + heading + "\" data=\"" + heading + "\">heading test</" + heading + ">"
+		result, err := converter.ConvertToMarkdown(input)
+		if err != nil {
+			t.Fatalf("ConvertToMarkdown() failed: %v", err)
 		}
-		selection := &goquery.Selection{Nodes: []*html.Node{node}}
-		opt := &md.Options{}
-
-		level, _ := strconv.Atoi(node.Data[1:])
-		prefix := strings.Repeat("#", level)
-
-		expextedContent := prefix + " " + content + " {#" + heading + " ." + heading + " data=" + heading + "}\n"
-		replaced := replacementHeadings(content, selection, opt)
-
-		if *replaced != expextedContent {
-			t.Errorf("expected %s, got %s", expextedContent, *replaced)
+		expected := prefix + " heading test {#" + heading + " ." + heading + " data=" + heading + "}"
+		if result != expected {
+			t.Errorf("expected %q, got %q", expected, result)
 		}
-	}
-}
-
-func TestConvertToMarkdown_ReplacementDivNilNode(t *testing.T) {
-	content := "this is a test content"
-	selection := &goquery.Selection{Nodes: []*html.Node{nil}}
-	opt := &md.Options{}
-
-	replaced := replacementDiv(content, selection, opt)
-
-	if *replaced != content {
-		t.Errorf("expected %q, got %q", content, *replaced)
-	}
-}
-
-func TestConvertToMarkdown_ReplacementHeadingsNilNode(t *testing.T) {
-	content := "heading test"
-	selection := &goquery.Selection{Nodes: []*html.Node{nil}}
-	opt := &md.Options{}
-
-	replaced := replacementHeadings(content, selection, opt)
-
-	if *replaced != content {
-		t.Errorf("expected %q, got %q", content, *replaced)
-	}
-}
-
-func TestConvertToMarkdown_ReplacementHeadingsInvalidLevel(t *testing.T) {
-	content := "heading test"
-	node := &html.Node{
-		Data: "hx",
-		Attr: []html.Attribute{},
-	}
-	selection := &goquery.Selection{Nodes: []*html.Node{node}}
-	opt := &md.Options{}
-
-	replaced := replacementHeadings(content, selection, opt)
-
-	if *replaced != content {
-		t.Errorf("expected %q, got %q", content, *replaced)
 	}
 }

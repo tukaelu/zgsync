@@ -7,9 +7,10 @@ import (
 
 	"golang.org/x/net/html"
 
-	md "github.com/JohannesKaufmann/html-to-markdown"
-	"github.com/JohannesKaufmann/html-to-markdown/plugin"
-	"github.com/PuerkitoBio/goquery"
+	md "github.com/JohannesKaufmann/html-to-markdown/v2/converter"
+	"github.com/JohannesKaufmann/html-to-markdown/v2/plugin/base"
+	"github.com/JohannesKaufmann/html-to-markdown/v2/plugin/commonmark"
+	"github.com/JohannesKaufmann/html-to-markdown/v2/plugin/table"
 	fences "github.com/stefanfritsch/goldmark-fences"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
@@ -53,17 +54,20 @@ func NewConverter(enableLinkTargetBlank bool) Converter {
 		)
 	}
 
-	html := md.NewConverter("", true, &md.Options{EscapeMode: "disabled", CodeBlockStyle: "fenced"})
-	html.Use(plugin.Table())
-	html.AddRules(
-		md.Rule{
-			Filter:      []string{"div"},
-			Replacement: replacementDiv,
-		},
-		md.Rule{
-			Filter:      []string{"h1", "h2", "h3", "h4", "h5", "h6"},
-			Replacement: replacementHeadings,
-		})
+	html := md.NewConverter(
+		md.WithPlugins(
+			base.NewBasePlugin(),
+			commonmark.NewCommonmarkPlugin(),
+			table.NewTablePlugin(
+				table.WithCellPaddingBehavior(table.CellPaddingBehaviorMinimal),
+			),
+		),
+		md.WithEscapeMode(md.EscapeModeDisabled),
+	)
+	html.Register.RendererFor("div", md.TagTypeBlock, renderDiv, md.PriorityEarly)
+	for _, tag := range []string{"h1", "h2", "h3", "h4", "h5", "h6"} {
+		html.Register.RendererFor(tag, md.TagTypeBlock, renderHeading, md.PriorityEarly)
+	}
 
 	return &converterImpl{markdown, html}
 }
@@ -99,40 +103,38 @@ func pluckAttributes(node *html.Node) []string {
 	return attrs
 }
 
-func replacementDiv(content string, selec *goquery.Selection, opt *md.Options) *string {
-	var node *html.Node
-	if node = selec.Get(0); node == nil {
-		return md.String(content)
-	}
-	attrs := pluckAttributes(node)
+func renderDiv(ctx md.Context, w md.Writer, n *html.Node) md.RenderStatus {
+	var buf bytes.Buffer
+	ctx.RenderChildNodes(ctx, &buf, n)
 
+	attrs := pluckAttributes(n)
 	styledDiv := ":::"
 	if len(attrs) > 0 {
 		styledDiv = styledDiv + "{" + strings.Join(attrs, " ") + "}"
 	}
-	styledDiv = styledDiv + "\n" + strings.TrimSpace(content) + "\n:::\n\n"
+	styledDiv = styledDiv + "\n" + strings.TrimSpace(buf.String()) + "\n:::\n\n"
 
-	return md.String(styledDiv)
+	_, _ = w.WriteString(styledDiv)
+	return md.RenderSuccess
 }
 
-func replacementHeadings(content string, selec *goquery.Selection, opt *md.Options) *string {
-	var node *html.Node
-	if node = selec.Get(0); node == nil {
-		return md.String(content)
-	}
-
-	level, err := strconv.Atoi(node.Data[1:])
-	if err != nil {
-		return md.String(content)
-	}
+func renderHeading(ctx md.Context, w md.Writer, n *html.Node) md.RenderStatus {
+	// n.Data is guaranteed to be "h1".."h6": RendererFor only invokes this
+	// for nodes whose tag name matches what it was registered for.
+	level, _ := strconv.Atoi(n.Data[1:])
 	prefix := strings.Repeat("#", level)
 
-	attrs := pluckAttributes(node)
+	var buf bytes.Buffer
+	ctx.RenderChildNodes(ctx, &buf, n)
+	content := buf.String()
+
+	attrs := pluckAttributes(n)
 	if len(attrs) > 0 {
 		content = content + " {" + strings.Join(attrs, " ") + "}"
 	}
 
-	return md.String(prefix + " " + content + "\n")
+	_, _ = w.WriteString(prefix + " " + content + "\n")
+	return md.RenderSuccess
 }
 
 type linkTargetTransformer struct{}
