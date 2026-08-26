@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.2.0](https://github.com/tukaelu/zgsync/compare/v0.1.0...v0.2.0) - 2026-08-25
+
+### Other Changes
+- fix(deps): update module golang.org/x/net to v0.57.0 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/97
+- docs(readme): fix config table and usage block inconsistencies by @tukaelu in https://github.com/tukaelu/zgsync/pull/92
+- fix(deps): update module github.com/johanneskaufmann/html-to-markdown to v2 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/68
+- use config file directory for credentials.json path by @kmuto in https://github.com/tukaelu/zgsync/pull/107
+- introduce bind option to modify bind address for docker container by @kmuto in https://github.com/tukaelu/zgsync/pull/106
+
 ## [v0.1.0](https://github.com/tukaelu/zgsync/compare/v0.0.20...v0.1.0) - 2026-08-05
 
 ### Other Changes
