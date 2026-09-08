@@ -1,6 +1,6 @@
 module github.com/tukaelu/zgsync
 
-go 1.25.0
+go 1.26.0
 
 toolchain go1.26.5
 
@@ -12,7 +12,7 @@ require (
 	github.com/alecthomas/kong v1.16.0
 	github.com/stefanfritsch/goldmark-fences v1.0.0
 	github.com/yuin/goldmark v1.8.5
-	golang.org/x/net v0.57.0
+	golang.org/x/net v0.59.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
