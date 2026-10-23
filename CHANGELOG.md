@@ -1,5 +1,15 @@
 # Changelog
 
+## [v0.2.1](https://github.com/tukaelu/zgsync/compare/v0.2.0...v0.2.1) - 2026-10-23
+
+### Other Changes
+- Update module github.com/yuin/goldmark to v1.8.6 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/113
+- Update module github.com/alecthomas/kong to v1.16.1 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/112
+- Update github-actions by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/108
+- Update module github.com/PuerkitoBio/goquery to v1.13.0 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/111
+- Update module golang.org/x/net to v0.61.0 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/104
+- Update go toolchain directive to v1.27.3 by @renovate[bot] in https://github.com/tukaelu/zgsync/pull/105
+
 ## [v0.2.0](https://github.com/tukaelu/zgsync/compare/v0.1.0...v0.2.0) - 2026-08-25
 
 ### Other Changes
